@@ -9,7 +9,7 @@ from __future__ import absolute_import
 import extract
 import numpy as np
 import matplotlib
-# matplotlib.use('pdf')
+matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 import os
 from shutil import copyfile
@@ -17,7 +17,7 @@ from shutil import copyfile
 
 def main():
     """
-    "1"
+    "1"             READ
     """
     A = np.loadtxt('n_r_n_dop.txt')  # num of replicas, num of dopings
     n_r, n_d = [int(np.loadtxt('n_r_n_dop.txt')[0]), int(np.loadtxt('n_r_n_dop.txt')[1])]
@@ -39,7 +39,7 @@ def main():
     # end ini
 
     """
-    "2"
+    "2"         COMPUTE AND SAVE: AVERAGE DISTRIBUTIONS
     """
     if not os.path.isdir('postprocessing'):
         os.makedirs('postprocessing')
@@ -60,14 +60,13 @@ def main():
             LUMO_plus[i_d, :] /= aaa[i_d]
         np.savetxt('postprocessing/LUMO.dat', LUMO_plus)
 
-    #quick check
-
-    #end: quick check
+    # quick check
+    print("if normalization works, it must be 1 (one). It is: {} \n".format(np.sum(LUMO_plus[0, :] + HOMO[0, :]) + dop[0]))
+    # end: quick check
 
     """
-    "3"
+    "3"     COMPUTE: DISORDER, MEAN HOMO/LUMO, MAX HOMO/LUMO
     """
-
     level_homo = Level(HOMO, Energy)
     level_homo.compute_parameters()
 
@@ -78,33 +77,76 @@ def main():
     level_homo_plus_lumo.compute_parameters()
 
     """
-    "4"
+    "4"     SAVE 3
     """
-
     np.savetxt("postprocessing/HOMO_disorder.dat", level_homo.disorder)
     np.savetxt("postprocessing/LUMO_plus_disorder.dat", level_lumo_plus.disorder)
     np.savetxt("postprocessing/HOMO_plus_LUMO_disorder.dat", level_homo_plus_lumo.disorder)
     np.savetxt("postprocessing/energy.dat", Energy)
     np.savetxt("postprocessing/doping.dat", dop)
 
-
     """
-    "5"         FERMI LEVEL
+    "5"     COMPUTE: FERMI LEVEL
     """
-
     density_of_states = DOS(HOMO + LUMO_plus, Energy, T, dop)
-
     density_of_states.compute_parameters()
     density_of_states.compute_ef()
 
-    print("ef = ", density_of_states.ef)
-    print("LUMO mean", level_lumo_plus.mean)
-    dE = Energy[-1]-Energy[-2]
-    print("must be one:", np.sum(level_homo_plus_lumo.distribution[12, :])+dop[12])
+    ef_wrt_homo_mean = density_of_states.ef - level_homo.mean
+    ef_wrt_homo_offset = density_of_states.ef - level_homo.mean - 2*level_homo.disorder
 
     """
-    OPTIONAL PLOTS
+    "6"     SAVE: FERMI LEVEL
     """
+    np.savetxt("postprocessing/ef.dat", density_of_states.ef)                   # w.r.t. vacuum
+    np.savetxt("postprocessing/ef_wrt_homo_mean.dat", density_of_states.ef)     # w.r.t. HOMO_mean
+    np.savetxt("postprocessing/ef_wrt_homo_offset.dat", density_of_states.ef)   # w.r.t. HOMO_offset
+
+    """
+    N-1     PRINT
+    """
+
+    # uncomment to print
+    """
+    print("LUMO mean", level_lumo_plus.mean)
+    """
+    print("ef w.r.t. vacuum: \n {} \n".format(density_of_states.ef))
+    print("Fermi w.r.t. HOMO mean: \n {} \n".format(ef_wrt_homo_mean))
+    print("Fermi w.r.t. HOMO offset: \n {} \n".format(ef_wrt_homo_offset))
+
+    """
+    N       PLOT
+    """
+
+    # uncomment to plot EF, LUMO_mean and HOMO_mean w.r.t. vacuum
+    """
+    plt.figure()
+    plt.plot(dop, density_of_states.ef, label="$E_F$")
+    plt.plot(dop, level_homo.mean, label="$HOMO_{mean}$")
+    plt.plot(dop, level_lumo_plus.mean, label="$LUMO^+_{mean}$")
+    plt.xlabel("doping fraction")
+    plt.ylabel("Energy [eV]")
+    plt.legend()
+    plt.ylim([-6.5, -4.0])
+    plt.xlim([dop[0], dop[-1]])
+    plt.xscale('log')
+    plt.savefig("fermi_wrt_vac.png")
+    plt.close()
+    """
+
+    # uncomment to plot dE_mean dE_offset
+
+    plt.figure()
+    plt.plot(dop, ef_wrt_homo_mean, label="$dE_F^{mean}$")
+    plt.plot(dop, ef_wrt_homo_offset, label="$dE_F^{offset}$")
+    plt.xlabel("doping fraction")
+    plt.ylabel("Energy [eV]")
+    plt.legend()
+    plt.ylim([1, 0])
+    plt.xlim([dop[0], dop[-1]])
+    plt.xscale('log')
+    plt.savefig("def.png")
+    plt.close()
 
     # uncomment to plot HOMO, LUMO and HOMO+LUMO disorder
     """
