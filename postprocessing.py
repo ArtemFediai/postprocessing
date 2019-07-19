@@ -19,6 +19,7 @@ def main():
     """
     "1"             READ
     """
+    TrapLevelExists = True
     A = np.loadtxt('n_r_n_dop.txt')  # num of replicas, num of dopings
     n_r, n_d = [int(np.loadtxt('n_r_n_dop.txt')[0]), int(np.loadtxt('n_r_n_dop.txt')[1])]
     dop = np.loadtxt('doping.txt')
@@ -48,6 +49,9 @@ def main():
         HOMO[:, :] = np.loadtxt('postprocessing/HOMO.dat')
     else:
         HOMO[:, :] = get_average_distribution('IP_0', n_d, n_r, NE)  # this is an average distribution of HOMO
+        if TrapLevelExists:
+            print("I have detected a trap level and include it to HOMO")
+            HOMO[:, :] += get_average_distribution('IP_2', n_d, n_r, NE)
         for i_d in range(0, n_d):
             HOMO[i_d, :] /= aaa[i_d]
         np.savetxt('postprocessing/HOMO.dat', HOMO)
@@ -56,6 +60,9 @@ def main():
         LUMO_plus[:, :] = np.loadtxt('postprocessing/LUMO.dat')
     else:
         LUMO_plus[:, :] = get_average_distribution('EA_plus_0', n_d, n_r, NE)  # the same for LUMO+
+        if TrapLevelExists:
+            print("I have detected a trap level and include it to LUMO_plus")
+            LUMO_plus[:, :] += get_average_distribution('EA_plus_2', n_d, n_r, NE)
         for i_d in range(0, n_d):
             LUMO_plus[i_d, :] /= aaa[i_d]
         np.savetxt('postprocessing/LUMO.dat', LUMO_plus)
@@ -99,8 +106,8 @@ def main():
     "6"     SAVE: FERMI LEVEL
     """
     np.savetxt("postprocessing/ef.dat", density_of_states.ef)                   # w.r.t. vacuum
-    np.savetxt("postprocessing/ef_wrt_homo_mean.dat", density_of_states.ef)     # w.r.t. HOMO_mean
-    np.savetxt("postprocessing/ef_wrt_homo_offset.dat", density_of_states.ef)   # w.r.t. HOMO_offset
+    np.savetxt("postprocessing/ef_wrt_homo_mean.dat", ef_wrt_homo_mean)     # w.r.t. HOMO_mean
+    np.savetxt("postprocessing/ef_wrt_homo_offset.dat", ef_wrt_homo_offset)   # w.r.t. HOMO_offset
 
     """
     N-1     PRINT
@@ -163,16 +170,16 @@ def main():
     """
 
     # uncomment to plot HOMO and LUMO_plus
-    """
+
     plt.figure()
     for i_d in range(n_d):
         plt.plot(Energy, HOMO[i_d, :])
     for i_d in range(n_d):
         plt.plot(Energy, LUMO_plus[i_d, :])
     plt.yscale('log')
-    plt.show()
-    exit()
-    """
+    plt.ylim(bottom = 1E-5)
+    plt.savefig('DOS.png')
+
     # end: uncomment
 
 
