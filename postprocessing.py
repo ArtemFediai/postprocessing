@@ -53,7 +53,7 @@ def main():
             print("I have detected a trap level and include it to HOMO")
             HOMO[:, :] += get_average_distribution('IP_2', n_d, n_r, NE)
         for i_d in range(0, n_d):
-            HOMO[i_d, :] /= aaa[i_d]
+            HOMO[i_d, :] /= aaa[i_d] #density of states per material's molecule
         np.savetxt('postprocessing/HOMO.dat', HOMO)
 
     if os.path.isfile('postprocessing/LUMO.dat'):
