@@ -14,26 +14,22 @@ def main():
     """
     "1"             READ
     """
-    TrapLevelExists = False
-    A = np.loadtxt('n_r_n_dop.txt')  # num of replicas, num of dopings
-    n_r, n_d = [int(np.loadtxt('n_r_n_dop.txt')[0]), int(np.loadtxt('n_r_n_dop.txt')[1])]
-    # hard coded
-    scale = 0.196  # this is only once for the paper
-    # end: hard-coded
-    field = 0.04 * 10 ** 9  # field, V/nm SI
-    dop = np.loadtxt('doping.txt')
-
+    n_r, n_t = [int(np.loadtxt('n_r_n_t.dat')[0]), int(np.loadtxt('n_r_n_t.dat')[1])]
+    field = 0.036 * 10 ** 9  # field, V/nm SI
+    n_traps = np.loadtxt('N_t.dat')
+    n_t = 5 #  hc
+    n_traps = n_traps[0:n_t]
 
     """
     "2"         COMPUTE AND SAVE: AVERAGE DISTRIBUTIONS
     """
 
-    my_current = Current(n_d, n_r)  # ini with empties
+    my_current = Current(n_t, n_r)  # ini with empties
 
     if not os.path.isdir('postprocessing'):
         os.makedirs('postprocessing')
-    if not os.path.isfile("postprocessing/doping.dat"):
-        np.savetxt("postprocessing/doping.dat", dop)  # ungly
+    if not os.path.isfile("postprocessing/n_traps.dat"):
+        np.savetxt("postprocessing/n_traps.dat", n_traps)  # ugly
 
     if (os.path.isfile('postprocessing/current.dat') and
         os.path.isfile('postprocessing/mobility.dat') and
@@ -57,73 +53,80 @@ def main():
     print("current: \n", my_current.current)
 
     plt.figure()
-    plt.plot(dop, my_current.current*scale)
-    plt.xscale('log')
+    plt.plot(n_traps, my_current.current)
+    plt.errorbar(n_traps, my_current.current, yerr=my_current.std_err_cu, fmt='o-')
+#    plt.xscale('log')
     plt.yscale('log')
+    plt.ylabel('current, A/m$^2$')
+    plt.xlabel('trap molar fraction')
     plt.savefig("current.png")
+    plt.close()
 
     plt.figure()
-    plt.plot(dop, my_current.mobility*scale)
+    plt.errorbar(n_traps, my_current.mobility*1E4, yerr=my_current.std_err_mo*1E4, fmt='o-')
     plt.xscale('log')
     plt.yscale('log')
+    plt.ylabel('mobility, cm$^2$V$-1$s$-1$')
+    plt.xlabel('trap molar fraction')
     plt.savefig("mobility.png")
+    plt.close()
 
     plt.figure()
-    plt.plot(dop, my_current.conductivity*scale*100)
+    plt.errorbar(n_traps, my_current.conductivity, yerr=my_current.std_err_co, fmt='o-')
     plt.ylabel('Conductivity, S/cm')
     plt.xscale('log')
     plt.yscale('log')
+    plt.ylabel('conductivity, S/m')
+    plt.xlabel('trap molar fraction')
     plt.savefig("conductivity.png")
+    plt.close()
 
     """
     N-1     PRINT
     """
 
     # uncomment to print
-    """
-    print("LUMO mean", level_lumo_plus.mean)
-    """
-    """
-    print("current: \n {} \n".format(MyCurrent.current))
-    print("mobility: \n {} \n".format(MyCurrent.mobility))
-    print("conductivity: \n {} \n".format(MyCurrent.conductivity))
-    """
+
+    print("current: \n {} \n".format(my_current.current))
+    print("mobility: \n {} \n".format(my_current.mobility))
+    print("conductivity: \n {} \n".format(my_current.conductivity))
+
     """
     N       PLOT
     """
 
 
 class Current:
-    def __init__(self, n_d, n_r):
-        self.n_d = n_d
+    def __init__(self, n_t, n_r):
+        self.n_t = n_t
         self.n_r = n_r
-        self.current = np.zeros(n_d)
-        self.mobility = np.zeros(n_d)
-        self.conductivity = np.zeros(n_d)
-        self.std_err_cu = np.zeros(n_d)
-        self.std_err_mo = np.zeros(n_d)
-        self.std_err_co = np.zeros(n_d)
+        self.current = np.zeros(n_t)
+        self.mobility = np.zeros(n_t)
+        self.conductivity = np.zeros(n_t)
+        self.std_err_cu = np.zeros(n_t)
+        self.std_err_mo = np.zeros(n_t)
+        self.std_err_co = np.zeros(n_t)
 
     def compute(self, f):
-        fn = "dop_{}/r_{}/output_job_0"
+        fn = "t_{}/r_{}/output_job_0"
         current, mobility, field, conductivity = np.zeros(self.n_r), np.zeros(self.n_r), np.zeros(self.n_r), np.zeros(self.n_r)
-        for i_d in range(0, self.n_d):
+        for i_t in range(0, self.n_t):
             for i_r in range(0, self.n_r):
-                current[i_r] = extract.extract_e(fn.format(i_d, i_r), "final current density: ")
-                mobility[i_r] = extract.extract_e(fn.format(i_d, i_r), "final mobility: ")
-                #field[i_r] = extract.extract_float(fn.format(i_d, i_r),"applying field of [ ")  #in V/nm
+                print("read-in i_t = {}, i_r = {}".format(i_t, i_r))
+                current[i_r] = extract.extract_e(fn.format(i_t, i_r), "final current density: ")
+                mobility[i_r] = extract.extract_e(fn.format(i_t, i_r), "final mobility: ")
                 field[i_r] = f
                 conductivity[i_r] = current[i_r]/field[i_r]
-            self.current[i_d] = gmean(current)
-            self.mobility[i_d] = gmean(mobility)
-            self.conductivity[i_d] = gmean(conductivity)
+            #self.current[i_t] = gmean(current)
+            #self.mobility[i_t] = gmean(mobility)
+            #self.conductivity[i_t] = gmean(conductivity)
 
-            #self.current[i_d] = np.mean(current)
-            #self.mobility[i_d] = np.mean(mobility)
-            #self.conductivity[i_d] = np.mean(conductivity)
-            self.std_err_cu[i_d] = np.std(current)/self.n_r
-            self.std_err_mo[i_d] = np.std(mobility)/self.n_r
-            self.std_err_co[i_d] = np.std(conductivity)/self.n_r
+            self.current[i_t] = np.mean(current)
+            self.mobility[i_t] = np.mean(mobility)
+            self.conductivity[i_t] = np.mean(conductivity)
+            self.std_err_cu[i_t] = np.std(current)/self.n_r
+            self.std_err_mo[i_t] = np.std(mobility)/self.n_r
+            self.std_err_co[i_t] = np.std(conductivity)/self.n_r
 
         np.savetxt('postprocessing/current.dat', self.current)
         np.savetxt('postprocessing/mobility.dat', self.mobility)
