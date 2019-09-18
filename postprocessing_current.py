@@ -1,3 +1,7 @@
+"""
+this is in fact traps simulations n_r n_t
+"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 import extract
@@ -14,11 +18,13 @@ def main():
     """
     "1"             READ
     """
+    error = 'std'  # std_err or std
+
     n_r, n_t = [int(np.loadtxt('n_r_n_t.dat')[0]), int(np.loadtxt('n_r_n_t.dat')[1])]
     field = 0.036 * 10 ** 9  # field, V/nm SI
     n_traps = np.loadtxt('N_t.dat')
-    n_t = 5 #  hc
-    n_traps = n_traps[0:n_t]
+    #n_t = 19 #  hc
+    #n_traps = n_traps[0:n_t]
 
     """
     "2"         COMPUTE AND SAVE: AVERAGE DISTRIBUTIONS
@@ -41,9 +47,9 @@ def main():
         my_current.current = np.loadtxt('postprocessing/current.dat')
         my_current.mobility = np.loadtxt('postprocessing/mobility.dat')
         my_current.conductivity = np.loadtxt('postprocessing/conductivity.dat')
-        my_current.std_err_current = np.loadtxt('postprocessing/std_err_cu.dat')
-        my_current.std_err_mobility = np.loadtxt('postprocessing/std_err_mo.dat')
-        my_current.std_err_conductivity = np.loadtxt('postprocessing/std_err_co.dat')
+        my_current.std_err_cu = np.loadtxt('postprocessing/std_err_cu.dat')
+        my_current.std_err_mo = np.loadtxt('postprocessing/std_err_mo.dat')
+        my_current.std_err_co = np.loadtxt('postprocessing/std_err_co.dat')
     else:
         my_current.compute(field)
 
@@ -63,10 +69,13 @@ def main():
     plt.close()
 
     plt.figure()
-    plt.errorbar(n_traps, my_current.mobility*1E4, yerr=my_current.std_err_mo*1E4, fmt='o-')
+    if error == 'std':
+        plt.errorbar(n_traps, my_current.mobility*1E4, yerr=(my_current.std_err_mo*1E4*n_r)) #  std
+    else:
+        plt.errorbar(n_traps, my_current.mobility*1E4, yerr=my_current.std_err_mo*1E4, fmt='o-') # std_err
     plt.xscale('log')
     plt.yscale('log')
-    plt.ylabel('mobility, cm$^2$V$-1$s$-1$')
+    plt.ylabel('mobility, cm$^2$V$^-1$s$^-1$')
     plt.xlabel('trap molar fraction')
     plt.savefig("mobility.png")
     plt.close()
@@ -117,13 +126,13 @@ class Current:
                 mobility[i_r] = extract.extract_e(fn.format(i_t, i_r), "final mobility: ")
                 field[i_r] = f
                 conductivity[i_r] = current[i_r]/field[i_r]
-            #self.current[i_t] = gmean(current)
-            #self.mobility[i_t] = gmean(mobility)
-            #self.conductivity[i_t] = gmean(conductivity)
+            self.current[i_t] = gmean(current)
+            self.mobility[i_t] = gmean(mobility)
+            self.conductivity[i_t] = gmean(conductivity)
 
-            self.current[i_t] = np.mean(current)
-            self.mobility[i_t] = np.mean(mobility)
-            self.conductivity[i_t] = np.mean(conductivity)
+            #self.current[i_t] = np.mean(current)
+            #self.mobility[i_t] = np.mean(mobility)g
+            #self.conductivity[i_t] = np.mean(conductivity)
             self.std_err_cu[i_t] = np.std(current)/self.n_r
             self.std_err_mo[i_t] = np.std(mobility)/self.n_r
             self.std_err_co[i_t] = np.std(conductivity)/self.n_r
