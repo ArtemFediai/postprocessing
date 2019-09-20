@@ -23,8 +23,8 @@ def main():
     n_r, n_t = [int(np.loadtxt('n_r_n_t.dat')[0]), int(np.loadtxt('n_r_n_t.dat')[1])]
     field = 0.036 * 10 ** 9  # field, V/nm SI
     n_traps = np.loadtxt('N_t.dat')
-    #n_t = 19 #  hc
-    #n_traps = n_traps[0:n_t]
+    n_t = 26 #  hc
+    n_traps = n_traps[0:n_t]
 
     """
     "2"         COMPUTE AND SAVE: AVERAGE DISTRIBUTIONS
@@ -70,9 +70,9 @@ def main():
 
     plt.figure()
     if error == 'std':
-        plt.errorbar(n_traps, my_current.mobility*1E4, yerr=(my_current.std_err_mo*1E4*n_r)) #  std
+        plt.errorbar(n_traps, my_current.mobility*1E4, yerr=(my_current.std_err_mo*1E4*n_r), capsize=3) #  std
     else:
-        plt.errorbar(n_traps, my_current.mobility*1E4, yerr=my_current.std_err_mo*1E4, fmt='o-') # std_err
+        plt.errorbar(n_traps, my_current.mobility*1E4, yerr=my_current.std_err_mo*1E4, capsize=3) # std_err
     plt.xscale('log')
     plt.yscale('log')
     plt.ylabel('mobility, cm$^2$V$^-1$s$^-1$')
