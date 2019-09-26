@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from SimAnalysis import CurrFieldSimulation
 
 # This is an example on how to use the classe CurrFieldSimulation from SimAnalysis.
@@ -6,7 +7,7 @@ from SimAnalysis import CurrFieldSimulation
 # seperately. Shall be used if one wants to analyse only one J(E) simulation
 # (for only one DMR).
 
-simulation = CurrFieldSimulation(source_dir='',dest_dir='analysis/'+dir)
+simulation = CurrFieldSimulation(source_dir='',dest_dir='analysis/')
 
 simulation.get_current()
 simulation.plot_current(errorbar=True)

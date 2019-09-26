@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from SimAnalysis import CurrSysSizeSimulation
 
 # This is an example on how to use the classe CurrSysSizeSimulation from SimAnalysis.

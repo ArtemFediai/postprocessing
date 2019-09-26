@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python3
 from SimAnalysis import CurrTempSimulation
 
 # This is an example on how to use the classe CurrTempSimulation from SimAnalysis.
@@ -9,7 +9,7 @@ from SimAnalysis import CurrTempSimulation
 
 
 
-simulation = CurrTempSimulation(source_dir='',dest_dir='analysis/'+dir)
+simulation = CurrTempSimulation(source_dir='',dest_dir='analysis/')
 
 simulation.get_current()
 simulation.plot_current(errorbar=True)

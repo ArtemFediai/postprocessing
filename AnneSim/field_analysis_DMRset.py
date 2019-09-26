@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from SimAnalysis import CurrFieldDMRset
 
 # This is an example on how to use the class CurrFieldDMRset from SimAnalysis.
