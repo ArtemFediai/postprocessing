@@ -10,7 +10,9 @@ from SimAnalysis import CurrTempDMRset
 
 
 dis_sim = CurrTempDMRset()
-dis_sim.plot_current(errorbar=True)
-dis_sim.plot_conductivity(errorbar=True,plot_log=True)
-dis_sim.plot_act_energy()
 dis_sim.plot_conv_analysis()
+dis_sim.plot_current(errorbar=True)
+
+dis_sim.plot_conductivity(errorbar=True,plot_log=True)
+dis_sim.get_act_energy(tlim_low=250,tlim_high=350)
+dis_sim.plot_act_energy()

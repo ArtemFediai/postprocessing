@@ -19,6 +19,8 @@ class CurrTempSimulation:
     '''
     # TODO: use yaml file for sim_param.txt
     # TODO: rewrite the code in a way that false format is recognised
+    # TODO: add mode for writting the lambda (just a single value) for 
+    #       Marcus rates in all plots and data files
     def __init__(self,source_dir='',dest_dir='analysis',sim_data_file='sim_param.txt'):
         sim_data = np.genfromtxt(source_dir+sim_data_file,dtype=float)
         self.field    = sim_data[1]
@@ -1115,15 +1117,14 @@ class CurrTempDMRset:
         plt.savefig(self.dest_dir+'/conv_analysis_DMR_set.png')
         plt.close()  
 
-    def get_act_energy(self):
+    def get_act_energy(self,tlim_low=250,tlim_high=350):
         DMR_dir = sorted(glob.glob('DMR_*'))
         n_DMR    = len(DMR_dir)  
         act_energy = np.zeros(n_DMR)
         dmr        = self.DMR * 100
         for i_dmr, dir in enumerate(DMR_dir):
             dmr_sim = CurrTempSimulation(source_dir=dir+'/',dest_dir='analysis/'+dir)
-            if not os.path.exists(self.dest_dir+dir+"/data/act_energy/activation_energy.txt"):    
-                dmr_sim.get_act_energy()
+            dmr_sim.get_act_energy(tlim_low=tlim_low,tlim_high=tlim_high)
             act_energy[i_dmr] = np.loadtxt(self.dest_dir+dir+"/data/act_energy/activation_energy.txt",unpack=True)
         if not os.path.isdir(self.dest_dir+'/act_energy'):
             os.makedirs(self.dest_dir+'/act_energy')       
