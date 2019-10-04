@@ -208,7 +208,7 @@ class CurrTempSimulation:
             for i_t in range(n_temp): f.write(analysis_data[i_t])           
         f.close()
 
-    def get_act_energy(self,tlim_low=50,tlim_high=600,save_to_file=True):
+    def get_act_energy(self,Tlim_low=50,Tlim_high=600,save_to_file=True):
         '''
         Fit log(J) vs. 1000/T with linear fit: y = a*x + b.
         Use specific temperature interval from tlim_low to tlim_high.
@@ -233,8 +233,8 @@ class CurrTempSimulation:
                 temperatures = self.temp[x_conv[0][0]:x_conv[0][-1]+1]  
                 x = 1000/temperatures                  
                 y = np.log(current)
-                idx_low  = np.argwhere( temperatures >= tlim_low )[0,0]
-                idx_high = np.argwhere( temperatures <= tlim_high )[-1,0]
+                idx_low  = np.argwhere( temperatures >= Tlim_low )[0,0]
+                idx_high = np.argwhere( temperatures <= Tlim_high )[-1,0]
                 x_fit = (x[idx_low:idx_high+1]).reshape((-1,1))
                 y_fit = y[idx_low:idx_high+1]
                 if x_fit == [] or y_fit == []:
@@ -270,7 +270,9 @@ class CurrTempSimulation:
                     plt.close()
     
 
-    def plot_current(self,plot_log=True,errorbar=False, only_conv=True,curve_color='b', save_to_file=True):
+    def plot_current(self,Tlim_low=None,Tlim_high=None,Jlim_low=None,Jlim_high=None,plot_log=True,errorbar=False, only_conv=True,
+                     curve_color='b', save_to_file=True
+                     ):
         '''
         Plot current vs. 1000/T. 
         plot_log:     plot natural logarithm of current.
@@ -280,7 +282,8 @@ class CurrTempSimulation:
         save_to_file: save the generated plot directly to 'current.png'.
 
         '''
-        # check if CurrTempSimulation already has current etc. attribute, if not check if data is already generated and if yes read it in
+        # check if CurrTempSimulation already has current etc. attribute, 
+        # if not check if data is already generated and if yes read it in
         if not os.path.exists(self.dest_dir+'/data/current.txt'):
             self.get_current()   
         else:
@@ -304,6 +307,32 @@ class CurrTempSimulation:
                 current      = self.current
                 std_current  = self.std_current
                 temperatures = self.temp
+            # adjust plot limits
+            if Tlim_low!=None:
+                x = np.where(temperatures[:]>=Tlim_low)
+                if len(x[0])>0:
+                    current      = current[x[0][0]:x[0][-1]+1]
+                    std_current  = [std_current[0][x[0][0]:x[0][-1]+1],std_current[1][x[0][0]:x[0][-1]+1]]
+                    temperatures = temperatures[x[0][0]:x[0][-1]+1]
+            if Tlim_high!=None:
+                x = np.where(temperatures[:]<=Tlim_high)
+                if len(x[0])>0:
+                    current      = current[x[0][0]:x[0][-1]+1]
+                    std_current  = [std_current[0][x[0][0]:x[0][-1]+1],std_current[1][x[0][0]:x[0][-1]+1]]
+                    temperatures = temperatures[x[0][0]:x[0][-1]+1]
+            if Jlim_low!=None:
+                x = np.where(current[:]>=Jlim_low)
+                if len(x[0])>0:
+                    current      = current[x[0][0]:x[0][-1]+1]
+                    std_current  = [std_current[0][x[0][0]:x[0][-1]+1],std_current[1][x[0][0]:x[0][-1]+1]]
+                    temperatures = temperatures[x[0][0]:x[0][-1]+1]
+            if Jlim_high!=None:
+                x = np.where(current[:]<=Jlim_high)
+                if len(x[0])>0:
+                    current      = current[x[0][0]:x[0][-1]+1]
+                    std_current  = [std_current[0][x[0][0]:x[0][-1]+1],std_current[1][x[0][0]:x[0][-1]+1]]
+                    temperatures = temperatures[x[0][0]:x[0][-1]+1]
+                
             # make logarithmic plot with appropiate std error
             if plot_log:
                 if errorbar:
@@ -1053,14 +1082,14 @@ class CurrTempDMRset:
 
 
 
-    def plot_current(self,errorbar=False,plot_log=True, only_conv=True):
+    def plot_current(self,Tlim_low=None,Tlim_high=None,Jlim_low=None,Jlim_high=None,errorbar=False,plot_log=True, only_conv=True):
         DMR_dir = self.list_DMR_dirs
         curr_dmr_colors  = self.colorset
         for i_dmr,dir in enumerate(DMR_dir):
             dmr_sim = CurrTempSimulation(source_dir=dir+'/',dest_dir='analysis/'+dir)
             if not os.path.exists(self.dest_dir+dir+"/data/current.txt"):    
                 dmr_sim.get_current()
-            dmr_sim.plot_current( plot_log, errorbar, only_conv, curr_dmr_colors[i_dmr], False)
+            dmr_sim.plot_current(Tlim_low,Tlim_high,Jlim_low,Jlim_high, plot_log, errorbar, only_conv, curr_dmr_colors[i_dmr], False)
         if plot_log:
             ylabel = 'log J (A/m$^2$)'
         else:
@@ -1117,14 +1146,14 @@ class CurrTempDMRset:
         plt.savefig(self.dest_dir+'/conv_analysis_DMR_set.png')
         plt.close()  
 
-    def get_act_energy(self,tlim_low=250,tlim_high=350):
+    def get_act_energy(self,Tlim_low=250,Tlim_high=350):
         DMR_dir = sorted(glob.glob('DMR_*'))
         n_DMR    = len(DMR_dir)  
         act_energy = np.zeros(n_DMR)
         dmr        = self.DMR * 100
         for i_dmr, dir in enumerate(DMR_dir):
             dmr_sim = CurrTempSimulation(source_dir=dir+'/',dest_dir='analysis/'+dir)
-            dmr_sim.get_act_energy(tlim_low=tlim_low,tlim_high=tlim_high)
+            dmr_sim.get_act_energy(Tlim_low=Tlim_low,Tlim_high=Tlim_high)
             act_energy[i_dmr] = np.loadtxt(self.dest_dir+dir+"/data/act_energy/activation_energy.txt",unpack=True)
         if not os.path.isdir(self.dest_dir+'/act_energy'):
             os.makedirs(self.dest_dir+'/act_energy')       

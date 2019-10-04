@@ -12,7 +12,7 @@ from SimAnalysis import CurrTempSimulation
 simulation = CurrTempSimulation(source_dir='',dest_dir='analysis/')
 
 simulation.get_current()
-# simulation.plot_current(errorbar=True)
+simulation.plot_current(Tlim_low=250, Tlim_high=350,Jlim_low=10000,Jlim_high=40000,errorbar=True)
 
 simulation.get_conductivity()
 # simulation.plot_conductivity(errorbar=True)
