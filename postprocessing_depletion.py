@@ -30,6 +30,9 @@ def main():
 
     dop = np.loadtxt('doping.txt')  # all doping
 
+    #n_d = 6
+    #dop = dop[0:n_d]
+    #n_r = 10
     """
     "2"         COMPUTE AND SAVE: AVERAGE DISTRIBUTIONS
     """
@@ -56,7 +59,7 @@ def main():
     """
      3          PLOT
     """
-
+    # Fig 1: dop vs. L | normal scales
     plt.figure()
     plt.plot(dop, my_depletion.depl_length)
     plt.errorbar(dop, my_depletion.depl_length, yerr=my_depletion.std_err_de, fmt='o-')
@@ -72,7 +75,7 @@ def main():
     coeff = w**2/(delta+w)**2
     #
 
-
+    # Fig 2: dop. vs. mobile fraction | xscale log
     plt.figure()
     if error == 'std':
         plt.errorbar(dop, my_depletion.mobile_fraction, yerr=(my_depletion.std_err_mo * n_r), capsize=3)  # std
@@ -87,13 +90,13 @@ def main():
     plt.savefig("MobileFraction.png")
     plt.close()
 
-
+    # Fig. 3: dop**(-1/2) vs L
     plt.figure()
     #plt.plot(dop, my_depletion.depl_length)
     plt.errorbar((dop)**(-1/2), my_depletion.depl_length, yerr=my_depletion.std_err_de, fmt='o')
     plot_trend((dop)**(-1/2), my_depletion.depl_length, color_num='0')
     plt.ylabel('Depletion length, nm')
-    plt.xlabel('Dopant molar fraction$^{1/2}$')
+    plt.xlabel('Dopant molar fraction$^{-1/2}$')
     plt.savefig("Depletion_length_vs_sqrt_doping.png")
     plt.close()
 
@@ -130,11 +133,11 @@ class Depletion:
                 print("read-in i_dop = {}, i_r = {}".format(i_d, i_r))
                 depl_length[i_r] = extract.extract_float(fn.format(i_d, i_r), "depletion length: ")
                 mobile_fraction[i_r] = extract.extract_float(fn.format(i_d, i_r), "mobile carrier fraction: ")
-            self.depl_length[i_d] = gmean(-depl_length)
-            self.mobile_fraction[i_d] = gmean(mobile_fraction)
+            #self.depl_length[i_d] = gmean(-depl_length)
+            #self.mobile_fraction[i_d] = gmean(mobile_fraction)
 
-            # self.current[i_d] = np.mean(depl_length)
-            # self.mobility[i_d] = np.mean(mobile_fraction)
+            self.depl_length[i_d] = np.mean(-depl_length)
+            self.mobile_fraction[i_d] = np.mean(mobile_fraction)
             self.std_err_de[i_d] = np.std(depl_length) / self.n_r
             self.std_err_mo[i_d] = np.std(mobile_fraction) / self.n_r
 
