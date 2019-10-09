@@ -7,6 +7,9 @@ from __future__ import absolute_import
 import extract
 import numpy as np
 import matplotlib
+import yaml
+from scipy import constants as c
+import json
 
 matplotlib.use('pdf')
 import matplotlib.pyplot as plt
@@ -30,9 +33,9 @@ def main():
 
     dop = np.loadtxt('doping.txt')  # all doping
 
-    #n_d = 6
-    #dop = dop[0:n_d]
-    #n_r = 10
+    n_d = 3
+    dop = dop[0:n_d]
+    n_r = 4
     """
     "2"         COMPUTE AND SAVE: AVERAGE DISTRIBUTIONS
     """
@@ -56,6 +59,10 @@ def main():
     else:
         my_depletion.compute()
 
+    if os.path.isfile('postprocessing/thickness.dat'):
+        my_depletion.thickness = np.loadtxt('postprocessing/thickness.dat')
+    else:
+        my_depletion.extract_yaml()
     """
      3          PLOT
     """
@@ -100,8 +107,20 @@ def main():
     plt.savefig("Depletion_length_vs_sqrt_doping.png")
     plt.close()
 
+    # Fig. 4: thickness vs. L/2
+    plt.figure()
+    plt.plot(dop, my_depletion.thickness/2, label='Half thickness')
+    plt.plot(dop, my_depletion.depl_length, label='Depletion length')
+    plt.ylabel('Depletion length, nm')
+    plt.xlabel('Dopant molar fraction')
+    plt.xscale('log')
+    plt.legend()
+    plt.savefig("Depletion_length_vs_Thickness.png")
+    plt.close()
 
-
+    #xxx = np.load('postprocessing/x.npz')
+    #with open('postprocessing/xx.txt', 'r') as fh:
+    #    xx = json.load(fh)
     """
     N-1     PRINT
     """
@@ -110,6 +129,7 @@ def main():
 
     print("Depletion: \n {} \n".format(my_depletion.depl_length))
     print("Mobile fraction: \n {} \n".format(my_depletion.mobile_fraction))
+    print("Thickness: \n {} \n".format(my_depletion.thickness))
 
     """
     N       PLOT
@@ -124,6 +144,7 @@ class Depletion:
         self.mobile_fraction = np.zeros(n_d)
         self.std_err_de = np.zeros(n_d)
         self.std_err_mo = np.zeros(n_d)
+        self.thickness = np.zeros(n_d)
 
     def compute(self):
         fn = "dop_{}/r_{}/output_job_0"  # ugly
@@ -146,7 +167,38 @@ class Depletion:
         np.savetxt('postprocessing/std_err_de.dat', self.std_err_de)
         np.savetxt('postprocessing/std_err_mo.dat', self.std_err_mo)
 
-def plot_trend(x,y,color_num = '0'):
+    def extract_yaml(self):
+        name = 'dop_{}/r_0/dl.yml'
+        for i_d in range(0, self.n_d):
+            fid = open(name.format(i_d), 'r')
+            print("read yaml for dop = {}".format(i_d))
+            settings = yaml.load(fid)
+            self.thickness[i_d] = settings['layers'][0]['thickness']
+            print('thickness = {}'.format(self.thickness[i_d]))
+        np.savetxt('postprocessing/thickness.dat', self.thickness)
+
+        name = 'dop_{}/r_{}/experiments/coulomb_average_0.dat'
+        self.x = []
+        self.coulomb = []
+        f1 = open('postprocessing/x.dat', 'a')
+        #f2 = open('postprocessing/coulomb.dat', 'a')
+        for i_d in range(0, self.n_d):
+            tmp = np.array(np.loadtxt(name.format(i_d, 0))[0])
+            self.x.append(tmp)  # coord
+            self.coulomb.append(np.loadtxt(name.format(i_d, 0))[1])  # C pot along
+            for i_r in range(1, self.n_r):
+                self.coulomb[i_d][:] += np.loadtxt(name.format(i_d, i_r))[1]  # C pot along
+                print('I read coulomb | dop {} r {}'.format(i_d, i_r))
+            self.coulomb[i_d][:] /= c.elementary_charge  # J --> eV
+            f1.write(np.array2string(self.x[i_d]))
+            #f2.write(self.coulomb[i_d])
+        #np.savez('postprocessing/x.npz', self.x)
+        #with open('postprocessing/xx.txt', 'w') as fh:
+        #    json.dump(self.x, fh)
+        f1.close()
+1
+
+def plot_trend(x, y, color_num = '0'):
     z = np.polyfit(x, y, 1)
     p = np.poly1d(z)
     plt.plot(x, p(x), color='C{}'.format(color_num), linestyle=':')
