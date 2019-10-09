@@ -336,15 +336,15 @@ class CurrTempSimulation:
             # make logarithmic plot with appropiate std error
             if plot_log:
                 if errorbar:
-                    plt.errorbar(1000/temperatures,np.log(current),yerr=std_current[1],label='Dop.fract. {} %'.format(self.DMR*100),color=curve_color)
+                    plt.errorbar(1000/temperatures,np.log(current),yerr=std_current[1],label='Dop.fract. {} %'.format(round(self.DMR*100,2)),color=curve_color)
                 else:
-                    plt.plot(1000/temperatures,np.log(current),'-+',label='Dop.fract. {} %'.format(self.DMR*100),color=curve_color)
+                    plt.plot(1000/temperatures,np.log(current),'-+',label='Dop.fract. {} %'.format(round(self.DMR*100,2)),color=curve_color)
                 ylabel = 'log J (A/m$^2$)'
             else:
                 if errorbar:
-                    plt.errorbar(1000/temperatures,current,yerr=std_current[0],label='Dop.fract. {} %'.format(self.DMR*100),color=curve_color)
+                    plt.errorbar(1000/temperatures,current,yerr=std_current[0],label='Dop.fract. {} %'.format(round(self.DMR*100,2)),color=curve_color)
                 else:
-                    plt.plot(1000/temperatures,current,'-+',label='Dop.fract. {} %'.format(self.DMR*100),color=curve_color)
+                    plt.plot(1000/temperatures,current,'-+',label='Dop.fract. {} %'.format(round(self.DMR*100,2)),color=curve_color)
                 ylabel = 'J (A/m$^2$)'
             if save_to_file:
                 plt.xlabel('1/T (1000/K)')
@@ -392,15 +392,15 @@ class CurrTempSimulation:
             # make logarithmic plot with appropiate std error
             if plot_log:
                 if errorbar:
-                    plt.errorbar(1000/temperatures,np.log(conduct),yerr=std_conduct[1],label='Dop.fract. {} %'.format(self.DMR*100),color=curve_color)
+                    plt.errorbar(1000/temperatures,np.log(conduct),yerr=std_conduct[1],label='Dop.fract. {} %'.format(round(self.DMR*100,2)),color=curve_color)
                 else:
-                    plt.plot(1000/temperatures,np.log(conduct),'-+',label='Dop.fract. {} %'.format(self.DMR*100),color=curve_color)
+                    plt.plot(1000/temperatures,np.log(conduct),'-+',label='Dop.fract. {} %'.format(round(self.DMR*100,2)),color=curve_color)
                 ylabel = 'log $\sigma$ (A/eV/m)'
             else:
                 if errorbar:
-                    plt.errorbar(1000/temperatures,conduct,yerr=std_conduct[0],label='Dop.fract. {} %'.format(self.DMR*100),color=curve_color)
+                    plt.errorbar(1000/temperatures,conduct,yerr=std_conduct[0],label='Dop.fract. {} %'.format(round(self.DMR*100,2)),color=curve_color)
                 else:
-                    plt.plot(1000/temperatures,conduct,'-+',label='Dop.fract. {} %'.format(self.DMR*100),color=curve_color)
+                    plt.plot(1000/temperatures,conduct,'-+',label='Dop.fract. {} %'.format(round(self.DMR*100,2)),color=curve_color)
                 ylabel = '$\sigma$ (A/eV/m)'
             if save_to_file:
                 plt.xlabel('1/T (1000/K)')
@@ -447,7 +447,7 @@ class CurrTempSimulation:
             for i in range(n_col):
                 for j in range(n_row):
                     if not save_to_file:
-                        dmr_label = 'Dop.fract. {} %'.format(self.DMR*100)
+                        dmr_label = 'Dop.fract. {} %'.format(round(self.DMR*100,2))
                     else:
                         dmr_label = None
                     axes[j,i].bar(ind + bar_loc*bar_width/2, conv_quan[i][j], bar_width,color=bar_color,label=dmr_label)
@@ -696,15 +696,15 @@ class CurrFieldSimulation:
             # make logarithmic plot with appropiate std error
             if plot_log:
                 if errorbar:
-                    plt.errorbar(fields,np.log(current),yerr=std_current[1],label='Dop.fract. {} %'.format(self.DMR*100),color=curve_color)
+                    plt.errorbar(fields,np.log(current),yerr=std_current[1],label='Dop.fract. {} %'.format(round(self.DMR*100,2)),color=curve_color)
                 else:
-                    plt.plot(fields,np.log(current),'-+',label='Dop.fract. {} %'.format(self.DMR*100),color=curve_color)
+                    plt.plot(fields,np.log(current),'-+',label='Dop.fract. {} %'.format(round(self.DMR*100,2)),color=curve_color)
                 ylabel = 'log J (A/m$^2$)'
             else:
                 if errorbar:
-                    plt.errorbar(fields,current,yerr=std_current[0],label='Dop.fract. {} %'.format(self.DMR*100),color=curve_color)
+                    plt.errorbar(fields,current,yerr=std_current[0],label='Dop.fract. {} %'.format(round(self.DMR*100,2)),color=curve_color)
                 else:
-                    plt.plot(fields,current,'-+',label='Dop.fract. {} %'.format(self.DMR*100),color=curve_color)
+                    plt.plot(fields,current,'-+',label='Dop.fract. {} %'.format(round(self.DMR*100,2)),color=curve_color)
                 ylabel = 'J (A/m$^2$)'
             if save_to_file:
                 plt.xlabel('E (V/nm)')
@@ -750,7 +750,7 @@ class CurrFieldSimulation:
             for i in range(n_col):
                 for j in range(n_row):
                     if not save_to_file:
-                        dmr_label = 'Dop.fract. {} %'.format(self.DMR*100)
+                        dmr_label = 'Dop.fract. {} %'.format(round(self.DMR*100,2))
                     else:
                         dmr_label = None
                     axes[j,i].bar(ind + bar_loc*bar_width/2, conv_quan[i][j], bar_width,color=bar_color,label=dmr_label)
@@ -953,15 +953,15 @@ class CurrSysSizeSimulation:
             # make logarithmic plot with appropiate std error
             if plot_log:
                 if errorbar:
-                    plt.errorbar(sys_size,np.log(current),yerr=std_current[1],label='Dop.fract. {} %'.format(self.DMR*100),color=curve_color)
+                    plt.errorbar(sys_size,np.log(current),yerr=std_current[1],label='Dop.fract. {} %'.format(round(self.DMR*100,2)),color=curve_color)
                 else:
-                    plt.plot(sys_size,np.log(current),'-+',label='Dop.fract. {} %'.format(self.DMR*100),color=curve_color)
+                    plt.plot(sys_size,np.log(current),'-+',label='Dop.fract. {} %'.format(round(self.DMR*100,2)),color=curve_color)
                 ylabel = 'log J (A/m$^2$)'
             else:
                 if errorbar:
-                    plt.errorbar(sys_size,current,yerr=std_current[0],label='Dop.fract. {} %'.format(self.DMR*100),color=curve_color)
+                    plt.errorbar(sys_size,current,yerr=std_current[0],label='Dop.fract. {} %'.format(round(self.DMR*100,2)),color=curve_color)
                 else:
-                    plt.plot(sys_size,current,'-+',label='Dop.fract. {} %'.format(self.DMR*100),color=curve_color)
+                    plt.plot(sys_size,current,'-+',label='Dop.fract. {} %'.format(round(self.DMR*100,2)),color=curve_color)
                 ylabel = 'J (A/m$^2$)'
             if save_to_file:
                 if not os.path.isdir(self.dest_dir+'/plots'):
@@ -1003,7 +1003,7 @@ class CurrSysSizeSimulation:
         for i in range(n_col):
             for j in range(n_row):
                 if not save_to_file:
-                    dmr_label = 'Dop.fract. {} %'.format(self.DMR*100)
+                    dmr_label = 'Dop.fract. {} %'.format(round(self.DMR*100,2))
                 else:
                     dmr_label = None
                 axes[j,i].bar(ind + bar_loc*bar_width/2, conv_quan[i][j], bar_width,color=bar_color,label=dmr_label)
@@ -1168,7 +1168,7 @@ class CurrTempDMRset:
         if not os.path.exists(self.dest_dir+"act_energy/act_energy_DMR_set.txt"):
             self.get_act_energy()     
         act_energy = (np.loadtxt(self.dest_dir+"act_energy/act_energy_DMR_set.txt",comments='#',unpack=True))[1]
-        dmr        = self.DMR
+        dmr        = (np.loadtxt(self.dest_dir+"act_energy/act_energy_DMR_set.txt",comments='#',unpack=True))[0]
         plt.plot(dmr,act_energy)
         plt.xlabel('DMR (%)')
         plt.xscale("log")
