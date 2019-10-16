@@ -5,6 +5,7 @@ import shutil
 import glob
 import scipy.stats.mstats as stat
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 plt.switch_backend('Agg')
 from sklearn.linear_model import LinearRegression
 from scipy.constants import Boltzmann,e
@@ -1046,6 +1047,7 @@ class CurrTempDMRset:
         self.list_DMR_dirs = sorted(DMR_dis_unsorted, key = lambda x: int(x.split('_')[-1]))
         if self.list_DMR_dirs == []:
             print("SimAnalysisError: No compatible Simulations found.")
+            exit()
         else:
             print(self.list_DMR_dirs)
             for i_dmr,dir in enumerate(self.list_DMR_dirs):
@@ -1066,10 +1068,22 @@ class CurrTempDMRset:
                         self.sys_size.append(dmr_sim.sys_size)
 
         self.act_energy = None 
-        self.colorset   = np.array(['salmon','orangered','darkred',
-                                       'violet','blueviolet','darkblue',
-                                       'royalblue','dodgerblue','mediumseagreen',
-                                       'green'])
+        self.colorset = np.array(['salmon','orangered','darkred','violet','blueviolet','darkblue','royalblue','dodgerblue','mediumseagreen',
+                                  'green','black','navajowhite','blue','brown','burlywood','cadetblue','chartreuse','chocolate', 
+                                  'coral','cornflowerblue','crimson','cyan','darkblue','darkcyan','darkgoldenrod','darkgray', 
+                                  'darkgreen','darkgrey','darkkhaki','darkmagenta','darkolivegreen','darkorange','darkorchid', 
+                                  'darksalmon','darkseagreen','darkslateblue','darkslategray','darkturquoise','darkviolet', 
+                                  'deeppink','deepskyblue','dimgray','firebrick','forestgreen','fuchsia','gainsboro','gold', 
+                                  'goldenrod','greenyellow','grey','hotpink','indianred','indigo','khaki','lawngreen', 
+                                  'lemonchiffon','lightblue','lightcoral','lightgreen','lightpink','lightsalmon', 
+                                  'lightseagreen','lightskyblue','lightslategrey','lightsteelblue','lime','limegreen','magenta', 
+                                  'maroon','mediumaquamarine','mediumblue','mediumorchid','mediumpurple','mediumslateblue', 
+                                  'mediumspringgreen','mediumturquoise','mediumvioletred','midnightblue','mintcream', 
+                                  'moccasin','navy','olive','olivedrab','orange','orchid','palegoldenrod','palegreen','paleturquoise', 
+                                  'palevioletred','peachpuff','peru','pink','plum','powderblue','purple','rebeccapurple', 
+                                  'red','rosybrown','royalblue','saddlebrown','sandybrown','seagreen','sienna','silver', 
+                                  'skyblue','slateblue','slategray','slategrey','snow','springgreen','steelblue','tan','teal', 
+                                  'thistle','tomato','turquoise','wheat','yellow','yellowgreen'])
 
         sim_data = open(self.dest_dir+'/sim_param_DMR_set.txt','w')
         sim_data.write("# n_replicas\n{}\n".format(self.n_r))
