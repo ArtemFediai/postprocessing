@@ -1041,7 +1041,9 @@ class CurrTempDMRset:
         if not os.path.isdir(dest_dir):
             os.makedirs(dest_dir)        
         self.dest_dir   = dest_dir+'/'
-        self.list_DMR_dirs = sorted(glob.glob('DMR_*'))
+        # get sorted list of DMR_* directories
+        DMR_dis_unsorted = glob.glob('DMR_*')
+        self.list_DMR_dirs = sorted(DMR_dis_unsorted, key = lambda x: int(x.split('_')[-1]))
         if self.list_DMR_dirs == []:
             print("SimAnalysisError: No compatible Simulations found.")
         else:
