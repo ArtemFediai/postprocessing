@@ -234,7 +234,7 @@ class CurrTempSimulation:
         '''
         Fit log(J) vs. 1000/T with linear fit: y = a*x + b.
         Use specific temperature interval from tlim_low to tlim_high.
-        The outputfile 'activation_energy.txt' contains the activation energy 
+        The outputfile 'lin_fit_data.txt' contains the activation energy 
         (eV) for this temperature set (within the spec. limits).
         The plot 'current_lin_fit_dmr*.png' contains the log J vs. 1000/T
         with the curve from the linear regression.
@@ -270,9 +270,15 @@ class CurrTempSimulation:
                     self.act_energy = -1000*1000*a*Boltzmann/e
                     print('Activation energy: E_A = {} meV'.format(self.act_energy))
                     if save_to_file:
-                        if not os.path.isdir(self.dest_dir+'data/act_energy'):
-                            os.makedirs(self.dest_dir+'data/act_energy')
-                        with open(self.dest_dir+'data/act_energy/activation_energy.txt','w') as f:
+                        if not os.path.isdir(self.dest_dir+'act_energy'):
+                            os.makedirs(self.dest_dir+'act_energy')
+                        with open(self.dest_dir+'act_energy/lin_fit_data.txt','w') as f:
+                            f.write('# Linear regression information\n')
+                            f.write('# Slope (AK/1000/m^2) \n{}\n'.format(a))
+                            f.write('# Intercept (A/m^2)\n{}\n'.format(b))
+                            f.write('# Coefficient of determination(R^2)\n{}\n'.format(r2))
+                            f.write('# Lower T limit (K)\n{}\n'.format(Tlim_low))
+                            f.write('# Upper T limit (K)\n{}\n'.format(Tlim_high))                            
                             f.write('# Activation Energy (meV)\n{}'.format(self.act_energy))
                         f.close()
 
@@ -286,9 +292,6 @@ class CurrTempSimulation:
                         plt.title('Field = {} eV, disorder = {} eV, $\lambda$ = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.lam,self.DMR,self.sys_size),fontsize=10)
                     else:
                         plt.title('Field = {} eV, disorder = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.DMR,self.sys_size),fontsize=10)
-                    if not os.path.isdir(self.dest_dir+'act_energy'):
-                        os.makedirs(self.dest_dir+'act_energy')                    
-                    plt.savefig(self.dest_dir+'act_energy/current_lin_fit_dmr{}.png'.format(self.DMR))
                     if not os.path.isdir(self.dest_dir+'act_energy'):
                         os.makedirs(self.dest_dir+'act_energy')
                     plt.savefig(self.dest_dir+'act_energy/current_lin_fit_dmr{}.png'.format(self.DMR))
@@ -1216,12 +1219,12 @@ class CurrTempDMRset:
         n_DMR    = len(DMR_dir)  
         act_energy = np.zeros(n_DMR)
         dmr        = self.DMR * 100
+        if not os.path.isdir(self.dest_dir+'act_energy'):
+            os.makedirs(self.dest_dir+'act_energy')       
         for i_dmr, dir in enumerate(DMR_dir):
             dmr_sim = CurrTempSimulation(rates = self.rates, source_dir=dir+'/',dest_dir=self.dest_dir+dir)
             dmr_sim.get_act_energy(Tlim_low=Tlim_low,Tlim_high=Tlim_high)
-            act_energy[i_dmr] = np.loadtxt(self.dest_dir+dir+"/data/act_energy/activation_energy.txt",unpack=True)
-        if not os.path.isdir(self.dest_dir+'act_energy'):
-            os.makedirs(self.dest_dir+'act_energy')       
+            act_energy[i_dmr] = (np.loadtxt(self.dest_dir+dir+"/act_energy/lin_fit_data.txt",unpack=True))[5]
         with open(self.dest_dir+"act_energy/act_energy_DMR_set.txt",'w') as f:
             if self.rates == "Marcus":    
                 f.write('# Field = {} V/nm, disorder = {} eV, $\lambda$ = {} eV\n'.format(self.field,self.dis,self.lam))
