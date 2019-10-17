@@ -1222,16 +1222,25 @@ class CurrTempDMRset:
         if not os.path.isdir(self.dest_dir+'act_energy'):
             os.makedirs(self.dest_dir+'act_energy')       
         for i_dmr, dir in enumerate(DMR_dir):
-            dmr_sim = CurrTempSimulation(rates = self.rates, source_dir=dir+'/',dest_dir=self.dest_dir+dir)
-            dmr_sim.get_act_energy(Tlim_low=Tlim_low,Tlim_high=Tlim_high)
-            act_energy[i_dmr] = (np.loadtxt(self.dest_dir+dir+"/act_energy/lin_fit_data.txt",unpack=True))[5]
+            if os.path.exists(self.dest_dir+dir+"/act_energy/lin_fit_data.txt"):
+                old_Tlim_low = (np.loadtxt(self.dest_dir+dir+"/act_energy/lin_fit_data.txt",unpack=True))[3]
+                old_Tlim_high = (np.loadtxt(self.dest_dir+dir+"/act_energy/lin_fit_data.txt",unpack=True))[4]
+                # check if linear fit was made of the right T range
+                if old_Tlim_low != Tlim_low or old_Tlim_high != Tlim_high:
+                    dmr_sim = CurrTempSimulation(rates = self.rates, source_dir=dir+'/',dest_dir=self.dest_dir+dir)
+                    dmr_sim.get_act_energy(Tlim_low=Tlim_low,Tlim_high=Tlim_high)      
+            else:
+                dmr_sim = CurrTempSimulation(rates = self.rates, source_dir=dir+'/',dest_dir=self.dest_dir+dir)
+                dmr_sim.get_act_energy(Tlim_low=Tlim_low,Tlim_high=Tlim_high)              
+            act_energy[i_dmr] = (np.loadtxt(self.dest_dir+dir+"/act_energy/lin_fit_data.txt",unpack=True))[5]          
         with open(self.dest_dir+"act_energy/act_energy_DMR_set.txt",'w') as f:
             if self.rates == "Marcus":    
-                f.write('# Field = {} V/nm, disorder = {} eV, $\lambda$ = {} eV\n'.format(self.field,self.dis,self.lam))
+                f.write('# Field = {} V/nm, disorder = {} eV, lambda = {} eV\n'.format(self.field,self.dis,self.lam))
             else:    
                 f.write('# Field = {} V/nm, disorder = {} eV\n'.format(self.field,self.dis))
-            f.write('# DMR(%)   Activation energy(meV)\n')
-            for i in range(n_DMR):f.write('{}   {}\n'.format(dmr[i],act_energy[i]))
+            f.write("# T. range for lin. fit of log J(1000/T) : {} - {} K\n".format(Tlim_low,Tlim_high))    
+            f.write('#\n# DMR      Activation energy(meV)\n')
+            for i in range(n_DMR):f.write('{0:<8}   {1:<6}\n'.format(dmr[i],act_energy[i]))
         f.close()
         self.act_energy = act_energy
 
