@@ -38,6 +38,8 @@ def main():
     n_d = int(n_d)
     n_r = int(n_r)
 
+
+
     """
     "2"         COMPUTE AND SAVE: AVERAGE DISTRIBUTIONS
     """
@@ -62,6 +64,8 @@ def main():
         f2 = open('postprocessing/depl.yaml','w+')
         yaml_obj.dump(my_depletion, f2)
         f2.close()
+
+    my_depletion.extract_level(level='IP_x', mol_num='0')
 
 
     """
@@ -237,7 +241,18 @@ class Depletion:
         for i_d in range(0, self.n_d):
             self.coulomb1[i_d] = self.coulomb1[i_d].tolist()
 
+    def extract_level(self, level='IP_x', mol_num='0'):
+
+        for i_d in range(0, self.n_d):
+            for i_r in range(0, self.n_r):
+                name = 'dop_{}/r_{}/experiments/tmp/{}_{}_0.dat'.format(i_d, i_r, level, mol_num)
+                print("I make doping {} replica {}".format(i_d, i_r))
+                print("dir name = {}".format(name))
+                IP_x = np.loadtxt(name)
         pass
+
+
+
 
 def plot_trend(x, y, color_num = '0'):
     z = np.polyfit(x, y, 1)
