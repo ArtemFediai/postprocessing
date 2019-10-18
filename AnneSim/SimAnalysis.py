@@ -65,18 +65,15 @@ class CurrTempSimulation:
         if not os.path.isdir(self.dest_dir+'current_data'):
             os.makedirs(self.dest_dir+'current_data')
         for i_t in range(n_temp):
-            current=[]
             for i_r in range(self.n_r):
                 outputdir=self.source_dir+'temp_{}/r_{}'.format(i_t, i_r)
                 if os.path.exists(outputdir):
                     if 'final current density: ' in open(outputdir+'/output_job_0').read():
                         current_dens=extract.extract_e(outputdir+'/output_job_0', "final current density: ")
                         if current_dens<0:
-                            print("Negative current density encountered at {}: {} A/m^2.\n Not counted into average current density.".format(outputdir,current_dens))
+                            print("Negative current density encountered at {}: {} A/m^2.\n Not counted to current densities.".format(outputdir,current_dens))
                         else:
-                            current.append(current_dens)
-
-            current_data[i_t,0:len(current)] = current
+                            current_data[i_t,i_r] = current_dens
             with open(self.dest_dir+'current_data/curr_temp_{}.txt'.format(i_t), 'w') as f: 
                     f.write("# Raw current data for temp_{} (T={} K)\n".format(i_t,self.temp[i_t]))
                     if self.rates == "Marcus":
@@ -103,15 +100,16 @@ class CurrTempSimulation:
         n_temp      = len(self.temp)
         av_current  = np.zeros(n_temp)
         std_current = np.zeros(n_temp)
-        log_std_current = np.zeros(n_temp)
+        log_std_current = np.zeros(n_temp)        
         for i_t in range(n_temp):
-            if not os.path.exists(self.dest_dir+'current_data'):
+            if not os.path.exists(self.dest_dir+'current_data/temp_{}'.format(i_t)):
                 self.collect_current_data()
-            current = (np.loadtxt(self.dest_dir+'current_data/curr_temp_{}.txt'.format(i_t)))[1]
+            current = (np.loadtxt(self.dest_dir+'current_data/curr_temp_{}.txt'.format(i_t)))[:,1]
             # Calculate average current
-            av_current[i_t]  = stat.gmean(current)
-            std_current[i_t] = np.std(current)/np.sqrt(len(current))
-            log_std_current[i_t] = np.std(np.log(current))/np.sqrt(len(current))
+            if np.count_nonzero(current)>0.0:
+                av_current[i_t]  = stat.gmean(current)
+                std_current[i_t] = np.std(current)/np.sqrt(np.count_nonzero(current))
+                log_std_current[i_t] = np.std(np.log(current))/np.sqrt(np.count_nonzero(current))
 
         self.current = av_current
         self.std_current = [std_current,log_std_current]
@@ -994,7 +992,7 @@ class CurrSysSizeSimulation:
             self.get_av_current()   
         else:
             if np.any(self.current) == None:
-                current_data = np.loadtxt(self.dest_dir+'current.txt',comments='#',unpack=True)
+                current_data = np.loadtxt(self.dest_dir+'av_current.txt',comments='#',unpack=True)
                 self.current, self.std_current = current_data[1], [current_data[2],current_data[3]]                 
             # only plot points with at least one converged job
             if only_conv:
@@ -1168,7 +1166,7 @@ class CurrTempDMRset:
         curr_dmr_colors  = self.colorset
         for i_dmr,dir in enumerate(DMR_dir):
             dmr_sim = CurrTempSimulation(rates = self.rates, source_dir=dir+'/',dest_dir=self.dest_dir+dir)
-            if not os.path.exists(self.dest_dir+dir+"/current.txt"):    
+            if not os.path.exists(self.dest_dir+dir+"/av_current.txt"):    
                 dmr_sim.get_av_current()
             dmr_sim.plot_av_current(Tlim_low,Tlim_high,Jlim_low,Jlim_high, plot_log, errorbar, only_conv, curr_dmr_colors[i_dmr], False)
         if plot_log:
@@ -1250,34 +1248,43 @@ class CurrTempDMRset:
                     dmr_sim.get_act_energy(Tlim_low=Tlim_low,Tlim_high=Tlim_high)      
             else:
                 dmr_sim = CurrTempSimulation(rates = self.rates, source_dir=dir+'/',dest_dir=self.dest_dir+dir)
-                dmr_sim.get_act_energy(Tlim_low=Tlim_low,Tlim_high=Tlim_high)              
+                dmr_sim.get_act_energy(Tlim_low=Tlim_low,Tlim_high=Tlim_high)
+                if not os.path.exists(self.dest_dir+dir+"/act_energy/lin_fit_data.txt"):
+                    print("Activation energy could not be determined for DMR_{}.".format(i_dmr))
+                    continue              
             act_energy[i_dmr] = (np.loadtxt(self.dest_dir+dir+"/act_energy/lin_fit_data.txt",unpack=True))[5]          
-        with open(self.dest_dir+"act_energy/act_energy_DMR_set.txt",'w') as f:
-            if self.rates == "Marcus":    
-                f.write('# Field = {} V/nm, disorder = {} eV, lambda = {} eV\n'.format(self.field,self.dis,self.lam))
-            else:    
-                f.write('# Field = {} V/nm, disorder = {} eV\n'.format(self.field,self.dis))
-            f.write("# T. range for lin. fit of log J(1000/T): {} - {} K\n".format(Tlim_low,Tlim_high))    
-            f.write('#\n# DMR      Activation energy(meV)\n')
-            for i in range(n_DMR):f.write('{0:<8}   {1:<6}\n'.format(dmr[i],act_energy[i]))
-        f.close()
-        self.act_energy = act_energy
+        if np.count_nonzero(act_energy)>0.0:
+            with open(self.dest_dir+"act_energy/act_energy_DMR_set.txt",'w') as f:
+                if self.rates == "Marcus":    
+                    f.write('# Field = {} V/nm, disorder = {} eV, lambda = {} eV\n'.format(self.field,self.dis,self.lam))
+                else:    
+                    f.write('# Field = {} V/nm, disorder = {} eV\n'.format(self.field,self.dis))
+                f.write("# T. range for lin. fit of log J(1000/T): {} - {} K\n".format(Tlim_low,Tlim_high))    
+                f.write('#\n# DMR      Activation energy(meV)\n')
+                for i in range(n_DMR):f.write('{0:<8}   {1:<6}\n'.format(dmr[i],act_energy[i]))
+            f.close()
+            self.act_energy = act_energy
+        else:
+            print("Activation energy could not be determined for this DMRset.")
 
     def plot_act_energy(self):
         if not os.path.exists(self.dest_dir+"act_energy/act_energy_DMR_set.txt"):
-            self.get_act_energy()     
-        act_energy = (np.loadtxt(self.dest_dir+"act_energy/act_energy_DMR_set.txt",comments='#',unpack=True))[1]
-        dmr        = (np.loadtxt(self.dest_dir+"act_energy/act_energy_DMR_set.txt",comments='#',unpack=True))[0]
-        plt.plot(dmr*100,act_energy,marker="+", linestyle="None")
-        plt.xlabel('DMR (%)')
-        plt.xscale("log")
-        plt.ylabel('$E_A$ (meV)')
-        if self.rates == "Marcus":
-            plt.title('Field = {} V/nm, disorder = {} eV, $\lambda$ = {} eV'.format(self.field,self.dis, self.lam))
+            self.get_act_energy()
+        if os.path.exists(self.dest_dir+"act_energy/act_energy_DMR_set.txt"):   
+            act_energy = (np.loadtxt(self.dest_dir+"act_energy/act_energy_DMR_set.txt",comments='#',unpack=True))[1]
+            dmr        = (np.loadtxt(self.dest_dir+"act_energy/act_energy_DMR_set.txt",comments='#',unpack=True))[0]
+            plt.plot(dmr*100,act_energy,marker="+", linestyle="None")
+            plt.xlabel('DMR (%)')
+            plt.xscale("log")
+            plt.ylabel('$E_A$ (meV)')
+            if self.rates == "Marcus":
+                plt.title('Field = {} V/nm, disorder = {} eV, $\lambda$ = {} eV'.format(self.field,self.dis, self.lam))
+            else:
+                plt.title('Field = {} V/nm, disorder = {} eV'.format(self.field,self.dis))
+            plt.savefig(self.dest_dir+'act_energy/act_energy_DMR_set.png')
+            plt.close()        
         else:
-            plt.title('Field = {} V/nm, disorder = {} eV'.format(self.field,self.dis))
-        plt.savefig(self.dest_dir+'act_energy/act_energy_DMR_set.png')
-        plt.close()        
+            print("Activation energy vs. DMR cannot be plotted.")
 
 class CurrFieldDMRset:
     '''
