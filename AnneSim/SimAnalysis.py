@@ -280,6 +280,12 @@ class CurrTempSimulation:
                 current      = self.current[x_conv[0][0]:x_conv[0][-1]+1]
                 std_current  = [self.std_current[0][x_conv[0][0]:x_conv[0][-1]+1],self.std_current[1][x_conv[0][0]:x_conv[0][-1]+1]]
                 temperatures = self.temp[x_conv[0][0]:x_conv[0][-1]+1]  
+                # Only use non zero current for linear regression
+                nonzero_ids = np.nonzero(current)
+                current = current[nonzero_ids]
+                std_current = [std_current[0][nonzero_ids],std_current[1][nonzero_ids]]
+                temperatures = temperatures[nonzero_ids]
+                # define x and y for linear regression
                 x = 1000/temperatures                  
                 y = np.log(current)
                 idx_low  = np.argwhere( temperatures >= Tlim_low )[0,0]
