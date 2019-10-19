@@ -9,8 +9,8 @@ from SimAnalysis import CurrFieldSimulation
 
 simulation = CurrFieldSimulation(source_dir='',dest_dir='analysis/')
 
-simulation.get_current()
-simulation.plot_current(errorbar=True)
+simulation.get_av_current()
+simulation.plot_av_current(errorbar=True)
 
 simulation.get_conv_analysis()
 simulation.plot_conv_analysis()

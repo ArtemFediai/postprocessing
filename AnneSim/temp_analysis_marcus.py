@@ -9,7 +9,7 @@ from SimAnalysis import CurrTempSimulation
 
 
 
-simulation = CurrTempSimulation(source_dir='',dest_dir='analysis/')
+simulation = CurrTempSimulation(rates="Marcus",source_dir='',dest_dir='analysis')
 
 simulation.collect_current_data()
 

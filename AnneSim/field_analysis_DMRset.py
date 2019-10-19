@@ -10,5 +10,5 @@ from SimAnalysis import CurrFieldDMRset
 
 
 dis_sim = CurrFieldDMRset()
-dis_sim.plot_current(errorbar=True)
+dis_sim.plot_av_current(errorbar=True)
 dis_sim.plot_conv_analysis()
