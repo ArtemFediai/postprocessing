@@ -107,8 +107,10 @@ class CurrTempSimulation:
             if not os.path.exists(self.dest_dir+'current_data/temp_{}'.format(i_t)):
                 self.collect_current_data()
             current = (np.loadtxt(self.dest_dir+'current_data/curr_temp_{}.txt'.format(i_t)))[:,1]
+            current = current[np.nonzero(current)]
+            print(current)
             # Calculate average current
-            if np.count_nonzero(current)>0.0:
+            if len(current)>0:
                 av_current[i_t]  = stat.gmean(current)
                 std_current[i_t] = np.std(current)/np.sqrt(np.count_nonzero(current))
                 log_std_current[i_t] = np.std(np.log(current))/np.sqrt(np.count_nonzero(current))
