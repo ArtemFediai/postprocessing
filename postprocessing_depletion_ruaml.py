@@ -65,7 +65,6 @@ def main():
         yaml_obj.dump(my_depletion, f2)
         f2.close()
 
-
     my_depletion.extract_level(level='IP_x', mol_num='0')
     # # dumping must be rationalized
     # yaml_obj = YAML(typ='safe')
@@ -163,7 +162,7 @@ def main():
 
     # Fig. 6: ip vs. x
     plt.figure(figsize=(6, 3))
-    for i_d in range(0, my_depletion.ip_x):
+    for i_d in range(0, my_depletion.n_d):
         plt.plot(np.array(my_depletion.x1[i_d])/my_depletion.thickness[i_d], np.array(my_depletion.ip_x[i_d]), label='doping = {:2.2E}'.format(my_depletion.dop[i_d]))
     plt.ylabel('Coulomb potentialIP mean, eV')
     plt.xlabel('x, nm')
@@ -200,7 +199,8 @@ class Depletion:
         self.dop = np.zeros(n_d).tolist()
         self.x1 = []     # list
         self.coulomb1 = []   # list
-
+        self.ip_x = []  # list
+        self.energies = []
     def compute(self):
         fn = "dop_{}/r_{}/output_job_0"  # ugly
         depl_length, mobile_fraction = np.zeros(self.n_r).tolist(), np.zeros(self.n_r).tolist()
@@ -261,29 +261,29 @@ class Depletion:
             self.coulomb1[i_d] = self.coulomb1[i_d].tolist()
 
     def extract_level(self, level='IP_x', mol_num='0'):
-        self.ip_x = []
-        name = 'dop_0/r_0/experiments/tmp/{}_{}_0.dat'.format(level, mol_num)
-        tmp = np.loadtxt(name)
-        self.NE = np.shape(tmp)[1]  # energy points
-        #self.energies =
-        name = 'dop_0/r_0/experiments/tmp/{}_{}_0.dat'.format(level, mol_num)
-        self.energies = tmp
+        name = 'dop_0/r_0/experiments/tmp/{}_{}_0.dat'.format(level, mol_num)  # ?
+        tmp = np.loadtxt(name)  # ?
+        self.NE = np.shape(tmp)[1]  # energy points ?
+        name = 'dop_0/r_0/experiments/tmp/energy_0.dat'
+        self.energies = np.loadtxt(name).tolist()
         print('NE = ', self.NE)
         for i_d in range(0, self.n_d):
             name = 'dop_{}/r_0/experiments/tmp/{}_{}_0.dat'.format(i_d, level, mol_num)
             ip_x = np.loadtxt(name)
+            print('first time', np.max(ip_x[0]))
+            print('first time', np.shape(ip_x[0]))
             for i_r in range(1, 3):  # self.n_r):
                 name = 'dop_{}/r_{}/experiments/tmp/{}_{}_0.dat'.format(i_d, i_r, level, mol_num)
                 print("I make doping {} replica {}".format(i_d, i_r))
                 print("dir name = {}".format(name))
                 ip_x += np.loadtxt(name)
             ip_x /= self.n_r
-            ip_x_mean = np.mean(ip_x, 1).tolist()
-            #ip_x_mean = np.average(energies)
-            self.ip_x.append(ip_x_mean)
+            ip_x_mean = np.zeros(self.thickness[i_d])
+            for i_x in range(0, self.thickness[i_d]):
+                print(np.max(ip_x[i_x]))
+                ip_x_mean[i_x] = np.average(self.energies, weights=ip_x[i_x, :])
+            self.ip_x.append(ip_x_mean[:].tolist())
         pass
-
-
 
 
 def plot_trend(x, y, color_num = '0'):
