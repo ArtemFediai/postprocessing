@@ -10,6 +10,10 @@ plt.switch_backend('Agg')
 from sklearn.linear_model import LinearRegression
 from scipy.constants import Boltzmann,e
 
+# TODO: use try except statements instead of if else.
+# TODO: use yaml file for sim_param.txt
+# TODO: rewrite the code in a way that false format is recognised
+
 class CurrTempSimulation:
     '''
     Analyse simulations for J(T), i.e. for several Temp. values and one 
@@ -18,8 +22,6 @@ class CurrTempSimulation:
     and a sim_data_file (default= 'sim_param.txt') containing the relevant 
     simulation parameters.
     '''
-    # TODO: use yaml file for sim_param.txt
-    # TODO: rewrite the code in a way that false format is recognised
     def __init__(self,rates="Miller",source_dir='',dest_dir='analysis',sim_data_file='sim_param.txt'):
         sim_data = np.genfromtxt(source_dir+sim_data_file,dtype=float)
         self.rates = rates
@@ -274,6 +276,8 @@ class CurrTempSimulation:
                 self.current, self.std_current = current_data[1], [current_data[2],current_data[3]]           
             if np.all(self.current == 0.0):
                 print("Only zero values for current found, linear regretion on log(J) vs. 1/T not possible.")
+                self.act_energy = 0.0
+                a, b, r2 = 0.0, 0.0, 0.0
             else:
                 # check if CurrTempSimulation already has current etc. attribute, if not check if data is already generated and if yes read it in                      
                 x_conv = np.where(self.current[:,]>0.0)
@@ -288,13 +292,16 @@ class CurrTempSimulation:
                 # define x and y for linear regression
                 x = 1000/temperatures                  
                 y = np.log(current)
-                idx_low  = np.argwhere( temperatures >= Tlim_low )[0,0]
-                idx_high = np.argwhere( temperatures <= Tlim_high )[-1,0]
-                x_fit = (x[idx_low:idx_high+1]).reshape((-1,1))
-                y_fit = y[idx_low:idx_high+1]
-                if x_fit == [] or y_fit == []:
+                print(temperatures)
+                if np.min(temperatures)>Tlim_high or np.max(temperatures)<Tlim_low:
                     print("Data points to analyse don't lie within the specified temperature range, linear regretion on log(J) vs. 1/T not possible.")
+                    self.act_energy = 0.0
+                    a, b, r2 = 0.0, 0.0, 0.0
                 else:
+                    idx_low  = np.argwhere( temperatures >= Tlim_low )[0,0]
+                    idx_high = np.argwhere( temperatures <= Tlim_high )[-1,0]
+                    x_fit = (x[idx_low:idx_high+1]).reshape((-1,1))
+                    y_fit = y[idx_low:idx_high+1]
                     linear_model = LinearRegression().fit(x_fit,y_fit)
                     a, b, r2 = linear_model.coef_[0], linear_model.intercept_, linear_model.score(x_fit,y_fit)
                     print('Linear fit: slope     = ', a)
@@ -302,19 +309,6 @@ class CurrTempSimulation:
                     print('                  R^2 = ',r2)
                     self.act_energy = -1000*1000*a*Boltzmann/e
                     print('Activation energy: E_A = {} meV'.format(self.act_energy))
-                    if save_to_file:
-                        if not os.path.isdir(self.dest_dir+'act_energy'):
-                            os.makedirs(self.dest_dir+'act_energy')
-                        with open(self.dest_dir+'act_energy/lin_fit_data.txt','w') as f:
-                            f.write('# Linear regression information\n')
-                            f.write('# Slope (AK/1000/m^2) \n{}\n'.format(a))
-                            f.write('# Intercept (A/m^2)\n{}\n'.format(b))
-                            f.write('# Coefficient of determination(R^2)\n{}\n'.format(r2))
-                            f.write('# Lower T limit (K)\n{}\n'.format(Tlim_low))
-                            f.write('# Upper T limit (K)\n{}\n'.format(Tlim_high))                            
-                            f.write('# Activation Energy (meV)\n{}'.format(self.act_energy))
-                        f.close()
-
                     # Plot linear regression
                     plt.errorbar(x, y,yerr=std_current[1],linestyle = '',marker='o',color='r', label='Simulated points')
                     plt.plot(x,a*x + b, color='k',label='Linear fit: $y = a*x + b$\n$a = {0:.3}, b =  {1:.3}$\n$R^2 = {2:.3}$'.format(a,b,r2))
@@ -329,7 +323,19 @@ class CurrTempSimulation:
                         os.makedirs(self.dest_dir+'act_energy')
                     plt.savefig(self.dest_dir+'act_energy/current_lin_fit_dmr{}.png'.format(self.DMR))
                     plt.close()
-    
+                if save_to_file:
+                    if not os.path.isdir(self.dest_dir+'act_energy'):
+                        os.makedirs(self.dest_dir+'act_energy')
+                    with open(self.dest_dir+'act_energy/lin_fit_data.txt','w') as f:
+                        f.write('# Linear regression information\n')
+                        f.write('# Slope (AK/1000/m^2) \n{}\n'.format(a))
+                        f.write('# Intercept (A/m^2)\n{}\n'.format(b))
+                        f.write('# Coefficient of determination(R^2)\n{}\n'.format(r2))
+                        f.write('# Lower T limit (K)\n{}\n'.format(Tlim_low))
+                        f.write('# Upper T limit (K)\n{}\n'.format(Tlim_high))                            
+                        f.write('# Activation Energy (meV)\n{}'.format(self.act_energy))
+                    f.close()
+        
 
     def plot_av_current(self,Tlim_low=None,Tlim_high=None,Jlim_low=None,Jlim_high=None,plot_log=True,errorbar=False, only_conv=True,
                      curve_color='b', save_to_file=True
@@ -1267,7 +1273,11 @@ class CurrTempDMRset:
                     f.write('# Field = {} V/nm, disorder = {} eV\n'.format(self.field,self.dis))
                 f.write("# T. range for lin. fit of log J(1000/T): {} - {} K\n".format(Tlim_low,Tlim_high))    
                 f.write('#\n# DMR      Activation energy(meV)\n')
-                for i in range(n_DMR):f.write('{0:<8}   {1:<6}\n'.format(dmr[i],act_energy[i]))
+                for i in range(n_DMR):
+                    if act_energy[i]==0.0:
+                        continue
+                    else:
+                        f.write('{0:<8}   {1:<6}\n'.format(dmr[i],act_energy[i]))
             f.close()
             self.act_energy = act_energy
         else:
