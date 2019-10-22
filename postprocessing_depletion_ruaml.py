@@ -160,16 +160,25 @@ def main():
     plt.savefig("Coulomn_vs_x.png")
     plt.close()
 
-    # Fig. 6: ip vs. x
+    # Fig. 7: ip_mean vs. x
     plt.figure(figsize=(6, 3))
     for i_d in range(0, my_depletion.n_d):
-        plt.plot(np.array(my_depletion.x1[i_d])/my_depletion.thickness[i_d], np.array(my_depletion.ip_x[i_d]), label='doping = {:2.2E}'.format(my_depletion.dop[i_d]))
-    plt.ylabel('Coulomb potentialIP mean, eV')
+        plt.plot(np.array(my_depletion.x1[i_d])/my_depletion.thickness[i_d], np.array(my_depletion.ip_x_mean[i_d]), label='doping = {:2.2E}'.format(my_depletion.dop[i_d]))
+    plt.ylabel('IP mean, eV')
     plt.xlabel('x, nm')
     plt.legend()
     plt.savefig("IP_mean_vs_x.png")
     plt.close()
 
+    # Fig. 8: ip vs. x
+    plt.figure(figsize=(6, 3))
+    for i_d in range(0, my_depletion.n_d):
+        plt.plot(np.array(my_depletion.x1[i_d])/my_depletion.thickness[i_d], np.array(my_depletion.ip_x_max[i_d]), label='doping = {:2.2E}'.format(my_depletion.dop[i_d]))
+    plt.ylabel('IP max, eV')
+    plt.xlabel('x, nm')
+    plt.legend()
+    plt.savefig("IP_max_vs_x.png")
+    plt.close()
 
 
     """
@@ -199,7 +208,8 @@ class Depletion:
         self.dop = np.zeros(n_d).tolist()
         self.x1 = []     # list
         self.coulomb1 = []   # list
-        self.ip_x = []  # list
+        self.ip_x_mean = []  # list
+        self.ip_x_max = []
         self.energies = []
     def compute(self):
         fn = "dop_{}/r_{}/output_job_0"  # ugly
@@ -256,7 +266,7 @@ class Depletion:
             for i_r in range(1, self.n_r):
                 self.coulomb1[i_d][:] += np.loadtxt(name.format(i_d, i_r))[1]  # C pot along
                 print('I read coulomb1 | dop {} r {}'.format(i_d, i_r))
-            self.coulomb1[i_d][:] /= c.elementary_charge/self.n_r  # J --> eV
+            self.coulomb1[i_d][:] /= c.elementary_charge*self.n_r  # J --> eV
         for i_d in range(0, self.n_d):
             self.coulomb1[i_d] = self.coulomb1[i_d].tolist()
 
@@ -272,17 +282,19 @@ class Depletion:
             ip_x = np.loadtxt(name)
             print('first time', np.max(ip_x[0]))
             print('first time', np.shape(ip_x[0]))
-            for i_r in range(1, 3):  # self.n_r):
+            for i_r in range(1, self.n_r):  # self.n_r):
                 name = 'dop_{}/r_{}/experiments/tmp/{}_{}_0.dat'.format(i_d, i_r, level, mol_num)
                 print("I make doping {} replica {}".format(i_d, i_r))
                 print("dir name = {}".format(name))
                 ip_x += np.loadtxt(name)
             ip_x /= self.n_r
             ip_x_mean = np.zeros(self.thickness[i_d])
+            ip_x_max = np.zeros(self.thickness[i_d])
             for i_x in range(0, self.thickness[i_d]):
-                print(np.max(ip_x[i_x]))
                 ip_x_mean[i_x] = np.average(self.energies, weights=ip_x[i_x, :])
-            self.ip_x.append(ip_x_mean[:].tolist())
+                ip_x_max[i_x] = self.energies[np.argmax(ip_x[i_x, :])]
+            self.ip_x_mean.append(ip_x_mean[:].tolist())
+            self.ip_x_max.append(ip_x_max[:].tolist())
         pass
 
 
