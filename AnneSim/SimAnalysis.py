@@ -104,7 +104,7 @@ class CurrTempSimulation:
         std_current = np.zeros(n_temp)
         log_std_current = np.zeros(n_temp)        
         for i_t in range(n_temp):
-            if not os.path.exists(self.dest_dir+'current_data/temp_{}'.format(i_t)):
+            if not os.path.exists(self.dest_dir+'current_data/curr_temp_{}.txt'.format(i_t)):
                 self.collect_current_data()
             current = (np.loadtxt(self.dest_dir+'current_data/curr_temp_{}.txt'.format(i_t)))[:,1]
             current = current[np.nonzero(current)]
