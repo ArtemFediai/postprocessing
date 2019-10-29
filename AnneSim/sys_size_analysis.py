@@ -11,7 +11,7 @@ from SimAnalysis import CurrSysSizeSimulation
 simulation = CurrSysSizeSimulation()
 
 simulation.get_av_current()
-simulation.plot_av_current(errorbar=True,y_logmin=-15,y_logmax=15)
+simulation.plot_av_current(errorbar=True,y_logmin=8.5,y_logmax=11.5)
 
 simulation.get_conv_analysis()
 simulation.plot_conv_analysis()
