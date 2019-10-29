@@ -108,7 +108,6 @@ class CurrTempSimulation:
                 self.collect_current_data()
             current = (np.loadtxt(self.dest_dir+'current_data/curr_temp_{}.txt'.format(i_t)))[:,1]
             current = current[np.nonzero(current)]
-            print(current)
             # Calculate average current
             if len(current)>0:
                 av_current[i_t]  = stat.gmean(current)
@@ -543,36 +542,7 @@ class CurrTempSimulation:
                 else:
                     fig.suptitle('Field = {} V/nm, disorder = {} eV.'.format(self.field,self.dis),size=14)
 
-    def get_nonconv_joblist(self, new_joblist_name = 'joblist_non_conv'):
-        '''
-        If simulation has not converged completely write a new joblist 
-        with all temperatures that have not converged in order to restart 
-        the simulation with this new joblist file.
-        '''
-        n_cpus = 1 # hardcoded
-        n_temp = len(self.temp)
-        n_replicas = self.n_r
 
-        # find non converged and non run jobs and save to new joblist  
-        jobfile = open(new_joblist_name+"_run_"+str(n_run), 'w')
-
-        # count_nonconv_jobs = 0
-        for i_t in reversed(range(n_temp)):
-            for i_r in range(n_replicas):
-                outputdir='{}temp_{}/r_{}'.format(self.source_dir,i_t, i_r)
-                if os.path.exists(outputdir):
-                    if not 'final current density:' in open(outputdir+'/output_job_0').read():
-                        for i in range(n_replicas):
-                            jobfile.write("{} JV.run_kmc {} {}\n".format(n_cpus, i_t, i))
-                        break
-                else:
-                    for i in range(n_replicas):
-                        jobfile.write("{} JV.run_kmc {} {}\n".format(n_cpus, i_t, i))
-                    break
-        print("Created new joblist: {}\n".format(new_joblist_name))
-
-        
-   
 
 class CurrFieldSimulation:
     '''
@@ -1303,6 +1273,56 @@ class CurrTempDMRset:
             plt.close()        
         else:
             print("Activation energy vs. DMR cannot be plotted.")
+
+    def get_nonconv_joblist(self):
+        '''
+        If simulation has not converged completely write a new joblist 
+        with all temperatures that have not converged in order to restart 
+        the simulation with this new joblist file.
+        '''
+        DMR_dir = self.list_DMR_dirs 
+        n_temp  = len(self.temp) 
+        if not os.path.isdir(self.dest_dir+'conv_analysis.txt'):
+            self.plot_conv_analysis()      
+        for i_dmr, dir in enumerate(DMR_dir):
+            converged_jobs = np.loadtxt(self.dest_dir+dir+"/conv_analysis.txt",unpack=True)[3]
+            nonconv_jobs = []
+            for i_t in range(n_temp):
+                if converged_jobs[i_t] != 50:
+                    n_cpus = int(np.loadtxt(self.source_dir+"joblist_DMR_"+str(i_dmr),usecols=0)[0])
+                    run_kmc_name = np.loadtxt(self.source_dir+"joblist_DMR_"+str(i_dmr),usecols=1,dtype=str)[0]
+                    for i_r in range(self.n_r):
+                        nonconv_jobs.append("{} {} {} {} {}\n".format(n_cpus, run_kmc_name, i_dmr, i_t, i_r))
+                    print("DMR_{}/temp_{} not fully converged. Moving files to non_conv".format(i_dmr,i_t)) 
+                    if not os.path.exists(self.source_dir+"non_conv"):
+                        os.makedirs(self.source_dir+"non_conv")   
+                    try:
+                        shutil.move(self.source_dir+"DMR_{}/temp_{}".format(i_dmr,i_t),self.source_dir+"non_conv/DMR_{}/temp_{}".format(i_dmr,i_t))
+                    except:
+                        print("Already moved")
+                    
+            if len(nonconv_jobs) != 0:
+                print("new_joblist_DMR_{} and new are being generated.".format(i_dmr))
+
+                new_joblist = open(self.source_dir+"new_joblist_DMR_"+str(i_dmr),'w')
+                for line in nonconv_jobs: new_joblist.write(line)
+                new_joblist.close()
+
+                old_sh_name = glob.glob(self.source_dir+"submit_EA_*DMR_{}.sh".format(i_dmr))[0]
+                old_sh_file = open(old_sh_name,'r')
+                sh_data = old_sh_file.readlines()
+                old_sh_file.close()
+
+                sh_data[-1] = sh_data[-1].replace("joblist","new_joblist")
+                new_sh_name = old_sh_name.replace("submit","new_submit")
+                new_sh_file = open(new_sh_name,"w")
+                for line in sh_data:
+                    new_sh_file.write(line)
+                new_sh_file.close()
+
+            
+
+
 
 class CurrFieldDMRset:
     '''
