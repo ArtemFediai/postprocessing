@@ -6,10 +6,17 @@ from SimAnalysis import CurrTempSimulation
 # the format temp_*/r_*. Generates data and plots for each J(T) simulation
 # seperately. Shall be used if one wants to analyse only one J(T) simulation
 # (for only one DMR).
+# TODO: add parser for Marcus/Miller/E_coul
 
+# # Miller
+# simulation = CurrTempSimulation(source_dir='',dest_dir='analysis/')
 
+# # Marcus
+# simulation = CurrTempSimulation(rates="Marcus",source_dir='',dest_dir='analysis')
 
-simulation = CurrTempSimulation(source_dir='',dest_dir='analysis/')
+# Marcus + info on Ecoul
+simulation = CurrTempSimulation(rates="Marcus",analyse_Ecoul= True, source_dir='',dest_dir='analysis')
+
 
 simulation.collect_current_data()
 

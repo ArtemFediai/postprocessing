@@ -7,9 +7,18 @@ from SimAnalysis import CurrTempDMRset
 # but only generates plots for the whole DMR set (all J(E) simulation 
 # with different DMRs). Should be used if one is interested in the influence 
 # of different DMRs on the J(T) curves and E_A vs. DMR.
+# TODO: add parser for Marcus/Miller/E_coul
+
+# # Miller
+# dis_sim = CurrTempDMRset()
+
+# # Marcus
+# dis_sim = CurrTempDMRset(rates="Marcus")
+
+# Marcus + info on Ecoul
+dis_sim = CurrTempDMRset(rates="Marcus",analyse_Ecoul=True)
 
 
-dis_sim = CurrTempDMRset()
 dis_sim.plot_conv_analysis()
 dis_sim.plot_av_current(Tlim_low=250, Tlim_high=400,errorbar=True)
 
