@@ -13,7 +13,10 @@ for ll in list_l_dirs[2:]:
         dmr_dir_unsorted = glob.glob('DMR_*')
         list_DMR_dirs = sorted(dmr_dir_unsorted, key = lambda x: int(x.split('_')[-1]))
         lam        = (np.loadtxt(ll+'/analysis/sim_param_DMR_set.txt')[3])
+        if ll == "l_4":
+            field, disorder = (np.loadtxt(ll+'/analysis/sim_param_DMR_set.txt')[1:3])
         plt.plot(dmr*100,act_energy,marker="+", linestyle="None",label="$\lambda$ = {} eV".format(lam))
+plt.title('Rates = {}, Field = {} eV, disorder = {} eV.'.format("Marcus", field,disorder))
 plt.xlabel('DMR (%)')
 plt.xscale("log")
 plt.ylabel('$E_A$ (meV)')
