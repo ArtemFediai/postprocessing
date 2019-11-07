@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 from SimAnalysis import CurrTempSimulation
 
 # This is an example on how to use the classe CurrTempSimulation from SimAnalysis.
@@ -8,14 +9,23 @@ from SimAnalysis import CurrTempSimulation
 # (for only one DMR).
 # TODO: add parser for Marcus/Miller/E_coul
 
-# # Miller
-# simulation = CurrTempSimulation(source_dir='',dest_dir='analysis/')
 
-# # Marcus
-# simulation = CurrTempSimulation(rates="Marcus",source_dir='',dest_dir='analysis')
+parser = argparse.ArgumentParser()
 
-# Marcus + info on Ecoul
-simulation = CurrTempSimulation(rates="Marcus",analyse_Ecoul= True, source_dir='',dest_dir='analysis')
+parser.add_argument('-marcus', action='store_true', help='Specify if simulation was done with Marcus rates.')
+parser.add_argument('-Ecoul', action='store_true')
+
+args = parser.parse_args()
+
+if args.Ecoul:
+    rates = "Marcus"  # currently implemented that way in SimAnalysis
+else:
+    if args.marcus:
+        rates = "Marcus" 
+    else:
+        rates = "Miller"
+
+simulation = CurrTempSimulation(rates=rates,analyse_Ecoul=args.Ecoul, source_dir='',dest_dir='analysis')
 
 
 simulation.collect_current_data()
