@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 from SimAnalysis import CurrTempDMRset
 
 # This is an example on how to use the class CurrTempDMRset from SimAnalysis.
@@ -7,17 +8,24 @@ from SimAnalysis import CurrTempDMRset
 # but only generates plots for the whole DMR set (all J(E) simulation 
 # with different DMRs). Should be used if one is interested in the influence 
 # of different DMRs on the J(T) curves and E_A vs. DMR.
-# TODO: add parser for Marcus/Miller/E_coul
 
-# # Miller
-# dis_sim = CurrTempDMRset()
+parser = argparse.ArgumentParser()
 
-# # Marcus
-# dis_sim = CurrTempDMRset(rates="Marcus")
+parser.add_argument('-marcus', action='store_true', help='Specify if simulation was done with Marcus rates.')
+parser.add_argument('-Ecoul', action='store_true')
 
-# Marcus + info on Ecoul
-dis_sim = CurrTempDMRset(rates="Marcus",analyse_Ecoul=True)
+args = parser.parse_args()
 
+if args.Ecoul:
+    rates = "Marcus"  # currently implemented that way in SimAnalysis
+else:
+    if args.marcus:
+        rates = "Marcus" 
+    else:
+        rates = "Miller"
+
+
+dis_sim = CurrTempDMRset(rates=rates, analyse_Ecoul=args.Ecoul)
 
 dis_sim.plot_conv_analysis()
 dis_sim.plot_av_current(Tlim_low=250, Tlim_high=400,errorbar=True)
