@@ -861,15 +861,27 @@ class CurrSysSizeSimulation:
     activation energy.
     '''
     # TODO: if needed add "Marcus" rates mode with lambda
-    def __init__(self,source_dir='',dest_dir='analysis',sim_data_file='sim_param.txt'):
+    def __init__(self,rates="Miller",source_dir='',dest_dir='analysis',sim_data_file='sim_param.txt'):
         sim_data = np.genfromtxt(sim_data_file,dtype=float)
 
+        self.rates    = rates
         self.n_r      = int(sim_data[0])
         self.field    = sim_data[1]
         self.temp     = sim_data[2]
         self.dis      = sim_data[3]
-        self.DMR      = sim_data[4]
-        self.sys_size = sim_data[5:]
+        if self.rates=="Marcus":
+            self.lam = sim_data[4]
+            self.DMR = sim_data[5]
+            sys_size = sim_data[6:] 
+        else:
+            self.DMR      = sim_data[4]
+            sys_size = sim_data[5:]   
+        # count only sys_sizes not n_cpus
+        self.sys_size = []
+        for i in sys_size:
+            if i > 10.0:
+                    (self.sys_size).append(i)
+        print(self.sys_size)
 
         self.source_dir = source_dir
         self.dest_dir   = dest_dir+"/"
@@ -907,7 +919,10 @@ class CurrSysSizeSimulation:
                             current_data[i_s,i_r] = current_dens
             with open(self.dest_dir+'current_data/curr_sys_{}.txt'.format(i_s), 'w') as f: 
                     f.write("# Raw current data for sys_{} (T={} K)\n".format(i_s,self.sys_size[i_s]))
-                    f.write('# Temp. = {} K, Field = {} eV, disorder = {} eV, DMR = {}\n'.format(self.temp, self.field,self.dis,self.DMR))
+                    if self.rates == "Marcus":
+                        f.write('# Temp. = {} K, Field = {} eV, disorder = {} eV, lambda = {} eV, DMR = {}\n'.format(self.temp, self.field,self.dis,self.lam, self.DMR))
+                    else:
+                        f.write('# Temp. = {} K, Field = {} eV, disorder = {} eV, DMR = {}\n'.format(self.temp, self.field,self.dis,self.DMR))
                     f.write('#\n# Replica Nr.     Current density(A/m$^2$)\n')
                     for i_r in range(self.n_r):
                         f.write('  {0:<13}   {1:<1}\n'.format(i_r, current_data[i_s,i_r]))
@@ -946,7 +961,10 @@ class CurrSysSizeSimulation:
         # Write current, temperature, DMR to txt file
         with open(self.dest_dir+'av_current.txt', 'w') as f:
             f.write("# Average current and related values.\n")
-            f.write('# Temp. = {} K, Field = {} eV, disorder = {} eV, DMR = {}\n'.format(self.temp,self.field,self.dis,self.DMR))
+            if self.rates == "Marcus":
+                f.write('# Temp. = {} K, Field = {} eV, disorder = {} eV, lambda = {} eV, DMR = {}\n'.format(self.temp, self.field,self.dis,self.lam, self.DMR))
+            else:
+                f.write('# Temp. = {} K, Field = {} eV, disorder = {} eV, DMR = {}\n'.format(self.temp,self.field,self.dis,self.DMR))
             f.write('# System size(nm)   Av. Current density(A/m$^2$)   Normal std. error(A/m$^2$)   Log. std. error(A/m$^2$)\n')
             for i_s in range(n_sys):
                 f.write('  {0:<14}   {1:<28}   {2:<26}   {3:<1}\n'.format(self.sys_size[i_s], self.current[i_s], self.std_current[0][i_s], self.std_current[1][i_s]))
@@ -1021,10 +1039,18 @@ class CurrSysSizeSimulation:
                                                                                                  )))
         with open(self.dest_dir+'conv_analysis.txt', 'w') as f:
             f.write('# Total number of jobs: {}\n'.format(n_sys*self.n_r))
-            f.write('# Temp.: {} K, Field: {} eV,  Disorder: {} eV, Dop.fract.: {} %\n'.format(self.temp,
+            if self.rates == "Marcus":
+                f.write('# Temp.: {} K, Field: {} eV,  Disorder: {} eV, Lambda = {} eV, Dop.fract.: {} %\n'.format(self.temp,
+                                                                                                                   self.field,
+                                                                                                                   self.dis,
+                                                                                                                   self.lam, 
+                                                                                                                   100.0*self.DMR))
+            else:
+                f.write('# Temp.: {} K, Field: {} eV,  Disorder: {} eV, Dop.fract.: {} %\n'.format(self.temp,
                                                                                                self.field,
                                                                                                self.dis, 
                                                                                                100.0*self.DMR))
+
             f.write('# Number of replicas for each settings configuration: {} \n'.format(self.n_r))             
             f.write('# Overview:   {} % of jobs started to run ({}).\n'.format(100.0*run/n_sys/self.n_r,run))
             if run>0:
@@ -1076,7 +1102,10 @@ class CurrSysSizeSimulation:
                 if plot_log:
                     plt.ylim(y_logmin,y_logmax)
                 plt.ylabel(ylabel)
-                plt.title('Temp. = {} K, Field = {} eV, disorder = {} eV, DMR = {}.'.format(self.temp,self.field,self.dis,self.DMR,self.sys_size),fontsize=10)
+                if self.rates == "Marcus":
+                    plt.title('Temp. = {} K, Field = {} eV, disorder = {} eV, $\lambda$ = {} eV, DMR = {}.'.format(self.temp,self.field,self.dis,self.lam,self.DMR),fontsize=10)
+                else:
+                    plt.title('Temp. = {} K, Field = {} eV, disorder = {} eV, DMR = {}.'.format(self.temp,self.field,self.dis,self.DMR),fontsize=10)
                 plt.savefig(self.dest_dir+'av_current.png')
                 plt.close()
 
@@ -1123,7 +1152,10 @@ class CurrSysSizeSimulation:
                 if not save_to_file:
                     axes[j,i].legend(loc='lower left')
         if save_to_file:
-            fig.suptitle('Temp. = {} K, Field={} V/nm,  disorder = {} eV, DMR = {}.'.format(self.temp,self.field,self.dis,self.DMR),size=10)
+            if self.rates == "Marcus":
+                fig.suptitle('Temp. = {} K, Field={} V/nm,  disorder = {} eV, $\lambda$ = {} eV, DMR = {}.'.format(self.temp,self.field,self.dis,self.lam,self.DMR),size=10)
+            else:
+                fig.suptitle('Temp. = {} K, Field={} V/nm,  disorder = {} eV, DMR = {}.'.format(self.temp,self.field,self.dis,self.DMR),size=10)
             plt.savefig(self.dest_dir+'conv_analysis.png')
             plt.close()
         else:
