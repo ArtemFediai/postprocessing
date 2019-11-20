@@ -77,7 +77,7 @@ class CurrTempSimulation:
         for i_t in range(n_temp):
             for i_r in range(self.n_r):
                 outputdir=self.source_dir+'temp_{}/r_{}'.format(i_t, i_r)
-                if os.path.exists(outputdir):
+                if os.path.exists(outputdir+'/output_job_0'):
                     if 'final current density: ' in open(outputdir+'/output_job_0').read():
                         current_dens=extract.extract_e(outputdir+'/output_job_0', "final current density: ")
                         if current_dens<0:
@@ -213,7 +213,7 @@ class CurrTempSimulation:
                 for i_r in range(self.n_r):
                     job=str(i_r)
                     outputdir=self.source_dir+'temp_{}/r_{}'.format(i_t, i_r)
-                    if os.path.exists(outputdir):
+                    if os.path.exists(outputdir+'/output_job_0'):
                         run_jobs.append(job)
                         run+=1
                         if 'final current density:' in open(outputdir+'/output_job_0').read():
@@ -628,7 +628,7 @@ class CurrFieldSimulation:
             current=[]
             for i_r in range(self.n_r):
                 outputdir=self.source_dir+'f_{}/r_{}'.format(i_f, i_r)
-                if os.path.exists(outputdir):
+                if os.path.exists(outputdir+'/output_job_0'):
                     if 'final current density: ' in open(outputdir+'/output_job_0').read():
                         current_dens=extract.extract_e(outputdir+'/output_job_0', "final current density: ")
                         if current_dens<0:
@@ -686,7 +686,7 @@ class CurrFieldSimulation:
                 for i_r in range(self.n_r):
                     job=str(i_r)
                     outputdir=self.source_dir+'f_{}/r_{}'.format(i_f, i_r)
-                    if os.path.exists(outputdir):
+                    if os.path.exists(outputdir+'/output_job_0'):
                         run_jobs.append(job)
                         run+=1
                         if 'final current density:' in open(outputdir+'/output_job_0').read():
@@ -910,7 +910,7 @@ class CurrSysSizeSimulation:
         for i_s in range(n_sys):
             for i_r in range(self.n_r):
                 outputdir=self.source_dir+'sys_{}/r_{}'.format(i_s, i_r)
-                if os.path.exists(outputdir):
+                if os.path.exists(outputdir+'/output_job_0'):
                     if 'final current density: ' in open(outputdir+'/output_job_0').read():
                         current_dens=extract.extract_e(outputdir+'/output_job_0', "final current density: ")
                         if current_dens<0:
@@ -994,7 +994,7 @@ class CurrSysSizeSimulation:
                 for i_r in range(self.n_r):
                     job=str(i_r)
                     outputdir=self.source_dir+'sys_{}/r_{}'.format(i_s, i_r)
-                    if os.path.exists(outputdir):
+                    if os.path.exists(outputdir+'/output_job_0'):
                         run_jobs.append(job)
                         run+=1
                         if 'final current density:' in open(outputdir+'/output_job_0').read():
