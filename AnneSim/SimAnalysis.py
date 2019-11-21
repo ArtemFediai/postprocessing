@@ -287,73 +287,72 @@ class CurrTempSimulation:
         '''
         if not os.path.exists(self.dest_dir+'av_current.txt'):
             self.get_av_current() 
+        if np.any(self.current) == None:
+            current_data = np.loadtxt(self.dest_dir+'av_current.txt',comments='#',unpack=True)
+            self.current, self.std_current = current_data[1], [current_data[2],current_data[3]]           
+        if np.all(self.current == 0.0):
+            print("Only zero values for current found, linear regretion on log(J) vs. 1/T not possible.")
+            self.act_energy = 0.0
+            a, b, r2 = 0.0, 0.0, 0.0
         else:
-            if np.any(self.current) == None:
-                current_data = np.loadtxt(self.dest_dir+'av_current.txt',comments='#',unpack=True)
-                self.current, self.std_current = current_data[1], [current_data[2],current_data[3]]           
-            if np.all(self.current == 0.0):
-                print("Only zero values for current found, linear regretion on log(J) vs. 1/T not possible.")
+            # check if CurrTempSimulation already has current etc. attribute, if not check if data is already generated and if yes read it in                      
+            x_conv = np.where(self.current[:,]>0.0)
+            current      = self.current[x_conv[0][0]:x_conv[0][-1]+1]
+            std_current  = [self.std_current[0][x_conv[0][0]:x_conv[0][-1]+1],self.std_current[1][x_conv[0][0]:x_conv[0][-1]+1]]
+            temperatures = self.temp[x_conv[0][0]:x_conv[0][-1]+1]  
+            # Only use non zero current for linear regression
+            nonzero_ids = np.nonzero(current)
+            current = current[nonzero_ids]
+            std_current = [std_current[0][nonzero_ids],std_current[1][nonzero_ids]]
+            temperatures = temperatures[nonzero_ids]
+            # define x and y for linear regression
+            x = 1000/temperatures                  
+            y = np.log(current)
+            if np.min(temperatures)>Tlim_high or np.max(temperatures)<Tlim_low:
+                print("Data points to analyse don't lie within the specified temperature range, linear regretion on log(J) vs. 1/T not possible.")
                 self.act_energy = 0.0
                 a, b, r2 = 0.0, 0.0, 0.0
             else:
-                # check if CurrTempSimulation already has current etc. attribute, if not check if data is already generated and if yes read it in                      
-                x_conv = np.where(self.current[:,]>0.0)
-                current      = self.current[x_conv[0][0]:x_conv[0][-1]+1]
-                std_current  = [self.std_current[0][x_conv[0][0]:x_conv[0][-1]+1],self.std_current[1][x_conv[0][0]:x_conv[0][-1]+1]]
-                temperatures = self.temp[x_conv[0][0]:x_conv[0][-1]+1]  
-                # Only use non zero current for linear regression
-                nonzero_ids = np.nonzero(current)
-                current = current[nonzero_ids]
-                std_current = [std_current[0][nonzero_ids],std_current[1][nonzero_ids]]
-                temperatures = temperatures[nonzero_ids]
-                # define x and y for linear regression
-                x = 1000/temperatures                  
-                y = np.log(current)
-                if np.min(temperatures)>Tlim_high or np.max(temperatures)<Tlim_low:
-                    print("Data points to analyse don't lie within the specified temperature range, linear regretion on log(J) vs. 1/T not possible.")
-                    self.act_energy = 0.0
-                    a, b, r2 = 0.0, 0.0, 0.0
-                else:
-                    idx_low  = np.argwhere( temperatures >= Tlim_low )[0,0]
-                    idx_high = np.argwhere( temperatures <= Tlim_high )[-1,0]
-                    x_fit = (x[idx_low:idx_high+1]).reshape((-1,1))
-                    y_fit = y[idx_low:idx_high+1]
-                    linear_model = LinearRegression().fit(x_fit,y_fit)
-                    a, b, r2 = linear_model.coef_[0], linear_model.intercept_, linear_model.score(x_fit,y_fit)
-                    print('Linear fit: slope     = ', a)
-                    print('            intercept = ',b)
-                    print('                  R^2 = ',r2)
-                    self.act_energy = -1000*1000*a*Boltzmann/e
-                    print('Activation energy: E_A = {} meV'.format(self.act_energy))
-                    # Plot linear regression
-                    plt.errorbar(x, y,yerr=std_current[1],linestyle = '',marker='o',color='r', label='Simulated points')
-                    plt.plot(x,a*x + b, color='k',label='Linear fit: $y = a*x + b$\n$a = {0:.3}, b =  {1:.3}$\n$R^2 = {2:.3}$'.format(a,b,r2))
-                    plt.legend()
-                    plt.xlabel('1/T (1000/K)')
-                    plt.ylabel('log J (A/m$^2$)')
-                    if self.rates == "Marcus":
-                        if self.analyse_Ecoul:
-                            plt.title('Field = {} eV, disorder = {} eV, $\lambda$ = {} eV, Ecoul= {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.lam,self.Ecoul, self.DMR,self.sys_size),fontsize=10)
-                        else:
-                            plt.title('Field = {} eV, disorder = {} eV, $\lambda$ = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.lam,self.DMR,self.sys_size),fontsize=10)
+                idx_low  = np.argwhere( temperatures >= Tlim_low )[0,0]
+                idx_high = np.argwhere( temperatures <= Tlim_high )[-1,0]
+                x_fit = (x[idx_low:idx_high+1]).reshape((-1,1))
+                y_fit = y[idx_low:idx_high+1]
+                linear_model = LinearRegression().fit(x_fit,y_fit)
+                a, b, r2 = linear_model.coef_[0], linear_model.intercept_, linear_model.score(x_fit,y_fit)
+                print('Linear fit: slope     = ', a)
+                print('            intercept = ',b)
+                print('                  R^2 = ',r2)
+                self.act_energy = -1000*1000*a*Boltzmann/e
+                print('Activation energy: E_A = {} meV'.format(self.act_energy))
+                # Plot linear regression
+                plt.errorbar(x, y,yerr=std_current[1],linestyle = '',marker='o',color='r', label='Simulated points')
+                plt.plot(x,a*x + b, color='k',label='Linear fit: $y = a*x + b$\n$a = {0:.3}, b =  {1:.3}$\n$R^2 = {2:.3}$'.format(a,b,r2))
+                plt.legend()
+                plt.xlabel('1/T (1000/K)')
+                plt.ylabel('log J (A/m$^2$)')
+                if self.rates == "Marcus":
+                    if self.analyse_Ecoul:
+                        plt.title('Field = {} eV, disorder = {} eV, $\lambda$ = {} eV, Ecoul= {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.lam,self.Ecoul, self.DMR,self.sys_size),fontsize=10)
                     else:
-                        plt.title('Field = {} eV, disorder = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.DMR,self.sys_size),fontsize=10)
-                    if not os.path.isdir(self.dest_dir+'act_energy'):
-                        os.makedirs(self.dest_dir+'act_energy')
-                    plt.savefig(self.dest_dir+'act_energy/current_lin_fit_dmr{}.png'.format(self.DMR))
-                    plt.close()
-                if save_to_file:
-                    if not os.path.isdir(self.dest_dir+'act_energy'):
-                        os.makedirs(self.dest_dir+'act_energy')
-                    with open(self.dest_dir+'act_energy/lin_fit_data.txt','w') as f:
-                        f.write('# Linear regression information\n')
-                        f.write('# Slope (AK/1000/m^2) \n{}\n'.format(a))
-                        f.write('# Intercept (A/m^2)\n{}\n'.format(b))
-                        f.write('# Coefficient of determination(R^2)\n{}\n'.format(r2))
-                        f.write('# Lower T limit (K)\n{}\n'.format(Tlim_low))
-                        f.write('# Upper T limit (K)\n{}\n'.format(Tlim_high))                            
-                        f.write('# Activation Energy (meV)\n{}'.format(self.act_energy))
-                    f.close()
+                        plt.title('Field = {} eV, disorder = {} eV, $\lambda$ = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.lam,self.DMR,self.sys_size),fontsize=10)
+                else:
+                    plt.title('Field = {} eV, disorder = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.DMR,self.sys_size),fontsize=10)
+                if not os.path.isdir(self.dest_dir+'act_energy'):
+                    os.makedirs(self.dest_dir+'act_energy')
+                plt.savefig(self.dest_dir+'act_energy/current_lin_fit_dmr{}.png'.format(self.DMR))
+                plt.close()
+            if save_to_file:
+                if not os.path.isdir(self.dest_dir+'act_energy'):
+                    os.makedirs(self.dest_dir+'act_energy')
+                with open(self.dest_dir+'act_energy/lin_fit_data.txt','w') as f:
+                    f.write('# Linear regression information\n')
+                    f.write('# Slope (AK/1000/m^2) \n{}\n'.format(a))
+                    f.write('# Intercept (A/m^2)\n{}\n'.format(b))
+                    f.write('# Coefficient of determination(R^2)\n{}\n'.format(r2))
+                    f.write('# Lower T limit (K)\n{}\n'.format(Tlim_low))
+                    f.write('# Upper T limit (K)\n{}\n'.format(Tlim_high))                            
+                    f.write('# Activation Energy (meV)\n{}'.format(self.act_energy))
+                f.close()
         
 
     def plot_av_current(self,Tlim_low=None,Tlim_high=None,Jlim_low=None,Jlim_high=None,plot_log=True,errorbar=False, only_conv=True,
