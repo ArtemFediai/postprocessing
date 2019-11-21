@@ -515,7 +515,7 @@ class CurrTempSimulation:
         are shown as bars for each temperature point.
         '''
         if not os.path.exists(self.dest_dir+'conv_analysis.txt'):
-            self.get_act_energy()  
+            self.get_conv_analysis()  
         else:
             n_temp      = len(self.temp)
             conv_data = np.loadtxt(self.dest_dir+'conv_analysis.txt', comments='#', unpack=True)
