@@ -1399,7 +1399,7 @@ class CurrTempDMRset:
             converged_jobs = np.loadtxt(self.dest_dir+dir+"/conv_analysis.txt",unpack=True)[3]
             nonconv_jobs = []
             for i_t in range(n_temp):
-                if converged_jobs[i_t] != 50:
+                if converged_jobs[i_t] != self.n_r:
                     n_cpus = int(np.loadtxt(self.source_dir+"joblist_DMR_"+str(i_dmr),usecols=0)[0])
                     run_kmc_name = np.loadtxt(self.source_dir+"joblist_DMR_"+str(i_dmr),usecols=1,dtype=str)[0]
                     for i_r in range(self.n_r):
