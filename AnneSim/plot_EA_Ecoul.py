@@ -4,7 +4,7 @@ import glob
 import matplotlib.pyplot as plt
 import os
 
-dis_dir_unsorted = glob.glob('dis_*')
+dis_dir_unsorted = glob.glob('Ecoul_*')
 list_dis_dirs = sorted(dis_dir_unsorted, key = lambda x: int(x.split('_')[-1]))
 for dis in list_dis_dirs[:]:
     if os.path.exists(dis+"/analysis/act_energy/act_energy_DMR_set.txt"):
@@ -12,11 +12,11 @@ for dis in list_dis_dirs[:]:
         dmr        = (np.loadtxt(dis+"/analysis/act_energy/act_energy_DMR_set.txt",comments='#',unpack=True))[0]
         dmr_dir_unsorted = glob.glob('DMR_*')
         list_DMR_dirs    = sorted(dmr_dir_unsorted, key = lambda x: int(x.split('_')[-1]))
-        disorder         = (np.loadtxt(dis+"/analysis/sim_param_DMR_set.txt")[2])
-        plt.plot(dmr*100,act_energy,marker="+", linestyle="None",label="$\sigma$ = {} eV".format(disorder))
+        Ecoul         = (np.loadtxt(dis+"/analysis/sim_param_DMR_set.txt")[4])
+        plt.plot(dmr*100,act_energy,marker="+", linestyle="None",label="$E_C$ = {} eV".format(Ecoul))
 plt.xlabel('DMR (%)')
 plt.xscale("log")
 plt.ylabel('$E_A$ (meV)')
 plt.legend()
-plt.savefig('act_energy_disorderset.png')
+plt.savefig('act_energy_CTenergyset.png')
 plt.close()       

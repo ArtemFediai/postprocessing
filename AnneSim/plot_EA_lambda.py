@@ -6,7 +6,7 @@ import os
 
 l_dir_unsorted = glob.glob('l_*')
 list_l_dirs = sorted(l_dir_unsorted, key = lambda x: int(x.split('_')[-1]))
-for ll in list_l_dirs[2:]:
+for ll in list_l_dirs[:]:
     if os.path.exists(ll+"/analysis/act_energy/act_energy_DMR_set.txt"):
         act_energy = (np.loadtxt(ll+"/analysis/act_energy/act_energy_DMR_set.txt",comments='#',unpack=True))[1]
         dmr        = (np.loadtxt(ll+"/analysis/act_energy/act_energy_DMR_set.txt",comments='#',unpack=True))[0]
