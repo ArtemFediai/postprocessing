@@ -278,36 +278,36 @@ class CurrTempSimulation:
 
     def get_act_energy(self,Tlim_low=50,Tlim_high=600,save_to_file=True):
         '''
-        Fit log(J) vs. 1000/T with linear fit: y = a*x + b.
+        Fit log(sigma) vs. 1000/T with linear fit: y = a*x + b.
         Use specific temperature interval from tlim_low to tlim_high.
         The outputfile 'lin_fit_data.txt' contains the activation energy 
         (eV) for this temperature set (within the spec. limits).
-        The plot 'current_lin_fit_dmr*.png' contains the log J vs. 1000/T
+        The plot 'conduct_lin_fit_dmr*.png' contains the log sigma vs. 1000/T
         with the curve from the linear regression.
         '''
-        if not os.path.exists(self.dest_dir+'av_current.txt'):
-            self.get_av_current() 
-        if np.any(self.current) == None:
-            current_data = np.loadtxt(self.dest_dir+'av_current.txt',comments='#',unpack=True)
-            self.current, self.std_current = current_data[1], [current_data[2],current_data[3]]           
-        if np.all(self.current == 0.0):
-            print("Only zero values for current found, linear regretion on log(J) vs. 1/T not possible.")
+        if not os.path.exists(self.dest_dir+'av_conductivity.txt'):
+            self.get_av_conductivity() 
+        if np.any(self.conduct) == None:
+            conduct_data = np.loadtxt(self.dest_dir+'av_conductivity.txt',comments='#',unpack=True)
+            self.conduct, self.std_conduct = conduct_data[1], [conduct_data[2],conduct_data[3]]           
+        if np.all(self.conduct == 0.0):
+            print("Only zero values for conductivity found, linear regretion on log(sigma) vs. 1/T not possible.")
             self.act_energy = 0.0
             a, b, r2 = 0.0, 0.0, 0.0
         else:
             # check if CurrTempSimulation already has current etc. attribute, if not check if data is already generated and if yes read it in                      
-            x_conv = np.where(self.current[:,]>0.0)
-            current      = self.current[x_conv[0][0]:x_conv[0][-1]+1]
-            std_current  = [self.std_current[0][x_conv[0][0]:x_conv[0][-1]+1],self.std_current[1][x_conv[0][0]:x_conv[0][-1]+1]]
+            x_conv = np.where(self.conduct[:,]>0.0)
+            conduct      = self.conduct[x_conv[0][0]:x_conv[0][-1]+1]
+            std_conduct  = [self.std_conduct[0][x_conv[0][0]:x_conv[0][-1]+1],self.std_conduct[1][x_conv[0][0]:x_conv[0][-1]+1]]
             temperatures = self.temp[x_conv[0][0]:x_conv[0][-1]+1]  
-            # Only use non zero current for linear regression
-            nonzero_ids = np.nonzero(current)
-            current = current[nonzero_ids]
-            std_current = [std_current[0][nonzero_ids],std_current[1][nonzero_ids]]
+            # Only use non zero conduct for linear regression
+            nonzero_ids = np.nonzero(conduct)
+            conduct = conduct[nonzero_ids]
+            std_conduct = [std_conduct[0][nonzero_ids],std_conduct[1][nonzero_ids]]
             temperatures = temperatures[nonzero_ids]
             # define x and y for linear regression
             x = 1000/temperatures                  
-            y = np.log(current)
+            y = np.log(conduct)
             if np.min(temperatures)>Tlim_high or np.max(temperatures)<Tlim_low:
                 print("Data points to analyse don't lie within the specified temperature range, linear regretion on log(J) vs. 1/T not possible.")
                 self.act_energy = 0.0
@@ -325,21 +325,21 @@ class CurrTempSimulation:
                 self.act_energy = -1000*1000*a*Boltzmann/e
                 print('Activation energy: E_A = {} meV'.format(self.act_energy))
                 # Plot linear regression
-                plt.errorbar(x, y,yerr=std_current[1],linestyle = '',marker='o',color='r', label='Simulated points')
+                plt.errorbar(x, y,yerr=std_conduct[1],linestyle = '',marker='o',color='r', label='Simulated points')
                 plt.plot(x,a*x + b, color='k',label='Linear fit: $y = a*x + b$\n$a = {0:.3}, b =  {1:.3}$\n$R^2 = {2:.3}$'.format(a,b,r2))
                 plt.legend()
                 plt.xlabel('1/T (1000/K)')
-                plt.ylabel('log J (A/m$^2$)')
+                plt.ylabel('log $\sigma$ (S/m)')
                 if self.rates == "Marcus":
                     if self.analyse_Ecoul:
-                        plt.title('Field = {} eV, disorder = {} eV, $\lambda$ = {} eV, Ecoul= {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.lam,self.Ecoul, self.DMR,self.sys_size),fontsize=10)
+                        plt.title('Field = {} V/nm, disorder = {} eV, $\lambda$ = {} eV, Ecoul= {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.lam,self.Ecoul, self.DMR,self.sys_size),fontsize=10)
                     else:
-                        plt.title('Field = {} eV, disorder = {} eV, $\lambda$ = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.lam,self.DMR,self.sys_size),fontsize=10)
+                        plt.title('Field = {} V/nm, disorder = {} eV, $\lambda$ = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.lam,self.DMR,self.sys_size),fontsize=10)
                 else:
-                    plt.title('Field = {} eV, disorder = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.DMR,self.sys_size),fontsize=10)
+                    plt.title('Field = {} V/nm, disorder = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.DMR,self.sys_size),fontsize=10)
                 if not os.path.isdir(self.dest_dir+'act_energy'):
                     os.makedirs(self.dest_dir+'act_energy')
-                plt.savefig(self.dest_dir+'act_energy/current_lin_fit_dmr{}.png'.format(self.DMR))
+                plt.savefig(self.dest_dir+'act_energy/conduct_lin_fit_dmr{}.png'.format(self.DMR))
                 plt.close()
             if save_to_file:
                 if not os.path.isdir(self.dest_dir+'act_energy'):
