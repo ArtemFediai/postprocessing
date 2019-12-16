@@ -148,8 +148,8 @@ class CurrTempSimulation:
         The outputfile 'current.txt' contains (in columns): 
         - Temperature values (K) 
         - Average conductivity values (Av/eV/m^2)
-        - Standard error values of current density (Av/eV/m^2)
-        - Logarithmic std. error of current density (Av/eV/m^2)
+        - Standard error values of conductivity (Av/eV/m^2)
+        - Logarithmic std. error of conductivity (Av/eV/m^2)
           (to use for errorbars in logarithmic plots) 
         
         '''
@@ -172,7 +172,7 @@ class CurrTempSimulation:
                     f.write('# Field = {} eV, disorder = {} eV, lambda = {} eV, DMR = {}, system size = {} nm\n'.format(self.field,self.dis,self.lam,self.DMR,self.sys_size))
             else:
                 f.write('# Field = {} eV, disorder = {} eV, DMR = {}, system size = {} nm\n'.format(self.field,self.dis,self.DMR,self.sys_size))
-            f.write('#\n# Temperature(K)   Av. Conductivity(A/eV/m$^2$)   Normal std. error(A/m$^2$)   Log. std. error(A/m$^2$)\n')
+            f.write('#\n# Temperature(K)   Av. Conductivity(S/m)   Normal std. error(S/m)   Log. std. error(S/m)\n')
             n_temp      = len(self.temp)
             for i_t in range(n_temp):
                 f.write('  {0:<14}   {1:<28}   {2:<26}   {3:<1}\n'.format(self.temp[i_t], self.conduct[i_t], self.std_conduct[0][i_t], self.std_conduct[1][i_t]))    
@@ -1277,9 +1277,9 @@ class CurrTempDMRset:
                 dmr_sim.get_av_conductivity()
             dmr_sim.plot_av_conductivity( plot_log, errorbar, only_conv, curr_dmr_colors[i_dmr], False)
         if plot_log:
-            ylabel = 'log $\sigma$ (A/eV/m)'
+            ylabel = 'log $\sigma$ (S/m)'
         else:
-            ylabel = '$\sigma$ (A/eV/m)'
+            ylabel = '$\sigma$ (S/m)'
         if log10:
             plt.yscale("log")
         plt.xlabel('1/T (1000/K)')
