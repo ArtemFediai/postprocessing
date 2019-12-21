@@ -30,6 +30,11 @@ elif args.lam:
 if not args.nonconv:
     if not os.path.exists("analysis/Eact_vs_{}.txt".format(dep)):
         dir_unsorted = glob.glob('{}_*'.format(dep))
+        print(dir_unsorted)
+        if 'dis_j' in dir_unsorted:
+            dir_unsorted.remove('dis_j')
+        if 'dis_j.zip' in dir_unsorted:
+            dir_unsorted.remove('dis_j.zip')
         list_dirs = sorted(dir_unsorted, key = lambda x: int(x.split('_')[-1]))
         n_x = len(list_dirs)
 
