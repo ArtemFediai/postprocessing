@@ -6,11 +6,11 @@ import os
 
 
 
-# # without trap
-# without_outputdir = "no_trap/act_energy_DMR_set_all.txt"
-# act_energy = (np.loadtxt(without_outputdir,comments='#',unpack=True))[1]
-# dmr        = (np.loadtxt(without_outputdir,comments='#',unpack=True))[0]
-# plt.plot(dmr*100,act_energy,marker="+", linestyle="None",label="no traps")
+# without trap
+without_outputdir = "no_trap/analysis/act_energy/act_energy_DMR_set.txt"
+act_energy = (np.loadtxt(without_outputdir,comments='#',unpack=True))[1]
+dmr        = (np.loadtxt(without_outputdir,comments='#',unpack=True))[0]
+plt.plot(dmr*100,act_energy,marker="+", linestyle="None",label="no traps")
 # traps
 list_dirs = sorted(glob.glob('trap_*'), key = lambda x: int(x.split('_')[-1]))
 for ll in list_dirs[:]:
