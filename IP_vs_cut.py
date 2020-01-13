@@ -43,9 +43,11 @@ def main():
 ############ TEST
     fid = open("all_energies.txt", "w")
     n_r = len(my_radii_updated)
-    n_r = 2
+    n_r = 4
 
-    IP_per_step_per_R = np.zeros([7, n_r])
+    ip_sd_stepwise = np.zeros([7, n_r])
+    ip_fe_stepwise = np.zeros([7, n_r])
+
 
     for i in range(n_r):
         fid.write("R = {} A\n".format(my_radii_updated))
@@ -58,22 +60,44 @@ def main():
             #print("Energy Uncharged = {} eV".format(my_ip.ip_uncharged))
             #print("Energy Charged = {} eV".format(my_ip.ip_charged))
             print("step = {}".format(step_num))
-            print("IP = {} eV".format(my_ip.ip_dif))
-            IP_per_step_per_R[step_num, i] = my_ip.ip_dif
-            fid.write("Charged = {} eV\tUncharged = {} eV\tIP = {} eV \n".format(my_ip.ip_charged, my_ip.ip_charged, my_ip.ip_dif))
+            print("IP s-d= {} eV".format(my_ip.ip_sd_stepwise))
+            print("IP full_env = {} eV".format(my_ip.ip_fe_stepwise))
+
+            ip_sd_stepwise[step_num, i] = my_ip.ip_sd_stepwise
+            ip_fe_stepwise[step_num, i] = my_ip.ip_fe_stepwise
+
+            fid.write("Charged = {} eV\tUncharged = {} eV\tIP = {} eV \n".format(my_ip.ip_charged, my_ip.ip_charged, my_ip.ip_sd_stepwise))
         print("R = {} A.\tTime: {} sec".format(my_radii_updated[i], time.time() - my_time))
 
     print("nothing1")
     fid.close()
-    print(IP_per_step_per_R)
+    print(ip_sd_stepwise)
 
     # IP stepwise
-    plt.plot(range(7), IP_per_step_per_R, marker='o')
+    plt.plot(range(7), ip_sd_stepwise, marker='o', label='single-delta')
+    plt.plot(range(7), ip_fe_stepwise, marker='x', label='full env + V_C')
     plt.ylabel("IP, eV")
     plt.xlabel("step number")
+    plt.legend()
+    plt.ylim([3,6.5])
     plt.savefig("stepwise.png")
     plt.close()
     #
+
+    # IP stepwise
+    plt.plot(range(7), ip_sd_stepwise, marker='o', label='single-delta')
+    plt.plot(range(7), ip_fe_stepwise, marker='x', label='full env + V_C')
+    plt.ylabel("IP, eV")
+    plt.yscale('log')
+    plt.xlabel("step number")
+    plt.legend()
+    plt.ylim([3,6.5])
+    plt.savefig("stepwise_log.png")
+    plt.close()
+    #
+    np.savetxt('ip_sd_stepwise.txt', ip_sd_stepwise)
+    np.savetxt('ip_fe_stepwise.txt', ip_fe_stepwise)
+
 
     exit()
 
@@ -252,6 +276,8 @@ class IP:
         self.yaml = yaml.load(fid)
         self.full_e_uncharged = 0
         self.full_e_charged = 0
+        self.ip_sd_stepwise = 0
+        self.ip_fe_stepwise = 0
 
 
 
@@ -283,11 +309,15 @@ class IP:
         for mol_num in list(self.a1.keys()):
             self.full_e_charged += self.a1[mol_num]["total"]
             self.full_e_uncharged += self.a2[mol_num]["total"]
-            self.full_e_diff = self.a1[mol_num]["total"] - self.a2[mol_num]["total"]
-            print('mol_num', mol_num)
-            print("e_diff charged/uncgarged", self.full_e_diff)
-        self.ip_dif = self.ip_charged - self.ip_uncharged
-        self.ip_fe_stepwise = self.full_e_charged - self.full_e_uncharged
+            diff = self.a1[mol_num]["total"] - self.a2[mol_num]["total"]
+            if np.abs(diff) > 100:
+                self.ip_fe_stepwise += 0  # if DFTB
+            else:
+                self.ip_fe_stepwise += diff
+            #print('mol_num', mol_num)
+            #print("e_diff charged/uncgarged", self.full_e_diff)
+        self.ip_sd_stepwise = self.ip_charged - self.ip_uncharged
+        #self.ip_fe_stepwise = self.full_e_charged - self.full_e_uncharged
         print("I am done")
 
 
