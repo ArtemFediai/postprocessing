@@ -13,6 +13,7 @@ from scipy.constants import Boltzmann,e
 # TODO: use try except statements instead of if else.
 # TODO: use yaml file for sim_param.txt
 # TODO: rewrite the code in a way that false format is recognised
+# TODO: add analyse_Ecoul in case of miller rates
 
 class CurrTempSimulation:
     '''
@@ -22,9 +23,10 @@ class CurrTempSimulation:
     and a sim_data_file (default= 'sim_param.txt') containing the relevant 
     simulation parameters.
     '''
-    def __init__(self,rates="Miller",source_dir='',dest_dir='analysis',sim_data_file='sim_param.txt'):
+    def __init__(self,rates="Miller",analyse_Ecoul=False, source_dir='',dest_dir='analysis',sim_data_file='sim_param.txt'):
         sim_data = np.genfromtxt(source_dir+sim_data_file,dtype=float)
-        self.rates = rates
+        self.rates         = rates
+        self.analyse_Ecoul = analyse_Ecoul
         self.n_r      = int(sim_data[0])
         self.field    = sim_data[1]
         self.dis      = sim_data[2]
@@ -34,9 +36,15 @@ class CurrTempSimulation:
             self.temp     = sim_data[5:]
         elif self.rates=="Marcus":
             self.lam      = sim_data[3]
-            self.DMR      = sim_data[4]
-            self.sys_size = sim_data[5]
-            self.temp     = sim_data[6:]
+            if analyse_Ecoul:
+                self.Ecoul    = sim_data[4]
+                self.DMR      = sim_data[5]
+                self.sys_size = sim_data[6]
+                self.temp     = sim_data[7:]
+            else:               
+                self.DMR      = sim_data[4]
+                self.sys_size = sim_data[5]
+                self.temp     = sim_data[6:]
         else:
             print("SimAnalysisError: False rates specified.")
             exit()
@@ -69,7 +77,7 @@ class CurrTempSimulation:
         for i_t in range(n_temp):
             for i_r in range(self.n_r):
                 outputdir=self.source_dir+'temp_{}/r_{}'.format(i_t, i_r)
-                if os.path.exists(outputdir):
+                if os.path.exists(outputdir+'/output_job_0'):
                     if 'final current density: ' in open(outputdir+'/output_job_0').read():
                         current_dens=extract.extract_e(outputdir+'/output_job_0', "final current density: ")
                         if current_dens<0:
@@ -79,9 +87,12 @@ class CurrTempSimulation:
             with open(self.dest_dir+'current_data/curr_temp_{}.txt'.format(i_t), 'w') as f: 
                     f.write("# Raw current data for temp_{} (T={} K)\n".format(i_t,self.temp[i_t]))
                     if self.rates == "Marcus":
-                        f.write('# Field = {} eV, disorder = {} eV, lambda = {} eV, DMR = {}, system size = {}\n'.format(self.field,self.dis,self.lam,self.DMR,self.sys_size))
+                        if self.analyse_Ecoul:  
+                            f.write('# Field = {} V/nm, disorder = {} eV, lambda = {} eV, Ecoul = {} eV, DMR = {}, system size = {} nm\n'.format(self.field,self.dis,self.lam, self.Ecoul,self.DMR,self.sys_size))    
+                        else:
+                            f.write('# Field = {} V/nm, disorder = {} eV, lambda = {} eV, DMR = {}, system size = {} nm\n'.format(self.field,self.dis,self.lam,self.DMR,self.sys_size))
                     else:
-                        f.write('# Field = {} eV, disorder = {} eV, DMR = {}, system size = {}\n'.format(self.field,self.dis,self.DMR,self.sys_size))
+                        f.write('# Field = {} V/nm, disorder = {} eV, DMR = {}, system size = {}\n'.format(self.field,self.dis,self.DMR,self.sys_size))
                     f.write('#\n# Replica Nr.     Current density(A/m$^2$)\n')
                     for i_r in range(self.n_r):
                         f.write('  {0:<13}   {1:<1}\n'.format(i_r, current_data[i_t,i_r]))
@@ -108,7 +119,6 @@ class CurrTempSimulation:
                 self.collect_current_data()
             current = (np.loadtxt(self.dest_dir+'current_data/curr_temp_{}.txt'.format(i_t)))[:,1]
             current = current[np.nonzero(current)]
-            print(current)
             # Calculate average current
             if len(current)>0:
                 av_current[i_t]  = stat.gmean(current)
@@ -121,9 +131,12 @@ class CurrTempSimulation:
         with open(self.dest_dir+'av_current.txt', 'w') as f:
             f.write("# Average current and related values.\n")
             if self.rates == "Marcus":
-                f.write('# Field = {} eV, disorder = {} eV, $\lambda$ = {} eV, DMR = {}, system size = {}\n'.format(self.field,self.lam,self.dis,self.DMR,self.sys_size))
+                if self.analyse_Ecoul:
+                    f.write('# Field = {} eV, disorder = {} eV, lambda = {} eV, Ecoul = {} eV, DMR = {}, system size = {} nm\n'.format(self.field,self.dis,self.lam,self.Ecoul,self.DMR,self.sys_size))
+                else:
+                    f.write('# Field = {} eV, disorder = {} eV, lambda = {} eV, DMR = {}, system size = {} nm\n'.format(self.field,self.dis,self.lam,self.DMR,self.sys_size))
             else:
-                f.write('# Field = {} eV, disorder = {} eV, DMR = {}, system size = {}\n'.format(self.field,self.dis,self.DMR,self.sys_size))
+                f.write('# Field = {} eV, disorder = {} eV, DMR = {}, system size = {} nm\n'.format(self.field,self.dis,self.DMR,self.sys_size))
             f.write('#\n# Temperature(K)   Av. Current density(A/m$^2$)   Normal std. error(A/m$^2$)   Log. std. error(A/m$^2$)\n')
             for i_t in range(n_temp):
                 f.write('  {0:<14}   {1:<28}   {2:<26}   {3:<1}\n'.format(self.temp[i_t], self.current[i_t], self.std_current[0][i_t], self.std_current[1][i_t]))
@@ -135,8 +148,8 @@ class CurrTempSimulation:
         The outputfile 'current.txt' contains (in columns): 
         - Temperature values (K) 
         - Average conductivity values (Av/eV/m^2)
-        - Standard error values of current density (Av/eV/m^2)
-        - Logarithmic std. error of current density (Av/eV/m^2)
+        - Standard error values of conductivity (Av/eV/m^2)
+        - Logarithmic std. error of conductivity (Av/eV/m^2)
           (to use for errorbars in logarithmic plots) 
         
         '''
@@ -153,10 +166,13 @@ class CurrTempSimulation:
         with open(self.dest_dir+'av_conductivity.txt', 'w') as f:
             f.write("# Average conductivity and related values.\n")
             if self.rates == "Marcus":
-                f.write('# Field = {} eV, disorder = {} eV, $\lambda$ = {} eV, DMR = {}, system size = {}\n'.format(self.field,self.lam,self.dis,self.DMR,self.sys_size))
+                if self.analyse_Ecoul:
+                    f.write('# Field = {} eV, disorder = {} eV, lambda = {} eV, Ecoul = {} eV, DMR = {}, system size = {} nm\n'.format(self.field,self.dis,self.lam,self.Ecoul,self.DMR,self.sys_size))
+                else:
+                    f.write('# Field = {} eV, disorder = {} eV, lambda = {} eV, DMR = {}, system size = {} nm\n'.format(self.field,self.dis,self.lam,self.DMR,self.sys_size))
             else:
-                f.write('# Field = {} eV, disorder = {} eV, DMR = {}, system size = {}\n'.format(self.field,self.dis,self.DMR,self.sys_size))
-            f.write('#\n# Temperature(K)   Av. Conductivity(A/eV/m$^2$)   Normal std. error(A/m$^2$)   Log. std. error(A/m$^2$)\n')
+                f.write('# Field = {} eV, disorder = {} eV, DMR = {}, system size = {} nm\n'.format(self.field,self.dis,self.DMR,self.sys_size))
+            f.write('#\n# Temperature(K)   Av. Conductivity(S/m)   Normal std. error(S/m)   Log. std. error(S/m)\n')
             n_temp      = len(self.temp)
             for i_t in range(n_temp):
                 f.write('  {0:<14}   {1:<28}   {2:<26}   {3:<1}\n'.format(self.temp[i_t], self.conduct[i_t], self.std_conduct[0][i_t], self.std_conduct[1][i_t]))    
@@ -197,7 +213,7 @@ class CurrTempSimulation:
                 for i_r in range(self.n_r):
                     job=str(i_r)
                     outputdir=self.source_dir+'temp_{}/r_{}'.format(i_t, i_r)
-                    if os.path.exists(outputdir):
+                    if os.path.exists(outputdir+'/output_job_0'):
                         run_jobs.append(job)
                         run+=1
                         if 'final current density:' in open(outputdir+'/output_job_0').read():
@@ -244,11 +260,10 @@ class CurrTempSimulation:
             f.write('# Convergence analysis.\n')
             f.write('# Total number of jobs: {}\n'.format(n_temp*self.n_r))
             if self.rates == "Marcus":
-                f.write('# Field: {} eV, Disorder: {} eV, Lambda: {} eV, Dop.fract.: {} %, System size: {} nm\n'.format(self.field,
-                                                                                                                        self.dis, 
-                                                                                                                        self.lam,
-                                                                                                                        100.0*self.DMR,
-                                                                                                                        self.sys_size))
+                if self.analyse_Ecoul:
+                    f.write('# Field: {} eV, Disorder: {} eV, Lambda: {} eV, Ecoul: {} eV, Dop.fract.: {} %, System size: {} nm\n'.format(self.field,self.dis,self.lam,self.Ecoul,100.0*self.DMR,self.sys_size))
+                else:
+                    f.write('# Field: {} eV, Disorder: {} eV, Lambda: {} eV, Dop.fract.: {} %, System size: {} nm\n'.format(self.field,self.dis,self.lam,100.0*self.DMR,self.sys_size))
             else:
                 f.write('# Field: {} eV, Disorder: {} eV, Dop.fract.: {} %, System size: {} nm\n'.format(self.field,
                                                                                                          self.dis, 
@@ -263,80 +278,81 @@ class CurrTempSimulation:
 
     def get_act_energy(self,Tlim_low=50,Tlim_high=600,save_to_file=True):
         '''
-        Fit log(J) vs. 1000/T with linear fit: y = a*x + b.
+        Fit log(sigma) vs. 1000/T with linear fit: y = a*x + b.
         Use specific temperature interval from tlim_low to tlim_high.
         The outputfile 'lin_fit_data.txt' contains the activation energy 
         (eV) for this temperature set (within the spec. limits).
-        The plot 'current_lin_fit_dmr*.png' contains the log J vs. 1000/T
+        The plot 'conduct_lin_fit_dmr*.png' contains the log sigma vs. 1000/T
         with the curve from the linear regression.
         '''
-        if not os.path.exists(self.dest_dir+'av_current.txt'):
-            self.get_av_current() 
+        if not os.path.exists(self.dest_dir+'av_conductivity.txt'):
+            self.get_av_conductivity() 
+        if np.any(self.conduct) == None:
+            conduct_data = np.loadtxt(self.dest_dir+'av_conductivity.txt',comments='#',unpack=True)
+            self.conduct, self.std_conduct = conduct_data[1], [conduct_data[2],conduct_data[3]]           
+        if np.all(self.conduct == 0.0):
+            print("Only zero values for conductivity found, linear regretion on log(sigma) vs. 1/T not possible.")
+            self.act_energy = 0.0
+            a, b, r2 = 0.0, 0.0, 0.0
         else:
-            if np.any(self.current) == None:
-                current_data = np.loadtxt(self.dest_dir+'av_current.txt',comments='#',unpack=True)
-                self.current, self.std_current = current_data[1], [current_data[2],current_data[3]]           
-            if np.all(self.current == 0.0):
-                print("Only zero values for current found, linear regretion on log(J) vs. 1/T not possible.")
+            # check if CurrTempSimulation already has current etc. attribute, if not check if data is already generated and if yes read it in                      
+            x_conv = np.where(self.conduct[:,]>0.0)
+            conduct      = self.conduct[x_conv[0][0]:x_conv[0][-1]+1]
+            std_conduct  = [self.std_conduct[0][x_conv[0][0]:x_conv[0][-1]+1],self.std_conduct[1][x_conv[0][0]:x_conv[0][-1]+1]]
+            temperatures = self.temp[x_conv[0][0]:x_conv[0][-1]+1]  
+            # Only use non zero conduct for linear regression
+            nonzero_ids = np.nonzero(conduct)
+            conduct = conduct[nonzero_ids]
+            std_conduct = [std_conduct[0][nonzero_ids],std_conduct[1][nonzero_ids]]
+            temperatures = temperatures[nonzero_ids]
+            # define x and y for linear regression
+            x = 1000/temperatures                  
+            y = np.log(conduct)
+            if np.min(temperatures)>Tlim_high or np.max(temperatures)<Tlim_low:
+                print("Data points to analyse don't lie within the specified temperature range, linear regretion on log(J) vs. 1/T not possible.")
                 self.act_energy = 0.0
                 a, b, r2 = 0.0, 0.0, 0.0
             else:
-                # check if CurrTempSimulation already has current etc. attribute, if not check if data is already generated and if yes read it in                      
-                x_conv = np.where(self.current[:,]>0.0)
-                current      = self.current[x_conv[0][0]:x_conv[0][-1]+1]
-                std_current  = [self.std_current[0][x_conv[0][0]:x_conv[0][-1]+1],self.std_current[1][x_conv[0][0]:x_conv[0][-1]+1]]
-                temperatures = self.temp[x_conv[0][0]:x_conv[0][-1]+1]  
-                # Only use non zero current for linear regression
-                nonzero_ids = np.nonzero(current)
-                current = current[nonzero_ids]
-                std_current = [std_current[0][nonzero_ids],std_current[1][nonzero_ids]]
-                temperatures = temperatures[nonzero_ids]
-                # define x and y for linear regression
-                x = 1000/temperatures                  
-                y = np.log(current)
-                print(temperatures)
-                if np.min(temperatures)>Tlim_high or np.max(temperatures)<Tlim_low:
-                    print("Data points to analyse don't lie within the specified temperature range, linear regretion on log(J) vs. 1/T not possible.")
-                    self.act_energy = 0.0
-                    a, b, r2 = 0.0, 0.0, 0.0
-                else:
-                    idx_low  = np.argwhere( temperatures >= Tlim_low )[0,0]
-                    idx_high = np.argwhere( temperatures <= Tlim_high )[-1,0]
-                    x_fit = (x[idx_low:idx_high+1]).reshape((-1,1))
-                    y_fit = y[idx_low:idx_high+1]
-                    linear_model = LinearRegression().fit(x_fit,y_fit)
-                    a, b, r2 = linear_model.coef_[0], linear_model.intercept_, linear_model.score(x_fit,y_fit)
-                    print('Linear fit: slope     = ', a)
-                    print('            intercept = ',b)
-                    print('                  R^2 = ',r2)
-                    self.act_energy = -1000*1000*a*Boltzmann/e
-                    print('Activation energy: E_A = {} meV'.format(self.act_energy))
-                    # Plot linear regression
-                    plt.errorbar(x, y,yerr=std_current[1],linestyle = '',marker='o',color='r', label='Simulated points')
-                    plt.plot(x,a*x + b, color='k',label='Linear fit: $y = a*x + b$\n$a = {0:.3}, b =  {1:.3}$\n$R^2 = {2:.3}$'.format(a,b,r2))
-                    plt.legend()
-                    plt.xlabel('1/T (1000/K)')
-                    plt.ylabel('log J (A/m$^2$)')
-                    if self.rates == "Marcus":
-                        plt.title('Field = {} eV, disorder = {} eV, $\lambda$ = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.lam,self.DMR,self.sys_size),fontsize=10)
+                idx_low  = np.argwhere( temperatures >= Tlim_low )[0,0]
+                idx_high = np.argwhere( temperatures <= Tlim_high )[-1,0]
+                x_fit = (x[idx_low:idx_high+1]).reshape((-1,1))
+                y_fit = y[idx_low:idx_high+1]
+                linear_model = LinearRegression().fit(x_fit,y_fit)
+                a, b, r2 = linear_model.coef_[0], linear_model.intercept_, linear_model.score(x_fit,y_fit)
+                print('Linear fit: slope     = ', a)
+                print('            intercept = ',b)
+                print('                  R^2 = ',r2)
+                self.act_energy = -1000*1000*a*Boltzmann/e
+                print('Activation energy: E_A = {} meV'.format(self.act_energy))
+                # Plot linear regression
+                plt.errorbar(x, y,yerr=std_conduct[1],linestyle = '',marker='o',color='r', label='Simulated points')
+                plt.plot(x,a*x + b, color='k',label='Linear fit: $y = a*x + b$\n$a = {0:.3}, b =  {1:.3}$\n$R^2 = {2:.3}$'.format(a,b,r2))
+                plt.legend()
+                plt.xlabel('1/T (1000/K)')
+                plt.ylabel('log $\sigma$ (S/m)')
+                if self.rates == "Marcus":
+                    if self.analyse_Ecoul:
+                        plt.title('Field = {} V/nm, disorder = {} eV, $\lambda$ = {} eV, Ecoul= {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.lam,self.Ecoul, self.DMR,self.sys_size),fontsize=10)
                     else:
-                        plt.title('Field = {} eV, disorder = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.DMR,self.sys_size),fontsize=10)
-                    if not os.path.isdir(self.dest_dir+'act_energy'):
-                        os.makedirs(self.dest_dir+'act_energy')
-                    plt.savefig(self.dest_dir+'act_energy/current_lin_fit_dmr{}.png'.format(self.DMR))
-                    plt.close()
-                if save_to_file:
-                    if not os.path.isdir(self.dest_dir+'act_energy'):
-                        os.makedirs(self.dest_dir+'act_energy')
-                    with open(self.dest_dir+'act_energy/lin_fit_data.txt','w') as f:
-                        f.write('# Linear regression information\n')
-                        f.write('# Slope (AK/1000/m^2) \n{}\n'.format(a))
-                        f.write('# Intercept (A/m^2)\n{}\n'.format(b))
-                        f.write('# Coefficient of determination(R^2)\n{}\n'.format(r2))
-                        f.write('# Lower T limit (K)\n{}\n'.format(Tlim_low))
-                        f.write('# Upper T limit (K)\n{}\n'.format(Tlim_high))                            
-                        f.write('# Activation Energy (meV)\n{}'.format(self.act_energy))
-                    f.close()
+                        plt.title('Field = {} V/nm, disorder = {} eV, $\lambda$ = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.lam,self.DMR,self.sys_size),fontsize=10)
+                else:
+                    plt.title('Field = {} V/nm, disorder = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.DMR,self.sys_size),fontsize=10)
+                if not os.path.isdir(self.dest_dir+'act_energy'):
+                    os.makedirs(self.dest_dir+'act_energy')
+                plt.savefig(self.dest_dir+'act_energy/conduct_lin_fit_dmr{}.png'.format(self.DMR))
+                plt.close()
+            if save_to_file:
+                if not os.path.isdir(self.dest_dir+'act_energy'):
+                    os.makedirs(self.dest_dir+'act_energy')
+                with open(self.dest_dir+'act_energy/lin_fit_data.txt','w') as f:
+                    f.write('# Linear regression information\n')
+                    f.write('# Slope (AK/1000/m^2) \n{}\n'.format(a))
+                    f.write('# Intercept (A/m^2)\n{}\n'.format(b))
+                    f.write('# Coefficient of determination(R^2)\n{}\n'.format(r2))
+                    f.write('# Lower T limit (K)\n{}\n'.format(Tlim_low))
+                    f.write('# Upper T limit (K)\n{}\n'.format(Tlim_high))                            
+                    f.write('# Activation Energy (meV)\n{}'.format(self.act_energy))
+                f.close()
         
 
     def plot_av_current(self,Tlim_low=None,Tlim_high=None,Jlim_low=None,Jlim_high=None,plot_log=True,errorbar=False, only_conv=True,
@@ -419,7 +435,10 @@ class CurrTempSimulation:
                 plt.xlabel('1/T (1000/K)')
                 plt.ylabel(ylabel)
                 if self.rates == "Marcus":
-                    plt.title('Field = {} eV, disorder = {} eV, $\lambda$ = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.lam,self.DMR,self.sys_size),fontsize=10)
+                    if self.analyse_Ecoul:
+                        plt.title('Field = {} eV, disorder = {} eV, $\lambda$ = {} eV, Ecoul = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.lam,self.Ecoul,self.DMR,self.sys_size),fontsize=10)
+                    else:
+                        plt.title('Field = {} eV, disorder = {} eV, $\lambda$ = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.lam,self.DMR,self.sys_size),fontsize=10)
                 else:
                     plt.title('Field = {} eV, disorder = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.DMR,self.sys_size),fontsize=10)
                 plt.savefig(self.dest_dir+'av_current.png')
@@ -476,7 +495,10 @@ class CurrTempSimulation:
                 plt.xlabel('1/T (1000/K)')
                 plt.ylabel(ylabel)
                 if self.rates == "Marcus":
-                    plt.title('Field = {} eV, disorder = {} eV, $\lambda$ = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.lam,self.DMR,self.sys_size),fontsize=10)
+                    if self.analyse_Ecoul:
+                        plt.title('Field = {} eV, disorder = {} eV, $\lambda$ = {} eV, Ecoul = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.lam,self.Ecoul,self.DMR,self.sys_size),fontsize=10)
+                    else:
+                        plt.title('Field = {} eV, disorder = {} eV, $\lambda$ = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.lam,self.DMR,self.sys_size),fontsize=10)
                 else:
                     plt.title('Field = {} eV, disorder = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.DMR,self.sys_size),fontsize=10)
                 plt.savefig(self.dest_dir+'av_conductivity.png')
@@ -492,7 +514,7 @@ class CurrTempSimulation:
         are shown as bars for each temperature point.
         '''
         if not os.path.exists(self.dest_dir+'conv_analysis.txt'):
-            self.get_act_energy()  
+            self.get_conv_analysis()  
         else:
             n_temp      = len(self.temp)
             conv_data = np.loadtxt(self.dest_dir+'conv_analysis.txt', comments='#', unpack=True)
@@ -532,47 +554,24 @@ class CurrTempSimulation:
                         axes[j,i].legend(loc='lower left')
             if save_to_file:
                 if self.rates == "Marcus":
-                    fig.suptitle('Field={} V/nm, disorder={} eV, $\lambda$ = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.lam,self.DMR,self.sys_size),size=10)
+                    if self.analyse_Ecoul:
+                        fig.suptitle('Field={} V/nm, disorder={} eV, $\lambda$ = {} eV, Ecoul = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.lam,self.Ecoul,self.DMR,self.sys_size),size=10)
+                    else:
+                        fig.suptitle('Field={} V/nm, disorder={} eV, $\lambda$ = {} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.lam,self.DMR,self.sys_size),size=10)
                 else:
                     fig.suptitle('Field={} V/nm, disorder={} eV, DMR = {}, system size = {} nm.'.format(self.field,self.dis,self.DMR,self.sys_size),size=10)
                 plt.savefig(self.dest_dir+'conv_analysis.png')
                 plt.close()
             else:
                 if self.rates == "Marcus":
-                    fig.suptitle('Field = {} V/nm, disorder = {} eV, $\lambda$ = {} eV.'.format(self.field,self.dis,self.lam),size=14)
+                    if self.analyse_Ecoul:
+                        fig.suptitle('Field={} V/nm, disorder={} eV, $\lambda$ = {} eV, Ecoul = {} eV.'.format(self.field,self.dis,self.lam,self.Ecoul),size=10)
+                    else:
+                        fig.suptitle('Field = {} V/nm, disorder = {} eV, $\lambda$ = {} eV.'.format(self.field,self.dis,self.lam),size=14)
                 else:
                     fig.suptitle('Field = {} V/nm, disorder = {} eV.'.format(self.field,self.dis),size=14)
 
-    def get_nonconv_joblist(self, new_joblist_name = 'joblist_non_conv'):
-        '''
-        If simulation has not converged completely write a new joblist 
-        with all temperatures that have not converged in order to restart 
-        the simulation with this new joblist file.
-        '''
-        n_cpus = 1 # hardcoded
-        n_temp = len(self.temp)
-        n_replicas = self.n_r
 
-        # find non converged and non run jobs and save to new joblist  
-        jobfile = open(new_joblist_name+"_run_"+str(n_run), 'w')
-
-        # count_nonconv_jobs = 0
-        for i_t in reversed(range(n_temp)):
-            for i_r in range(n_replicas):
-                outputdir='{}temp_{}/r_{}'.format(self.source_dir,i_t, i_r)
-                if os.path.exists(outputdir):
-                    if not 'final current density:' in open(outputdir+'/output_job_0').read():
-                        for i in range(n_replicas):
-                            jobfile.write("{} JV.run_kmc {} {}\n".format(n_cpus, i_t, i))
-                        break
-                else:
-                    for i in range(n_replicas):
-                        jobfile.write("{} JV.run_kmc {} {}\n".format(n_cpus, i_t, i))
-                    break
-        print("Created new joblist: {}\n".format(new_joblist_name))
-
-        
-   
 
 class CurrFieldSimulation:
     '''
@@ -628,7 +627,7 @@ class CurrFieldSimulation:
             current=[]
             for i_r in range(self.n_r):
                 outputdir=self.source_dir+'f_{}/r_{}'.format(i_f, i_r)
-                if os.path.exists(outputdir):
+                if os.path.exists(outputdir+'/output_job_0'):
                     if 'final current density: ' in open(outputdir+'/output_job_0').read():
                         current_dens=extract.extract_e(outputdir+'/output_job_0', "final current density: ")
                         if current_dens<0:
@@ -686,7 +685,7 @@ class CurrFieldSimulation:
                 for i_r in range(self.n_r):
                     job=str(i_r)
                     outputdir=self.source_dir+'f_{}/r_{}'.format(i_f, i_r)
-                    if os.path.exists(outputdir):
+                    if os.path.exists(outputdir+'/output_job_0'):
                         run_jobs.append(job)
                         run+=1
                         if 'final current density:' in open(outputdir+'/output_job_0').read():
@@ -861,60 +860,113 @@ class CurrSysSizeSimulation:
     activation energy.
     '''
     # TODO: if needed add "Marcus" rates mode with lambda
-    # TODO: as in CurrTempSimulation, collect current data seperately
-    def __init__(self,source_dir='',dest_dir='analysis',sim_data_file='sim_param.txt'):
+    def __init__(self,rates="Miller",source_dir='',dest_dir='analysis',sim_data_file='sim_param.txt'):
         sim_data = np.genfromtxt(sim_data_file,dtype=float)
 
+        self.rates    = rates
         self.n_r      = int(sim_data[0])
         self.field    = sim_data[1]
         self.temp     = sim_data[2]
         self.dis      = sim_data[3]
-        self.DMR      = sim_data[4]
-        self.sys_size = sim_data[5:]
+        if self.rates=="Marcus":
+            self.lam = sim_data[4]
+            self.DMR = sim_data[5]
+            sys_size = sim_data[6:] 
+        else:
+            self.DMR      = sim_data[4]
+            sys_size = sim_data[5:]   
+        # count only sys_sizes not n_cpus
+        self.sys_size = []
+        for i in sys_size:
+            if i > 10.0:
+                    (self.sys_size).append(i)
+        print(self.sys_size)
 
         self.source_dir = source_dir
-        self.dest_dir   = dest_dir
+        self.dest_dir   = dest_dir+"/"
 
         if not os.path.isdir(dest_dir):
             os.makedirs(dest_dir)
-        shutil.copyfile(sim_data_file,dest_dir+'/'+sim_data_file)
+        shutil.copyfile(sim_data_file,self.dest_dir+sim_data_file)
 
         self.current  = None
         self.std_current     = None
 
+    def collect_current_data(self):
+        '''
+        Extract final current density from outputfile 'output_job_0' from 
+        converged jobs for every replica. If no final current is found, 
+        current is set to 0.
+        The outputfile 'J_temp_*.txt' contains (in columns): 
+        - replica number
+        - final current density values (A/m^2)
+        
+        '''
+        n_sys      = len(self.sys_size)
+        current_data = np.zeros((n_sys,self.n_r))
+        if not os.path.isdir(self.dest_dir+'current_data'):
+            os.makedirs(self.dest_dir+'current_data')
+        for i_s in range(n_sys):
+            for i_r in range(self.n_r):
+                outputdir=self.source_dir+'sys_{}/r_{}'.format(i_s, i_r)
+                if os.path.exists(outputdir+'/output_job_0'):
+                    if 'final current density: ' in open(outputdir+'/output_job_0').read():
+                        current_dens=extract.extract_e(outputdir+'/output_job_0', "final current density: ")
+                        if current_dens<0:
+                            print("Negative current density encountered at {}: {} A/m^2.\n Not counted to current densities.".format(outputdir,current_dens))
+                        else:
+                            current_data[i_s,i_r] = current_dens
+            with open(self.dest_dir+'current_data/curr_sys_{}.txt'.format(i_s), 'w') as f: 
+                    f.write("# Raw current data for sys_{} (T={} K)\n".format(i_s,self.sys_size[i_s]))
+                    if self.rates == "Marcus":
+                        f.write('# Temp. = {} K, Field = {} eV, disorder = {} eV, lambda = {} eV, DMR = {}\n'.format(self.temp, self.field,self.dis,self.lam, self.DMR))
+                    else:
+                        f.write('# Temp. = {} K, Field = {} eV, disorder = {} eV, DMR = {}\n'.format(self.temp, self.field,self.dis,self.DMR))
+                    f.write('#\n# Replica Nr.     Current density(A/m$^2$)\n')
+                    for i_r in range(self.n_r):
+                        f.write('  {0:<13}   {1:<1}\n'.format(i_r, current_data[i_s,i_r]))
+            f.close()
 
     def get_av_current(self):
+        '''
+        Average final current density over all replicas for each system size.
+        Get data from '/current_data'.
+        The outputfile 'current.txt' contains (in columns): 
+        - system sizes (nm)
+        - average current density values (A/m^2)
+        - standard error values of current density (A/m^2)
+        - logarithmic std. error of current density (A/m^2) 
+          (to use for errorbars in logarithmic plots)
+        
+        '''
+        
         n_sys      = len(self.sys_size)
         av_current  = np.zeros(n_sys)
         std_current = np.zeros(n_sys)
         log_std_current = np.zeros(n_sys)
         for i_s in range(n_sys):
-            current=[]
-            for i_r in range(self.n_r):
-                outputdir=self.source_dir+'sys_{}/r_{}'.format(i_s, i_r)
-                if os.path.exists(outputdir):
-                    if 'final current density: ' in open(outputdir+'/output_job_0').read():
-                        current_dens=extract.extract_e(outputdir+'/output_job_0', "final current density: ")
-                        if current_dens<0:
-                            print("Negative current density encountered at {}: {} A/m^2.\n Not counted into average current density.".format(outputdir,current_dens))
-                        else:
-                            current.append(current_dens)
-
+            if not os.path.exists(self.dest_dir+'current_data/curr_sys_{}.txt'.format(i_s)):
+                self.collect_current_data()
+            current = (np.loadtxt(self.dest_dir+'current_data/curr_sys_{}.txt'.format(i_s)))[:,1]
+            current = current[np.nonzero(current)]
+            # Calculate average current
             if len(current)>0:
                 av_current[i_s]  = stat.gmean(current)
-                std_current[i_s] = np.std(current)/np.sqrt(len(current))
-                log_std_current[i_s] = np.std(np.log(current))/np.sqrt(len(current))
-
+                std_current[i_s] = np.std(current)/np.sqrt(np.count_nonzero(current))
+                log_std_current[i_s] = np.std(np.log(current))/np.sqrt(np.count_nonzero(current))
+        
         self.current = av_current
         self.std_current = [std_current,log_std_current]
         # Write current, temperature, DMR to txt file
-        if not os.path.isdir(self.dest_dir+'data'):
-            os.makedirs(self.dest_dir+'data')
         with open(self.dest_dir+'av_current.txt', 'w') as f:
-                f.write('# Field = {} eV, disorder = {} eV, DMR = {}, temperature = {} K\n'.format(self.field,self.dis,self.DMR,self.temp))
-                f.write('# System size(nm)   Av. Current density(A/m$^2$)   Normal std. error(A/m$^2$)   Log. std. error(A/m$^2$)\n')
-                for i_s in range(n_sys):
-                    f.write('{0:<16}   {1:<26}   {2:<24}   {3:<30}\n'.format(self.sys_size[i_s], self.current[i_s], self.std_current[0][i_s], self.std_current[1][i_s]))
+            f.write("# Average current and related values.\n")
+            if self.rates == "Marcus":
+                f.write('# Temp. = {} K, Field = {} eV, disorder = {} eV, lambda = {} eV, DMR = {}\n'.format(self.temp, self.field,self.dis,self.lam, self.DMR))
+            else:
+                f.write('# Temp. = {} K, Field = {} eV, disorder = {} eV, DMR = {}\n'.format(self.temp,self.field,self.dis,self.DMR))
+            f.write('# System size(nm)   Av. Current density(A/m$^2$)   Normal std. error(A/m$^2$)   Log. std. error(A/m$^2$)\n')
+            for i_s in range(n_sys):
+                f.write('  {0:<14}   {1:<28}   {2:<26}   {3:<1}\n'.format(self.sys_size[i_s], self.current[i_s], self.std_current[0][i_s], self.std_current[1][i_s]))
         f.close()
     
     def get_conv_analysis(self):
@@ -941,7 +993,7 @@ class CurrSysSizeSimulation:
                 for i_r in range(self.n_r):
                     job=str(i_r)
                     outputdir=self.source_dir+'sys_{}/r_{}'.format(i_s, i_r)
-                    if os.path.exists(outputdir):
+                    if os.path.exists(outputdir+'/output_job_0'):
                         run_jobs.append(job)
                         run+=1
                         if 'final current density:' in open(outputdir+'/output_job_0').read():
@@ -973,7 +1025,7 @@ class CurrSysSizeSimulation:
                         std_conv_time[i_s]=0.0
                 else:
                     convergence[i_s]=0         # set convergence to 0 if no job is run                        
-                analysis_data.append(('{0:<3}   {1:<2}   {2:<2}   {3:<2}   {4:<2}   {5:<6}   {6:<20}   {7:<20}   {8:<20}   {9:<20}\n'.format( self.sys_size[i_s],
+                analysis_data.append(('  {0:<14}   {1:<4}   {2:<7}   {3:<6}   {4:<11}   {5:<12}   {6:<19}   {7:<20}   {8:<20}   {9:<20}\n'.format( self.sys_size[i_s],
                                                                                                     len(run_jobs),
                                                                                                     len(nonrun_jobs),
                                                                                                     len(conv_jobs), 
@@ -984,19 +1036,25 @@ class CurrSysSizeSimulation:
                                                                                                     min_conv_time[i_s],
                                                                                                     std_conv_time[i_s]
                                                                                                  )))
-        if not os.path.isdir(self.dest_dir+'data'):
-            os.makedirs(self.dest_dir+'data')
         with open(self.dest_dir+'conv_analysis.txt', 'w') as f:
             f.write('# Total number of jobs: {}\n'.format(n_sys*self.n_r))
-            f.write('# Field: {} eV, Temperature: {} K, Disorder: {} eV, Dop.fract.: {} %\n'.format(self.field,
-                                                                                                    self.temp,
-                                                                                                    self.dis, 
-                                                                                                    100.0*self.DMR))
+            if self.rates == "Marcus":
+                f.write('# Temp.: {} K, Field: {} eV,  Disorder: {} eV, Lambda = {} eV, Dop.fract.: {} %\n'.format(self.temp,
+                                                                                                                   self.field,
+                                                                                                                   self.dis,
+                                                                                                                   self.lam, 
+                                                                                                                   100.0*self.DMR))
+            else:
+                f.write('# Temp.: {} K, Field: {} eV,  Disorder: {} eV, Dop.fract.: {} %\n'.format(self.temp,
+                                                                                               self.field,
+                                                                                               self.dis, 
+                                                                                               100.0*self.DMR))
+
             f.write('# Number of replicas for each settings configuration: {} \n'.format(self.n_r))             
             f.write('# Overview:   {} % of jobs started to run ({}).\n'.format(100.0*run/n_sys/self.n_r,run))
             if run>0:
                 f.write('#             {} % of run jobs have converged ({}). \n \n'.format(round(100.0*conv/run,1),conv))                
-            f.write('# System size(nm)     Number of jobs: run    non-run     conv.    non-conv.     Conv.(%)     Conv. time: Average(h)     Maximum(h)     Minimum(h)     Standarddev.(h)\n')
+            f.write('#\n# System size (nm)   run    non-run   conv.    non-conv.     Conv.(%)  Conv. time: Average(h)     Maximum(h)     Minimum(h)     Standarddev.(h)\n')
             for i_s in range(n_sys): f.write(analysis_data[i_s])           
         f.close()
 
@@ -1040,9 +1098,13 @@ class CurrSysSizeSimulation:
                 ylabel = 'J (A/m$^2$)'
             if save_to_file:
                 plt.xlabel('system size (nm)')
-                plt.ylim(y_logmin,y_logmax)
+                if plot_log:
+                    plt.ylim(y_logmin,y_logmax)
                 plt.ylabel(ylabel)
-                plt.title('Field = {} eV, temperature = {} K, disorder = {} eV, DMR = {}.'.format(self.field,self.temp,self.dis,self.DMR,self.sys_size),fontsize=10)
+                if self.rates == "Marcus":
+                    plt.title('Temp. = {} K, Field = {} eV, disorder = {} eV, $\lambda$ = {} eV, DMR = {}.'.format(self.temp,self.field,self.dis,self.lam,self.DMR),fontsize=10)
+                else:
+                    plt.title('Temp. = {} K, Field = {} eV, disorder = {} eV, DMR = {}.'.format(self.temp,self.field,self.dis,self.DMR),fontsize=10)
                 plt.savefig(self.dest_dir+'av_current.png')
                 plt.close()
 
@@ -1089,13 +1151,14 @@ class CurrSysSizeSimulation:
                 if not save_to_file:
                     axes[j,i].legend(loc='lower left')
         if save_to_file:
-            fig.suptitle('Field={} V/nm, temperature = {} K, disorder = {} eV, DMR = {}.'.format(self.field,self.temp,self.dis,self.DMR),size=10)
-            if not os.path.isdir(self.dest_dir+'plots'):
-                os.makedirs(self.dest_dir+'plots')
+            if self.rates == "Marcus":
+                fig.suptitle('Temp. = {} K, Field={} V/nm,  disorder = {} eV, $\lambda$ = {} eV, DMR = {}.'.format(self.temp,self.field,self.dis,self.lam,self.DMR),size=10)
+            else:
+                fig.suptitle('Temp. = {} K, Field={} V/nm,  disorder = {} eV, DMR = {}.'.format(self.temp,self.field,self.dis,self.DMR),size=10)
             plt.savefig(self.dest_dir+'conv_analysis.png')
             plt.close()
         else:
-            fig.suptitle('Field = {} V/nm, temperature = {} K, disorder = {} eV.'.format(self.field,self.temp,self.dis),size=14)
+            fig.suptitle('Temp. = {} K, Field = {} V/nm, disorder = {} eV.'.format(self.temp,self.field,self.dis),size=14)
 
 class CurrTempDMRset:
     '''
@@ -1104,7 +1167,7 @@ class CurrTempDMRset:
     The directory must contain subdirectories in the format DMR_*/temp_*/r_*
     and the J(T)-sets have to consist of the same sim. parameters.
     '''
-    def __init__(self,rates="Miller",source_dir='',dest_dir='analysis'):
+    def __init__(self,rates="Miller",analyse_Ecoul=False,source_dir='',dest_dir='analysis'):
         '''
         Initialize attributes of DMRset: number of replicas, field, 
         disorder, doping molar ratios (DMRs), system sizes, temperatures.
@@ -1123,14 +1186,17 @@ class CurrTempDMRset:
         else:
             print(self.list_DMR_dirs)
             self.rates = rates
+            self.analyse_Ecoul = analyse_Ecoul
             for i_dmr,dir in enumerate(self.list_DMR_dirs):
-                dmr_sim = CurrTempSimulation(rates = self.rates, source_dir=dir+'/',dest_dir='analysis/'+dir)
+                dmr_sim = CurrTempSimulation(rates = self.rates, analyse_Ecoul=self.analyse_Ecoul, source_dir=dir+'/',dest_dir='analysis/'+dir)
                 if i_dmr==0:
                     self.n_r      = dmr_sim.n_r
                     self.field    = dmr_sim.field
                     self.dis      = dmr_sim.dis
                     if self.rates == "Marcus":
                         self.lam = dmr_sim.lam
+                        if self.analyse_Ecoul:
+                            self.Ecoul = dmr_sim.Ecoul
                     self.DMR      = [dmr_sim.DMR]
                     self.sys_size = [dmr_sim.sys_size]
                     self.temp     = dmr_sim.temp
@@ -1166,6 +1232,8 @@ class CurrTempDMRset:
         sim_data.write("# disorder\n{}\n".format(self.dis))
         if self.rates == "Marcus":
             sim_data.write("# lambda\n{}\n".format(self.lam))
+            if self.analyse_Ecoul:
+                sim_data.write("# Ecoul\n{}\n".format(self.Ecoul))
         sim_data.write("# doping ratios\n")
         for dmr in self.DMR: sim_data.write("{}\n".format(dmr))
         sim_data.write("# system size\n")
@@ -1179,7 +1247,7 @@ class CurrTempDMRset:
         DMR_dir = self.list_DMR_dirs
         curr_dmr_colors  = self.colorset
         for i_dmr,dir in enumerate(DMR_dir):
-            dmr_sim = CurrTempSimulation(rates = self.rates, source_dir=dir+'/',dest_dir=self.dest_dir+dir)
+            dmr_sim = CurrTempSimulation(rates = self.rates, analyse_Ecoul= self.analyse_Ecoul, source_dir=dir+'/',dest_dir=self.dest_dir+dir)
             if not os.path.exists(self.dest_dir+dir+"/av_current.txt"):    
                 dmr_sim.get_av_current()
             dmr_sim.plot_av_current(Tlim_low,Tlim_high,Jlim_low,Jlim_high, plot_log, errorbar, only_conv, curr_dmr_colors[i_dmr], False)
@@ -1189,7 +1257,10 @@ class CurrTempDMRset:
             ylabel = 'J (A/m$^2$)'
         plt.xlabel('1/T (1000/K)')
         if self.rates == "Marcus":
-            plt.title('Field = {} V/nm, disorder = {} eV, $\lambda$ = {} eV.'.format(self.field,self.dis,self.lam),fontsize=14)        
+            if self.analyse_Ecoul:  
+                plt.title('Field = {} V/nm, disorder = {} eV, $\lambda$ = {} eV, Ecoul = {} eV.'.format(self.field,self.dis,self.lam, self.Ecoul),fontsize=14)   
+            else:
+                plt.title('Field = {} V/nm, disorder = {} eV, $\lambda$ = {} eV.'.format(self.field,self.dis,self.lam),fontsize=14)      
         else:
             plt.title('Field = {} V/nm, disorder = {} eV.'.format(self.field,self.dis),fontsize=14)
         plt.ylabel(ylabel)
@@ -1201,21 +1272,24 @@ class CurrTempDMRset:
         DMR_dir = self.list_DMR_dirs
         curr_dmr_colors  = self.colorset
         for i_dmr,dir in enumerate(DMR_dir):
-            dmr_sim = CurrTempSimulation(rates = self.rates, source_dir=dir+'/',dest_dir=self.dest_dir+dir)
+            dmr_sim = CurrTempSimulation(rates = self.rates, analyse_Ecoul= self.analyse_Ecoul, source_dir=dir+'/',dest_dir=self.dest_dir+dir)
             if not os.path.exists(self.dest_dir+dir+"/conductivity.txt"):    
                 dmr_sim.get_av_conductivity()
             dmr_sim.plot_av_conductivity( plot_log, errorbar, only_conv, curr_dmr_colors[i_dmr], False)
         if plot_log:
-            ylabel = 'log $\sigma$ (A/eV/m)'
+            ylabel = 'log $\sigma$ (S/m)'
         else:
-            ylabel = '$\sigma$ (A/eV/m)'
+            ylabel = '$\sigma$ (S/m)'
         if log10:
             plt.yscale("log")
         plt.xlabel('1/T (1000/K)')
         plt.ylabel(ylabel)
         plt.legend()
         if self.rates == "Marcus":
-            plt.title('Field = {} V/nm, disorder = {} eV, $\lambda$ = {} eV.'.format(dmr_sim.field,dmr_sim.dis,self.lam),fontsize=14)
+            if self.analyse_Ecoul:  
+                plt.title('Field = {} V/nm, disorder = {} eV, $\lambda$ = {} eV, Ecoul = {} eV.'.format(self.field,self.dis,self.lam, self.Ecoul),fontsize=14)   
+            else:
+                plt.title('Field = {} V/nm, disorder = {} eV, $\lambda$ = {} eV.'.format(self.field,self.dis,self.lam),fontsize=14)      
         else:
             plt.title('Field = {} V/nm, disorder = {} eV.'.format(dmr_sim.field,dmr_sim.dis),fontsize=14)
         plt.savefig(self.dest_dir+'conductivity_DMR_set.png')
@@ -1232,7 +1306,7 @@ class CurrTempDMRset:
         curr_dmr_colors  = self.colorset
         
         for i_dmr, dir in enumerate(DMR_dir):
-            dmr_sim = CurrTempSimulation(rates = self.rates, source_dir=dir+'/',dest_dir=self.dest_dir+dir)
+            dmr_sim = CurrTempSimulation(rates = self.rates, analyse_Ecoul= self.analyse_Ecoul, source_dir=dir+'/',dest_dir=self.dest_dir+dir)
             if not os.path.exists(self.dest_dir+dir+"/conv_analysis.txt"):    
                 dmr_sim.get_conv_analysis()
             if i_dmr == 0:
@@ -1258,10 +1332,10 @@ class CurrTempDMRset:
                 old_Tlim_high = (np.loadtxt(self.dest_dir+dir+"/act_energy/lin_fit_data.txt",unpack=True))[4]
                 # check if linear fit was made of the right T range
                 if old_Tlim_low != Tlim_low or old_Tlim_high != Tlim_high:
-                    dmr_sim = CurrTempSimulation(rates = self.rates, source_dir=dir+'/',dest_dir=self.dest_dir+dir)
+                    dmr_sim = CurrTempSimulation(rates = self.rates, analyse_Ecoul= self.analyse_Ecoul, source_dir=dir+'/',dest_dir=self.dest_dir+dir)
                     dmr_sim.get_act_energy(Tlim_low=Tlim_low,Tlim_high=Tlim_high)      
             else:
-                dmr_sim = CurrTempSimulation(rates = self.rates, source_dir=dir+'/',dest_dir=self.dest_dir+dir)
+                dmr_sim = CurrTempSimulation(rates = self.rates, analyse_Ecoul= self.analyse_Ecoul, source_dir=dir+'/',dest_dir=self.dest_dir+dir)
                 dmr_sim.get_act_energy(Tlim_low=Tlim_low,Tlim_high=Tlim_high)
                 if not os.path.exists(self.dest_dir+dir+"/act_energy/lin_fit_data.txt"):
                     print("Activation energy could not be determined for DMR_{}.".format(i_dmr))
@@ -1269,8 +1343,11 @@ class CurrTempDMRset:
             act_energy[i_dmr] = (np.loadtxt(self.dest_dir+dir+"/act_energy/lin_fit_data.txt",unpack=True))[5]          
         if np.count_nonzero(act_energy)>0.0:
             with open(self.dest_dir+"act_energy/act_energy_DMR_set.txt",'w') as f:
-                if self.rates == "Marcus":    
-                    f.write('# Field = {} V/nm, disorder = {} eV, lambda = {} eV\n'.format(self.field,self.dis,self.lam))
+                if self.rates == "Marcus":   
+                    if self.analyse_Ecoul:
+                        f.write('# Field = {} V/nm, disorder = {} eV, lambda = {} eV, Ecoul = {} eV\n'.format(self.field,self.dis,self.lam,self.Ecoul))
+                    else:
+                        f.write('# Field = {} V/nm, disorder = {} eV, lambda = {} eV\n'.format(self.field,self.dis,self.lam))
                 else:    
                     f.write('# Field = {} V/nm, disorder = {} eV\n'.format(self.field,self.dis))
                 f.write("# T. range for lin. fit of log J(1000/T): {} - {} K\n".format(Tlim_low,Tlim_high))    
@@ -1296,13 +1373,66 @@ class CurrTempDMRset:
             plt.xscale("log")
             plt.ylabel('$E_A$ (meV)')
             if self.rates == "Marcus":
-                plt.title('Field = {} V/nm, disorder = {} eV, $\lambda$ = {} eV'.format(self.field,self.dis, self.lam))
+                if self.analyse_Ecoul:  
+                    plt.title('Field = {} V/nm, disorder = {} eV, $\lambda$ = {} eV, Ecoul = {} eV.'.format(self.field,self.dis,self.lam, self.Ecoul),fontsize=14)                    
+                else:
+                    plt.title('Field = {} V/nm, disorder = {} eV, $\lambda$ = {} eV'.format(self.field,self.dis, self.lam),fontsize=14)
             else:
-                plt.title('Field = {} V/nm, disorder = {} eV'.format(self.field,self.dis))
+                plt.title('Field = {} V/nm, disorder = {} eV'.format(self.field,self.dis),fontsize=14)
             plt.savefig(self.dest_dir+'act_energy/act_energy_DMR_set.png')
             plt.close()        
         else:
             print("Activation energy vs. DMR cannot be plotted.")
+
+    def get_nonconv_joblist(self):
+        '''
+        If simulation has not converged completely write a new joblist 
+        with all temperatures that have not converged in order to restart 
+        the simulation with this new joblist file.
+        '''
+        DMR_dir = self.list_DMR_dirs 
+        n_temp  = len(self.temp) 
+        if not os.path.isdir(self.dest_dir+'conv_analysis.txt'):
+            self.plot_conv_analysis()      
+        for i_dmr, dir in enumerate(DMR_dir):
+            converged_jobs = np.loadtxt(self.dest_dir+dir+"/conv_analysis.txt",unpack=True)[3]
+            nonconv_jobs = []
+            for i_t in range(n_temp):
+                if converged_jobs[i_t] != self.n_r:
+                    n_cpus = int(np.loadtxt(self.source_dir+"joblist_DMR_"+str(i_dmr),usecols=0)[0])
+                    run_kmc_name = np.loadtxt(self.source_dir+"joblist_DMR_"+str(i_dmr),usecols=1,dtype=str)[0]
+                    for i_r in range(self.n_r):
+                        nonconv_jobs.append("{} {} {} {} {}\n".format(n_cpus, run_kmc_name, i_dmr, i_t, i_r))
+                    print("DMR_{}/temp_{} not fully converged. Moving files to non_conv".format(i_dmr,i_t)) 
+                    if not os.path.exists(self.source_dir+"non_conv"):
+                        os.makedirs(self.source_dir+"non_conv")   
+                    try:
+                        shutil.move(self.source_dir+"DMR_{}/temp_{}".format(i_dmr,i_t),self.source_dir+"non_conv/DMR_{}/temp_{}".format(i_dmr,i_t))
+                    except:
+                        print("Already moved")
+                    
+            if len(nonconv_jobs) != 0:
+                print("new_joblist_DMR_{} and new .sh file are being generated.".format(i_dmr))
+
+                new_joblist = open(self.source_dir+"new_joblist_DMR_"+str(i_dmr),'w')
+                for line in nonconv_jobs: new_joblist.write(line)
+                new_joblist.close()
+
+                old_sh_name = glob.glob(self.source_dir+"submit_EA_*DMR_{}.sh".format(i_dmr))[0]
+                old_sh_file = open(old_sh_name,'r')
+                sh_data = old_sh_file.readlines()
+                old_sh_file.close()
+
+                sh_data[-1] = sh_data[-1].replace("joblist","new_joblist")
+                new_sh_name = old_sh_name.replace("submit","new_submit")
+                new_sh_file = open(new_sh_name,"w")
+                for line in sh_data:
+                    new_sh_file.write(line)
+                new_sh_file.close()
+
+            
+
+
 
 class CurrFieldDMRset:
     '''
