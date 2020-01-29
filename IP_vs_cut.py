@@ -19,9 +19,14 @@ import time
 def main():
 
     #  I/O
+
+    my_mol_num = 0
+
+
     my_pattern_short = "_A_shell"
     my_out_file_name = "Analysis/EAIP/eaip_7b043a1428ff586ba119947b48219969_IP_summary.yml"
     mol_idxs = [775, 875]
+
 
     #  prepare
     folders = return_target_folders(my_pattern_short)
@@ -43,37 +48,117 @@ def main():
 ############ TEST
     fid = open("all_energies.txt", "w")
     n_r = len(my_radii_updated)
-    n_r = 2
+    n_r = 4
 
-    IP_per_step_per_R = np.zeros([7, n_r])
+    ip_sd_stepwise = np.zeros([7, n_r])
+    ip_fe_stepwise = np.zeros([7, n_r])
+    ip_fe_final = np.zeros(n_r) # for mol_idx = 775
+    ip_sd_final = np.zeros(n_r)
 
+    ############################################### 0 ####################
     for i in range(n_r):
         fid.write("R = {} A\n".format(my_radii_updated))
         for step_num in range(7):
             my_time = time.time()
             my_ip = IP(updated_folders[i], my_radii_updated[i])
             my_ip.extract_IP()
-            my_ip.extract_IP_stepwise(num_step=step_num)
+            my_ip.extract_IP_stepwise(num_step=step_num, mol_idx = mol_idxs[my_mol_num])
             #print("Energy Charged = {} eV".format(my_ip.ip_charged))
             #print("Energy Uncharged = {} eV".format(my_ip.ip_uncharged))
             #print("Energy Charged = {} eV".format(my_ip.ip_charged))
             print("step = {}".format(step_num))
-            print("IP = {} eV".format(my_ip.ip_dif))
-            IP_per_step_per_R[step_num, i] = my_ip.ip_dif
-            fid.write("Charged = {} eV\tUncharged = {} eV\tIP = {} eV \n".format(my_ip.ip_charged, my_ip.ip_charged, my_ip.ip_dif))
+            print("IP s-d= {} eV".format(my_ip.ip_sd_stepwise))
+            print("IP full_env = {} eV".format(my_ip.ip_fe_stepwise))
+
+            ip_sd_stepwise[step_num, i] = my_ip.ip_sd_stepwise
+            ip_fe_stepwise[step_num, i] = my_ip.ip_fe_stepwise
+
+            fid.write("Charged = {} eV\tUncharged = {} eV\tIP = {} eV \n".format(my_ip.ip_charged, my_ip.ip_charged, my_ip.ip_sd_stepwise))
+        ip_sd_final[i] = my_ip.raw_data[my_mol_num].single_delta
+        ip_fe_final[i] = my_ip.raw_data[my_mol_num].full_env
         print("R = {} A.\tTime: {} sec".format(my_radii_updated[i], time.time() - my_time))
+    ############################################### 0 ######################
+
+    # plt.plot(range(7), ip_sd_stepwise, marker='o', label='single-delta')
+    # plt.plot(6*np.ones(n_r), -ip_sd_final, marker='*', label='true sd', markersize=12)
+    plt.plot(range(7), ip_fe_stepwise, marker='x', label='full env + V_C')
+    plt.plot(6*np.ones(n_r), -ip_fe_final, marker='*', label='true fe')
+
+
+    ############################################### 1 ####################
+    my_mol_num = 1
+    for i in range(n_r):
+        fid.write("R = {} A\n".format(my_radii_updated))
+        for step_num in range(7):
+            my_time = time.time()
+            my_ip = IP(updated_folders[i], my_radii_updated[i])
+            my_ip.extract_IP()
+            my_ip.extract_IP_stepwise(num_step=step_num, mol_idx = mol_idxs[my_mol_num])
+            #print("Energy Charged = {} eV".format(my_ip.ip_charged))
+            #print("Energy Uncharged = {} eV".format(my_ip.ip_uncharged))
+            #print("Energy Charged = {} eV".format(my_ip.ip_charged))
+            print("step = {}".format(step_num))
+            print("IP s-d= {} eV".format(my_ip.ip_sd_stepwise))
+            print("IP full_env = {} eV".format(my_ip.ip_fe_stepwise))
+
+            ip_sd_stepwise[step_num, i] = my_ip.ip_sd_stepwise
+            ip_fe_stepwise[step_num, i] = my_ip.ip_fe_stepwise
+
+            fid.write("Charged = {} eV\tUncharged = {} eV\tIP = {} eV \n".format(my_ip.ip_charged, my_ip.ip_charged, my_ip.ip_sd_stepwise))
+        ip_sd_final[i] = my_ip.raw_data[my_mol_num].single_delta
+        ip_fe_final[i] = my_ip.raw_data[my_mol_num].full_env
+        print("R = {} A.\tTime: {} sec".format(my_radii_updated[i], time.time() - my_time))
+    ############################################### 1 ######################
+
+
 
     print("nothing1")
     fid.close()
-    print(IP_per_step_per_R)
+    print(ip_sd_stepwise)
 
-    # IP stepwise
-    plt.plot(range(7), IP_per_step_per_R, marker='o')
+    # IP stepwise sd
+    # plt.plot(range(7), ip_sd_stepwise, marker='o', label='single-delta')
+    # #plt.plot(range(7), ip_fe_stepwise, marker='x', label='full env + V_C')
+    # #plt.plot(6*np.ones(n_r), -ip_fe_final, marker='*', label='true fe')
+    # plt.plot(6*np.ones(n_r), -ip_sd_final, marker='*', label='true sd', markersize=12)
+    # plt.ylabel("IP, eV")
+    # plt.xlabel("step number")
+    # plt.legend()
+    # plt.ylim([5,6.5])
+    # plt.savefig("stepwise_{}.png".format(mol_idxs[my_mol_num]))
+    # plt.close()
+    #
+
+    # IP fe
+    # plt.plot(range(7), ip_sd_stepwise, marker='o', label='single-delta')
+    plt.plot(range(7), ip_fe_stepwise, marker='x', label='full env + V_C')
+    plt.plot(6*np.ones(n_r), -ip_fe_final, marker='*', label='true fe')
+    # plt.plot(6*np.ones(n_r), -ip_sd_final, marker='*', label='true sd')
     plt.ylabel("IP, eV")
     plt.xlabel("step number")
-    plt.savefig("stepwise.png")
+    plt.legend()
+    plt.ylim([5,6.5])
+    plt.savefig("stepwise_fe_{}.png".format(mol_idxs[my_mol_num]))
     plt.close()
+
+
+    # IP stepwise
+    # plt.plot(range(7), ip_sd_stepwise, marker='o', label='single-delta')
+    # plt.plot(range(7), ip_fe_stepwise, marker='x', label='full env + V_C')
+    # plt.plot(6*np.ones(n_r), -ip_fe_final, marker='*', label='true fe')
+    # plt.plot(6*np.ones(n_r), -ip_sd_final, marker='*', label='true sd')
     #
+    # plt.ylabel("IP, eV")
+    # plt.yscale('log')
+    # plt.xlabel("step number")
+    # plt.legend()
+    # plt.ylim([5,6.5])
+    # plt.savefig("stepwise_log_{}.png".format(mol_idxs[my_mol_num]))
+    # plt.close()
+    #
+    np.savetxt('ip_sd_stepwise.txt', ip_sd_stepwise)
+    np.savetxt('ip_fe_stepwise.txt', ip_fe_stepwise)
+
 
     exit()
 
@@ -252,6 +337,8 @@ class IP:
         self.yaml = yaml.load(fid)
         self.full_e_uncharged = 0
         self.full_e_charged = 0
+        self.ip_sd_stepwise = 0
+        self.ip_fe_stepwise = 0
 
 
 
@@ -268,26 +355,30 @@ class IP:
             c = self.yaml["raw_data"][mol_idx]["single_delta"]
             self.raw_data.append(IPMethods(a, b, c))
 
-    def extract_IP_stepwise(self, num_step):
+    def extract_IP_stepwise(self, num_step, mol_idx):
         # charged
-        fid = open(self.path+'/quantumpatch_runtime_files/Mol_775_C_1/{}/energies.ene.yml'.format(num_step+9), 'r')
+        fid = open(self.path+'/quantumpatch_runtime_files/Mol_{}_C_1/{}/energies.ene.yml'.format(mol_idx, num_step+9), 'r')
         self.a1 = yaml.load(fid)
         fid.close()
-        self.ip_charged = self.a1["775"]["total"]
+        self.ip_charged = self.a1[str(mol_idx)]["total"]
         # uncharged
         fid = open(self.path+'/quantumpatch_runtime_files/uncharged/{}/energies.ene.yml'.format(num_step+1), 'r')
         self.a2 = yaml.load(fid)
         fid.close()
-        self.ip_uncharged = self.a2["775"]["total"]
+        self.ip_uncharged = self.a2[str(mol_idx)]["total"]
 
         for mol_num in list(self.a1.keys()):
             self.full_e_charged += self.a1[mol_num]["total"]
             self.full_e_uncharged += self.a2[mol_num]["total"]
-            self.full_e_diff = self.a1[mol_num]["total"] - self.a2[mol_num]["total"]
-            print('mol_num', mol_num)
-            print("e_diff charged/uncgarged", self.full_e_diff)
-        self.ip_dif = self.ip_charged - self.ip_uncharged
-        self.ip_fe_stepwise = self.full_e_charged - self.full_e_uncharged
+            diff = self.a1[mol_num]["total"] - self.a2[mol_num]["total"]
+            if np.abs(diff) > 100:
+                self.ip_fe_stepwise += 0  # if DFTB
+            else:
+                self.ip_fe_stepwise += diff
+            #print('mol_num', mol_num)
+            #print("e_diff charged/uncgarged", self.full_e_diff)
+        self.ip_sd_stepwise = self.ip_charged - self.ip_uncharged
+        #self.ip_fe_stepwise = self.full_e_charged - self.full_e_uncharged
         print("I am done")
 
 
