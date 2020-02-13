@@ -23,24 +23,43 @@ def main():
     folder = 'results/material/energy_levels/DataFigure1/'
 
     V_C = np.loadtxt(folder + 'V_coul.dat')
-    x = np.loadtxt(folder+'dist.dat')
+    IP = np.loadtxt('results/material/energy_levels/IP_sd.dat')  # IP s-d
+    x = np.loadtxt(folder+'dist.dat') # COG
     xxx = np.loadtxt(folder+'xxx.dat')
-    #nad = np.loadtxt('results/material/energy_levels/id_file_distance_data.dat')[:,3]
+    nad = np.loadtxt('results/material/energy_levels/id_file_distance_data.dat')[:,3] #  nearest atom distance
 
-    coef = -14.3  # eV/nm
 
-    make_scatter_plot_4VC(
-        [[xxx, coef / xxx / 2], [xxx, coef / xxx / 3], [xxx, coef / xxx / 4], [x, V_C]],
-        "Figure_4_SID_paper.png",
+    z_nad = np.polyfit(nad, IP, 1)
+    p_nad = np.poly1d(z_nad)
+    IP_nad = p_nad(xxx)
+
+    z_cog = np.polyfit(x, IP, 1)
+    p_cog = np.poly1d(z_cog)
+    IP_cog = p_cog(xxx)
+
+
+    make_scatter_plot_4VC([[nad, IP], [x, IP], [xxx, IP_nad], [xxx, IP_cog]],
+        "Figure_5_SID_paper.png",
         "scatter",
-        labels=["$\epsilon$ = 2", "$\epsilon$ = 3", "$\epsilon$ = 4",
-                "d-m correction"],
+        labels=["nad", "cog", "nad", "cog"],
         xlabel='Pair distance [A]',
-        ylabel='V_coulomb [eV]',
-        style=['-', '-', '-', '.'],
-        color_dict=['grey', 'C3', 'grey', 'C3'],
-        ylim=[-1.5, 0],
+        ylabel='IP [eV]',
+        style=['o', 'o', '-', '-'],
+        color_dict=['C3', 'C4', 'C3', 'C4'],
+        #ylim=[-1.5, 0],
         xlim=[0, 30])
+
+    make_scatter_plot_4VC([[x, IP], [xxx, IP_cog]],
+        "Figure_5_SID_paper_cog.png",
+        "scatter",
+        labels=["cog","trend"],
+        xlabel='Pair distance [A]',
+        ylabel='IP [eV]',
+        style=['o', '-'],
+        color_dict=['C0', 'C0'],
+        #ylim=[-1.5, 0],
+        xlim=[0, 30])
+
 
 # FUNCTIONS
 

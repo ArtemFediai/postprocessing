@@ -25,20 +25,19 @@ def main():
     V_C = np.loadtxt(folder + 'V_coul.dat')
     x = np.loadtxt(folder+'dist.dat')
     xxx = np.loadtxt(folder+'xxx.dat')
-    #nad = np.loadtxt('results/material/energy_levels/id_file_distance_data.dat')[:,3]
+    nad = np.loadtxt('results/material/energy_levels/id_file_distance_data.dat')[:,3] #  nearest atom distance
 
     coef = -14.3  # eV/nm
 
     make_scatter_plot_4VC(
-        [[xxx, coef / xxx / 2], [xxx, coef / xxx / 3], [xxx, coef / xxx / 4], [x, V_C]],
+        [[xxx, coef / xxx / 2], [xxx, coef / xxx / 3], [xxx, coef / xxx / 4], [x, V_C], [nad, V_C], [0.5*(x + nad), V_C]],
         "Figure_4_SID_paper.png",
         "scatter",
-        labels=["$\epsilon$ = 2", "$\epsilon$ = 3", "$\epsilon$ = 4",
-                "d-m correction"],
+        labels=["$\epsilon$ = 2", "$\epsilon$ = 3", "$\epsilon$ = 4", "cog", "nad", "0.5x(cog + nad)"],
         xlabel='Pair distance [A]',
         ylabel='V_coulomb [eV]',
-        style=['-', '-', '-', '.'],
-        color_dict=['grey', 'C3', 'grey', 'C3'],
+        style=['-', '-', '-', '.', '.', 'x'],
+        color_dict=['grey', 'C3', 'grey', 'C3', 'C4', 'black'],
         ylim=[-1.5, 0],
         xlim=[0, 30])
 

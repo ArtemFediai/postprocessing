@@ -53,7 +53,7 @@ class QPOutput:
         folder_list = os.listdir("Analysis")
         match_folders = [folder for folder in folder_list if r.match(folder)]
         r = re.compile('.*'+'_classical_correction')
-        match_folders = [folder for folder in match_folders if not r.match(folder)]
+        match_folders = [folder for folder in match_folders if r.match(folder)]
 
         radius_pattern = re.compile("\d+\.\d+")
         radii = np.empty(len(match_folders))
@@ -85,6 +85,13 @@ class QPOutput:
         plt.ylabel('IP, eV')
         plt.savefig('IP_vs_R_sd.png')
         plt.close()
+
+        plt.plot(10/self.radii, -self.mean_single_delta, LineStyle='-', marker='o')
+        plt.xlabel('10/R, A')
+        plt.ylabel('IP, eV')
+        plt.savefig('IP_vs_1_over_R_sd.png')
+        plt.close()
+
 
     def plot_full_env(self):
         plt.plot(self.radii, -self.mean_full_env, LineStyle='-', marker='o')

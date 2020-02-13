@@ -48,23 +48,32 @@ def main():
 ############ TEST
     fid = open("all_energies.txt", "w")
     n_r = len(my_radii_updated)
-    n_r = 4
+    #n_r = 4
+    total_step_num = 7
 
-    ip_sd_stepwise = np.zeros([7, n_r])
-    ip_fe_stepwise = np.zeros([7, n_r])
+    ip_sd_stepwise = np.zeros([total_step_num, n_r])
+    ip_fe_stepwise = np.zeros([total_step_num, n_r])
     ip_fe_final = np.zeros(n_r) # for mol_idx = 775
     ip_sd_final = np.zeros(n_r)
+
+    e_uncharged = np.zeros([2, n_r])
+    e_charged = np.zeros([2, n_r])
+    full_e_charged = np.zeros([2, n_r])
+    full_e_uncharged = np.zeros([2, n_r])
+
 
     ############################################### 0 ####################
     for i in range(n_r):
         fid.write("R = {} A\n".format(my_radii_updated))
-        for step_num in [6]:
+        for step_num, step_id in enumerate([0, 6]):
             my_time = time.time()
             my_ip = IP(updated_folders[i], my_radii_updated[i])
             my_ip.extract_IP()
-            my_ip.extract_IP_stepwise(num_step=step_num, mol_idx = mol_idxs[my_mol_num])
+            my_ip.extract_IP_stepwise(num_step=step_id, mol_idx=mol_idxs[my_mol_num])
 
-            print("step = {}".format(step_num))
+            print("step (0 or 1)= {}".format(step_num))
+            print("step number (real) = {}".format(step_id))
+
 
             print("Energy Uncharged = {} eV".format(my_ip.e_uncharged))
             print("Energy Charged = {} eV".format(my_ip.e_charged))
@@ -75,6 +84,12 @@ def main():
             ip_sd_stepwise[step_num, i] = my_ip.ip_sd_stepwise
             ip_fe_stepwise[step_num, i] = my_ip.ip_fe_stepwise
 
+            e_uncharged[step_num][i] = my_ip.e_uncharged
+            e_charged[step_num][i] = my_ip.e_charged
+
+            full_e_charged[step_num][i] = my_ip.full_e_charged
+            full_e_uncharged[step_num][i] = my_ip.full_e_uncharged
+
             fid.write("Charged = {} eV\tUncharged = {} eV\tIP = {} eV \n".format(my_ip.e_charged, my_ip.e_charged, my_ip.ip_sd_stepwise))
         ip_sd_final[i] = my_ip.raw_data[my_mol_num].single_delta
         ip_fe_final[i] = my_ip.raw_data[my_mol_num].full_env
@@ -83,34 +98,57 @@ def main():
 
     # plt.plot(range(7), ip_sd_stepwise, marker='o', label='single-delta')
     # plt.plot(6*np.ones(n_r), -ip_sd_final, marker='*', label='true sd', markersize=12)
-    plt.plot(range(7), ip_fe_stepwise, marker='x', label='full env + V_C')
-    plt.plot(6*np.ones(n_r), -ip_fe_final, marker='*', label='true fe')
+    # plt.plot(range(total_step_num), ip_fe_stepwise, marker='x', label='full env + V_C')
+    # plt.plot(6*np.ones(n_r), -ip_fe_final, marker='*', label='true fe')
+
+    plt.plot(my_radii_updated[0:n_r], np.transpose(e_uncharged[0]-e_uncharged[1]))
+    plt.ylabel("Energy (uncharged) [eV]")
+    plt.xlabel("R, A")
+    plt.legend(['diff = 0'])
+    plt.savefig("new_DDDDDD.png")  # charged/uncharged energies vs. R
+    plt.close()
 
 
-    ############################################### 1 ####################
-    my_mol_num = 1
-    for i in range(n_r):
-        fid.write("R = {} A\n".format(my_radii_updated))
-        for step_num in range(7):
-            my_time = time.time()
-            my_ip = IP(updated_folders[i], my_radii_updated[i])
-            my_ip.extract_IP()
-            my_ip.extract_IP_stepwise(num_step=step_num, mol_idx = mol_idxs[my_mol_num])
-            #print("Energy Charged = {} eV".format(my_ip.ip_charged))
-            #print("Energy Uncharged = {} eV".format(my_ip.ip_uncharged))
-            #print("Energy Charged = {} eV".format(my_ip.ip_charged))
-            print("step = {}".format(step_num))
-            print("IP s-d= {} eV".format(my_ip.ip_sd_stepwise))
-            print("IP full_env = {} eV".format(my_ip.ip_fe_stepwise))
+    plt.plot(my_radii_updated[0:n_r], np.transpose(e_charged))
+    plt.ylabel("Energy (charged) [eV]")
+    plt.xlabel("R, A")
+    plt.legend(['iter = 0', 'iter = 7'])
+    plt.savefig("0De_charged_vs_R.png")  # charged/uncharged energies vs. R
+    plt.close()
+###################
 
-            ip_sd_stepwise[step_num, i] = my_ip.ip_sd_stepwise
-            ip_fe_stepwise[step_num, i] = my_ip.ip_fe_stepwise
+    plt.plot(1/(my_radii_updated[0:n_r]), np.transpose(e_uncharged[:][0]-e_uncharged[:][-1]))
+    plt.ylabel("Energy (uncharged) [eV]")
+    plt.xlabel("1/R, A-1")
+    plt.legend(['dif'])
+    plt.savefig("e_un_0_minus_e_un_7.png")  # charged/uncharged energies vs. R
+    plt.close()
 
-            fid.write("Charged = {} eV\tUncharged = {} eV\tIP = {} eV \n".format(my_ip.e_charged, my_ip.e_charged, my_ip.ip_sd_stepwise))
-        ip_sd_final[i] = my_ip.raw_data[my_mol_num].single_delta
-        ip_fe_final[i] = my_ip.raw_data[my_mol_num].full_env
-        print("R = {} A.\tTime: {} sec".format(my_radii_updated[i], time.time() - my_time))
-    ############################################### 1: end ######################
+    plt.plot(1/(my_radii_updated[0:n_r]), np.transpose(full_e_uncharged[:][0]-full_e_uncharged[:][-1]))
+    plt.ylabel("Energy (uncharged) [eV]")
+    plt.xlabel("1/R, A-1")
+    plt.legend(['dif'])
+    plt.savefig("full_0_7_un.png")  # charged/uncharged energies vs. R
+    plt.close()
+
+
+    plt.plot(1/(my_radii_updated[0:n_r]), np.transpose(e_charged[:][0]-e_charged[:][-1]))
+    plt.ylabel("Energy (charged) [eV]")
+    plt.xlabel("1/R, A-1")
+    plt.legend(['dif'])
+    plt.savefig("e_c_0_minus_e_c_7.png")  # charged/uncharged energies vs. R
+    plt.close()
+
+    plt.plot(1/(my_radii_updated[0:n_r]), np.transpose(full_e_charged[:][0]-full_e_charged[:][-1]))
+    plt.ylabel("Energy (charged) [eV]")
+    plt.xlabel("1/R, A-1")
+    plt.legend(['dif'])
+    plt.savefig("full_0_7_c.png")  # charged/uncharged energies vs. R
+    plt.close()
+
+
+    exit()
+
 
 
 
@@ -386,8 +424,10 @@ class IP:
             diff = self.a1[mol_num]["total"] - self.a2[mol_num]["total"]
             if np.abs(diff) > 100:
                 self.ip_fe_stepwise += 0  # if DFTB
+                self.full_e_charged -= self.a1[mol_num]["total"]
             else:
                 self.ip_fe_stepwise += diff
+                self.full_e_uncharged -= self.a2[mol_num]["total"]
             #print('mol_num', mol_num)
             #print("e_diff charged/uncgarged", self.full_e_diff)
         #self.ip_fe_stepwise = self.full_e_charged - self.full_e_uncharged
