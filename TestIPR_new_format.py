@@ -19,7 +19,7 @@ def main():
     my_mol_name = '7b043a1428ff586ba119947b48219969'
 
 
-    my_qp_output = QPOutput()
+    my_qp_output = QPOutput(my_mol_name)
 
     folders, radii, dict_radii_folder = my_qp_output.folders, my_qp_output.radii, my_qp_output.dict_radii_folder
 
@@ -30,6 +30,7 @@ def main():
     my_qp_output.plot_single_delta()
     my_qp_output.plot_full_env()
     my_qp_output.plot_single_delta()
+    my_qp_output.extract_eps()
 
 
 
@@ -43,18 +44,18 @@ def main():
 
 ############ FUNCTIONS ################
 class QPOutput:
-    def __init__(self):
-        self.return_target_folders()
+    def __init__(self, my_mol_name):
+        self.return_target_folders(my_mol_name)
 
-    def return_target_folders(self):
+    def return_target_folders(self, my_mol_name):
         folder_list = os.listdir("Analysis")
 
         _pattern = 'IP_'
-        r = re.compile(_pattern + '_for_radius_' '[0-9]*\.[0-9]*')
+        r = re.compile(_pattern + my_mol_name + '_for_radius_' '[0-9]*\.[0-9]*' + '_classical_correction')
 
         match_folders = [folder for folder in folder_list if r.match(folder)]
-        r = re.compile('.*'+'_classical_correction')
-        match_folders = [folder for folder in match_folders if r.match(folder)]
+        #r = re.compile('.*'+'_classical_correction')
+        #match_folders = [folder for folder in match_folders if r.match(folder)]
 
         radius_pattern = re.compile("\d+\.\d+")
         radii = np.empty(len(match_folders))
@@ -73,12 +74,35 @@ class QPOutput:
         self.mean_full_env = np.zeros(len(self.folders))
 
         for i, radius in enumerate(self.radii):
-            path2file = 'Analysis/' + self.dict_radii_folder[radius] + '/eaip_' + mol_name + '_IP_summary.yml'
+            path2file = 'Analysis/' + self.dict_radii_folder[radius] + '/IP_' + mol_name + '_summary.yml'
             fid = open(path2file)
             this_dict = yaml.load(fid, Loader=yaml.SafeLoader)
             fid.close()
             self.mean_single_delta[i] = this_dict['mean_single_delta']
             self.mean_full_env[i] = this_dict['mean_full_env']
+    def extract_eps(self, ab = [10, 30]):
+        # fit the slope --> get the eps
+        a, b = ab[0], ab[1]
+        C = 7.1997176734999995  # coefficient in the formula
+
+        target_i = np.where(np.logical_and(self.radii > a, self.radii < b))[0]
+        all_r = self.radii[target_i]
+        my_all_ips = -self.mean_single_delta[target_i]
+
+
+        print('ips', my_all_ips)
+        coef_poly = np.polyfit(1.0 / all_r, my_all_ips, 1)
+        print("coef_poly = ", coef_poly)
+        print("Extracted dielectric permittivity:", C / (C - coef_poly[0]))
+
+
+        plt.plot(10/self.radii, -self.mean_single_delta, LineStyle='-', marker='o')
+        plt.plot(10/all_r, coef_poly[0]*1/all_r + coef_poly[1])
+        plt.xlabel('10/R, A')
+        plt.ylabel('IP, eV')
+        plt.savefig('IP_vs_1_over_R_sd_epsilon.png')
+        plt.close()
+
 
     def plot_single_delta(self):
         plt.plot(self.radii, -self.mean_single_delta, LineStyle='-', marker='o')

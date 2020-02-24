@@ -47,11 +47,10 @@ class QPOutput:
         self.return_target_folders()
 
     def return_target_folders(self):
+        _pattern = 'EAIP_for_radius_'
+        r = re.compile(_pattern + '[0-9]*\.[0-9]*')
+
         folder_list = os.listdir("Analysis")
-
-        _pattern = 'IP_'
-        r = re.compile(_pattern + '_for_radius_' '[0-9]*\.[0-9]*')
-
         match_folders = [folder for folder in folder_list if r.match(folder)]
         r = re.compile('.*'+'_classical_correction')
         match_folders = [folder for folder in match_folders if r.match(folder)]
@@ -73,7 +72,7 @@ class QPOutput:
         self.mean_full_env = np.zeros(len(self.folders))
 
         for i, radius in enumerate(self.radii):
-            path2file = 'Analysis/' + self.dict_radii_folder[radius] + '/eaip_' + mol_name + '_IP_summary.yml'
+            path2file = 'Analysis/' + self.dict_radii_folder[radius] + '/eaip_' + mol_name + '_EA_summary.yml'
             fid = open(path2file)
             this_dict = yaml.load(fid, Loader=yaml.SafeLoader)
             fid.close()
@@ -83,28 +82,28 @@ class QPOutput:
     def plot_single_delta(self):
         plt.plot(self.radii, -self.mean_single_delta, LineStyle='-', marker='o')
         plt.xlabel('R, A')
-        plt.ylabel('IP, eV')
-        plt.savefig('IP_vs_R_sd.png')
+        plt.ylabel('EA, eV')
+        plt.savefig('EA_vs_R_sd.png')
         plt.close()
 
         plt.plot(10/self.radii, -self.mean_single_delta, LineStyle='-', marker='o')
         plt.xlabel('10/R, A')
-        plt.ylabel('IP, eV')
-        plt.savefig('IP_vs_1_over_R_sd.png')
+        plt.ylabel('EA, eV')
+        plt.savefig('EA_vs_1_over_R_sd.png')
         plt.close()
 
 
     def plot_full_env(self):
         plt.plot(self.radii, -self.mean_full_env, LineStyle='-', marker='o')
         plt.xlabel('R, A')
-        plt.ylabel('IP, eV')
-        plt.savefig('IP_vs_R_fe.png')
+        plt.ylabel('EA, eV')
+        plt.savefig('EA_vs_R_fe.png')
         plt.close()
 
         plt.plot(10/self.radii, -self.mean_full_env, LineStyle='-', marker='o')
         plt.xlabel('10/R, A')
-        plt.ylabel('IP, eV')
-        plt.savefig('IP_vs_1_over_R_fe.png')
+        plt.ylabel('EA, eV')
+        plt.savefig('EA_vs_1_over_R_fe.png')
         plt.close()
 
 
