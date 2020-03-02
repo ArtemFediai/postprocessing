@@ -16,8 +16,9 @@ import time
 
 def main():
 
-    my_mol_name = '7b043a1428ff586ba119947b48219969'
+    my_mol_name = '7b043a1428ff586ba119947b48219969' #TPD
 
+    my_mol_name = 'f273d730b77306e88fc77abb9fa56671' #aNPD
 
     my_qp_output = QPOutput(my_mol_name)
 
@@ -31,6 +32,7 @@ def main():
     my_qp_output.plot_full_env()
     my_qp_output.plot_single_delta()
     my_qp_output.extract_eps()
+    my_qp_output.save()
 
 
 
@@ -80,7 +82,7 @@ class QPOutput:
             fid.close()
             self.mean_single_delta[i] = this_dict['mean_single_delta']
             self.mean_full_env[i] = this_dict['mean_full_env']
-    def extract_eps(self, ab = [10, 30]):
+    def extract_eps(self, ab = [0, 50]):
         # fit the slope --> get the eps
         a, b = ab[0], ab[1]
         C = 7.1997176734999995  # coefficient in the formula
@@ -89,12 +91,10 @@ class QPOutput:
         all_r = self.radii[target_i]
         my_all_ips = -self.mean_single_delta[target_i]
 
-
         print('ips', my_all_ips)
         coef_poly = np.polyfit(1.0 / all_r, my_all_ips, 1)
         print("coef_poly = ", coef_poly)
         print("Extracted dielectric permittivity:", C / (C - coef_poly[0]))
-
 
         plt.plot(10/self.radii, -self.mean_single_delta, LineStyle='-', marker='o')
         plt.plot(10/all_r, coef_poly[0]*1/all_r + coef_poly[1])
@@ -102,7 +102,6 @@ class QPOutput:
         plt.ylabel('IP, eV')
         plt.savefig('IP_vs_1_over_R_sd_epsilon.png')
         plt.close()
-
 
     def plot_single_delta(self):
         plt.plot(self.radii, -self.mean_single_delta, LineStyle='-', marker='o')
@@ -117,8 +116,8 @@ class QPOutput:
         plt.savefig('IP_vs_1_over_R_sd.png')
         plt.close()
 
-
     def plot_full_env(self):
+
         plt.plot(self.radii, -self.mean_full_env, LineStyle='-', marker='o')
         plt.xlabel('R, A')
         plt.ylabel('IP, eV')
@@ -131,7 +130,11 @@ class QPOutput:
         plt.savefig('IP_vs_1_over_R_fe.png')
         plt.close()
 
+    def save(self):
 
+        print("I save data to IP.dat and R.dat")
+        np.savetxt('r.dat', self.radii)
+        np.savetxt('IP.dat', -self.mean_single_delta)
 
 
 if __name__ == '__main__':
