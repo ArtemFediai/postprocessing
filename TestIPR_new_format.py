@@ -33,16 +33,13 @@ def main():
     my_qp_output.plot_single_delta()
     my_qp_output.extract_eps()
     my_qp_output.save()
-
-
+    my_qp_output.plot_single_delta_HOMO()
 
     print(my_qp_output.mean_full_env)
     print(my_qp_output.radii)
 
-
     print("I am done")
 
-    pass
 
 ############ FUNCTIONS ################
 class QPOutput:
@@ -114,6 +111,23 @@ class QPOutput:
         plt.xlabel('10/R, A')
         plt.ylabel('IP, eV')
         plt.savefig('IP_vs_1_over_R_sd.png')
+        plt.close()
+
+    def plot_single_delta_HOMO(self):
+        plt.plot(self.radii, self.mean_single_delta, LineStyle='-', marker='o')
+        plt.xlabel('R, A')
+        plt.ylabel('IP, eV')
+        plt.ylim([-4.95, -4.65])
+        plt.savefig('HOMO_vs_R_sd.png')
+        plt.close()
+
+        plt.plot(10 / self.radii, self.mean_single_delta, LineStyle='-', marker='o')
+        plt.xlabel('10/R, A')
+        plt.ylabel('IP, eV')
+        #plt.ylim([-4.95, -4.65])
+        #plt.xlim([0.38, 1.5])
+
+        plt.savefig('HOMO_vs_1_over_R_sd_different_range.png')
         plt.close()
 
     def plot_full_env(self):
