@@ -30,7 +30,6 @@ def main():
     my_qp_output.plot_single_delta()
     my_qp_output.plot_full_env()
     my_qp_output.plot_single_delta()
-    my_qp_output.extract_eps()
     my_qp_output.save()
 
     ab = [29, 36]
@@ -39,8 +38,8 @@ def main():
     my_qp_output.extract_eps_fe(ab)
 
 
-    print(my_qp_output.mean_full_env)
-    print(my_qp_output.radii)
+    #print(my_qp_output.mean_full_env)
+    #print(my_qp_output.radii)
 
 
     print("I am done")
@@ -95,7 +94,7 @@ class QPOutput:
         my_all_ips = -self.mean_single_delta[target_i]
 
 
-        print('ips', my_all_ips)
+        #print('ips', my_all_ips)
         coef_poly = np.polyfit(1.0 / all_r, my_all_ips, 1)
         print("coef_poly = ", coef_poly)
         print("Extracted dielectric permittivity:", C / (C - coef_poly[0]))
@@ -117,7 +116,7 @@ class QPOutput:
         all_r = self.radii[target_i]
         my_all_ips = -self.mean_full_env[target_i]
 
-        print('ips', my_all_ips)
+        #print('ips', my_all_ips)
         coef_poly = np.polyfit(1.0 / all_r, my_all_ips, 1)
         print("coef_poly = ", coef_poly)
         print("Extracted dielectric permittivity (fe):", C / (C - coef_poly[0]))
