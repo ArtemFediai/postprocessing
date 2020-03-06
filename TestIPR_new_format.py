@@ -16,8 +16,8 @@ import time
 
 def main():
 
-    my_mol_name = '7b043a1428ff586ba119947b48219969'
-
+    #my_mol_name = '7b043a1428ff586ba119947b48219969'
+    my_mol_name = 'f273d730b77306e88fc77abb9fa56671' #aNPD
 
     my_qp_output = QPOutput(my_mol_name)
 
@@ -30,8 +30,11 @@ def main():
     my_qp_output.plot_single_delta()
     my_qp_output.plot_full_env()
     my_qp_output.plot_single_delta()
-    my_qp_output.extract_eps()
 
+    ab = [29, 36]
+
+    my_qp_output.extract_eps(ab)
+    my_qp_output.extract_eps_fe(ab)
 
 
     print(my_qp_output.mean_full_env)
@@ -80,7 +83,7 @@ class QPOutput:
             fid.close()
             self.mean_single_delta[i] = this_dict['mean_single_delta']
             self.mean_full_env[i] = this_dict['mean_full_env']
-    def extract_eps(self, ab = [10, 30]):
+    def extract_eps(self, ab = [0, 8]):
         # fit the slope --> get the eps
         a, b = ab[0], ab[1]
         C = 7.1997176734999995  # coefficient in the formula
@@ -103,6 +106,26 @@ class QPOutput:
         plt.savefig('IP_vs_1_over_R_sd_epsilon.png')
         plt.close()
 
+    def extract_eps_fe(self, ab=[0, 8]):
+        # fit the slope --> get the eps
+        a, b = ab[0], ab[1]
+        C = 7.1997176734999995  # coefficient in the formula
+
+        target_i = np.where(np.logical_and(self.radii > a, self.radii < b))[0]
+        all_r = self.radii[target_i]
+        my_all_ips = -self.mean_full_env[target_i]
+
+        print('ips', my_all_ips)
+        coef_poly = np.polyfit(1.0 / all_r, my_all_ips, 1)
+        print("coef_poly = ", coef_poly)
+        print("Extracted dielectric permittivity (fe):", C / (C - coef_poly[0]))
+
+        plt.plot(10 / self.radii, -self.mean_full_env, LineStyle='-', marker='o')
+        plt.plot(10 / all_r, coef_poly[0] * 1 / all_r + coef_poly[1])
+        plt.xlabel('10/R, A')
+        plt.ylabel('IP, eV')
+        plt.savefig('IP_vs_1_over_R_fe_epsilon.png')
+        plt.close()
 
     def plot_single_delta(self):
         plt.plot(self.radii, -self.mean_single_delta, LineStyle='-', marker='o')
@@ -122,12 +145,14 @@ class QPOutput:
         plt.plot(self.radii, -self.mean_full_env, LineStyle='-', marker='o')
         plt.xlabel('R, A')
         plt.ylabel('IP, eV')
+        plt.ylim([5.2, 5.5])
         plt.savefig('IP_vs_R_fe.png')
         plt.close()
 
         plt.plot(10/self.radii, -self.mean_full_env, LineStyle='-', marker='o')
         plt.xlabel('10/R, A')
         plt.ylabel('IP, eV')
+        plt.ylim([5.2, 5.4])
         plt.savefig('IP_vs_1_over_R_fe.png')
         plt.close()
 
