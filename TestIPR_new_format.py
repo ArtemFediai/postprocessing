@@ -30,6 +30,8 @@ def main():
     my_qp_output.plot_single_delta()
     my_qp_output.plot_full_env()
     my_qp_output.plot_single_delta()
+    my_qp_output.extract_eps()
+    my_qp_output.save()
 
     ab = [29, 36]
 
@@ -83,7 +85,7 @@ class QPOutput:
             fid.close()
             self.mean_single_delta[i] = this_dict['mean_single_delta']
             self.mean_full_env[i] = this_dict['mean_full_env']
-    def extract_eps(self, ab = [0, 8]):
+    def extract_eps(self, ab = [0, 50]):
         # fit the slope --> get the eps
         a, b = ab[0], ab[1]
         C = 7.1997176734999995  # coefficient in the formula
@@ -140,23 +142,41 @@ class QPOutput:
         plt.savefig('IP_vs_1_over_R_sd.png')
         plt.close()
 
+    def plot_single_delta_HOMO(self):
+        plt.plot(self.radii, self.mean_single_delta, LineStyle='-', marker='o')
+        plt.xlabel('R, A')
+        plt.ylabel('IP, eV')
+        plt.ylim([-4.95, -4.65])
+        plt.savefig('HOMO_vs_R_sd.png')
+        plt.close()
+
+        plt.plot(10 / self.radii, self.mean_single_delta, LineStyle='-', marker='o')
+        plt.xlabel('10/R, A')
+        plt.ylabel('IP, eV')
+        #plt.ylim([-4.95, -4.65])
+        #plt.xlim([0.38, 1.5])
+
+        plt.savefig('HOMO_vs_1_over_R_sd_different_range.png')
+        plt.close()
 
     def plot_full_env(self):
         plt.plot(self.radii, -self.mean_full_env, LineStyle='-', marker='o')
         plt.xlabel('R, A')
         plt.ylabel('IP, eV')
-        plt.ylim([5.2, 5.5])
         plt.savefig('IP_vs_R_fe.png')
         plt.close()
 
         plt.plot(10/self.radii, -self.mean_full_env, LineStyle='-', marker='o')
         plt.xlabel('10/R, A')
         plt.ylabel('IP, eV')
-        plt.ylim([5.2, 5.4])
         plt.savefig('IP_vs_1_over_R_fe.png')
         plt.close()
 
+    def save(self):
 
+        print("I save data to IP.dat and R.dat")
+        np.savetxt('r.dat', self.radii)
+        np.savetxt('IP.dat', -self.mean_single_delta)
 
 
 if __name__ == '__main__':
