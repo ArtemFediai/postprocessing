@@ -32,7 +32,7 @@ def main():
     my_qp_output.plot_single_delta()
     my_qp_output.save()
 
-    ab = [20, 40]
+    ab = [20, 30]
 
     my_qp_output.extract_eps(ab)
     my_qp_output.extract_eps_fe(ab)
@@ -54,7 +54,7 @@ class QPOutput:
     def return_target_folders(self, my_mol_name):
         folder_list = os.listdir("Analysis")
 
-        _pattern = 'IP_'
+        _pattern = 'EA_'
         r = re.compile(_pattern + my_mol_name + '_for_radius_' '[0-9]*\.[0-9]*' + '_classical_correction')
 
         match_folders = [folder for folder in folder_list if r.match(folder)]
@@ -78,7 +78,7 @@ class QPOutput:
         self.mean_full_env = np.zeros(len(self.folders))
 
         for i, radius in enumerate(self.radii):
-            path2file = 'Analysis/' + self.dict_radii_folder[radius] + '/IP_' + mol_name + '_summary.yml'
+            path2file = 'Analysis/' + self.dict_radii_folder[radius] + '/EA_' + mol_name + '_summary.yml'
             fid = open(path2file)
             this_dict = yaml.load(fid, Loader=yaml.SafeLoader)
             fid.close()
@@ -97,20 +97,20 @@ class QPOutput:
         #print('ips', my_all_ips)
         coef_poly = np.polyfit(1.0 / all_r, my_all_ips, 1)
         print("coef_poly = ", coef_poly)
-        print("Extracted dielectric permittivity:", C / (C - coef_poly[0]))
+        print("Extracted dielectric permittivity:", C / (C + coef_poly[0]))
 
 
         plt.plot(10/self.radii, -self.mean_single_delta, LineStyle='-', marker='o')
         plt.plot(10/all_r, coef_poly[0]*1/all_r + coef_poly[1])
         plt.xlabel('10/R, A')
-        plt.ylabel('IP, eV')
+        plt.ylabel('EA, eV')
         ym_ym = plt.gca().get_ylim()
         shells = np.array([40, 60, 70])
         plt.plot(10.0/np.array([shells[0], shells[0]]), ym_ym, label='20 A')
         plt.plot(10.0/np.array([30, 30]), ym_ym, label='30 A')
         plt.plot(10.0/np.array([20, 20]), ym_ym, label='{} A'.format(shells[0]))
         plt.legend()
-        plt.savefig('IP_vs_1_over_R_sd_epsilon.png')
+        plt.savefig('EA_vs_1_over_R_sd_epsilon.png')
         plt.close()
 
     def extract_eps_fe(self, ab=[0, 8]):
@@ -125,70 +125,69 @@ class QPOutput:
         #print('ips', my_all_ips)
         coef_poly = np.polyfit(1.0 / all_r, my_all_ips, 1)
         print("coef_poly = ", coef_poly)
-        print("Extracted dielectric permittivity (fe):", C / (C - coef_poly[0]))
+        print("Extracted dielectric permittivity (fe):", C / (C + coef_poly[0]))
 
         plt.plot(10 / self.radii, -self.mean_full_env, LineStyle='-', marker='o')
         plt.plot(10 / all_r, coef_poly[0] * 1 / all_r + coef_poly[1])
         plt.xlabel('10/R, A')
-        plt.ylabel('IP, eV')
+        plt.ylabel('EA, eV')
         ym_ym = plt.gca().get_ylim()
-        plt.plot(10.0/np.array([20, 20]), ym_ym, label='20 A')
+        shells = np.array([40, 60, 70])
+        plt.plot(10.0/np.array([shells[0], shells[0]]), ym_ym, label='20 A')
         plt.plot(10.0/np.array([30, 30]), ym_ym, label='30 A')
-        plt.plot(10.0/np.array([40, 40]), ym_ym, label='40 A')
-        plt.plot(10.0/np.array([40, 40]), ym_ym, label='50 A')
-        plt.plot(10.0/np.array([60, 60]), ym_ym, label='60 A')
+        plt.plot(10.0/np.array([20, 20]), ym_ym, label='{} A'.format(shells[0]))
         plt.legend()
-        plt.savefig('IP_vs_1_over_R_fe_epsilon.png')
+        plt.savefig('EA_vs_1_over_R_fe_epsilon.png')
         plt.close()
 
     def plot_single_delta(self):
         plt.plot(self.radii, -self.mean_single_delta, LineStyle='-', marker='o')
         plt.xlabel('R, A')
-        plt.ylabel('IP, eV')
-        plt.savefig('IP_vs_R_sd.png')
+        plt.ylabel('EA, eV')
+        plt.savefig('EA_vs_R_sd.png')
         plt.close()
 
         plt.plot(10/self.radii, -self.mean_single_delta, LineStyle='-', marker='o')
         plt.xlabel('10/R, A')
-        plt.ylabel('IP, eV')
-        plt.savefig('IP_vs_1_over_R_sd.png')
+        plt.ylabel('EA, eV')
+        plt.savefig('EA_vs_1_over_R_sd.png')
         plt.close()
 
     def plot_single_delta_HOMO(self):
         plt.plot(self.radii, self.mean_single_delta, LineStyle='-', marker='o')
         plt.xlabel('R, A')
-        plt.ylabel('IP, eV')
+        plt.ylabel('EA, eV')
         plt.ylim([-4.95, -4.65])
         plt.savefig('HOMO_vs_R_sd.png')
         plt.close()
 
         plt.plot(10 / self.radii, self.mean_single_delta, LineStyle='-', marker='o')
         plt.xlabel('10/R, A')
-        plt.ylabel('IP, eV')
+        plt.ylabel('EA, eV')
         #plt.ylim([-4.95, -4.65])
         #plt.xlim([0.38, 1.5])
 
-        plt.savefig('HOMO_vs_1_over_R_sd_different_range.png')
+        plt.savefig('LUMO_vs_1_over_R_sd_different_range.png')
         plt.close()
 
     def plot_full_env(self):
         plt.plot(self.radii, -self.mean_full_env, LineStyle='-', marker='o')
         plt.xlabel('R, A')
-        plt.ylabel('IP, eV')
-        plt.savefig('IP_vs_R_fe.png')
+        plt.ylabel('EA, eV')
+        plt.savefig('EA_vs_R_fe.png')
         plt.close()
 
         plt.plot(10/self.radii, -self.mean_full_env, LineStyle='-', marker='o')
         plt.xlabel('10/R, A')
-        plt.ylabel('IP, eV')
-        plt.savefig('IP_vs_1_over_R_fe.png')
+        plt.ylabel('EA, eV')
+        plt.savefig('EA_vs_1_over_R_fe.png')
         plt.close()
 
     def save(self):
 
-        print("I save data to IP.dat and R.dat")
+        print("I save data to EA.dat and R.dat")
         np.savetxt('r.dat', self.radii)
-        np.savetxt('IP.dat', -self.mean_single_delta)
+        np.savetxt('EA.dat', -self.mean_single_delta)
 
 
 if __name__ == '__main__':
