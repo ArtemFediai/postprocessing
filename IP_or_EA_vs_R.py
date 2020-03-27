@@ -57,6 +57,14 @@ def main():
     # get vacuum IP, EA
     my_runtime_output.compute_vacuum_binding_energies()
 
+    # combine outputs into a single object
+    my_output = Output(my_runtime_output, ip_output=ip_output, ea_output=ea_output)
+
+    # compute and plot polarizations
+    my_output.compute_polarization()
+    my_output.plot_polarization()
+
+
     print("\nI am done")
 
 
@@ -197,20 +205,6 @@ class QPOutput:
         plt.savefig('{}_vs_1_over_R_{}.png'.format(x, full_env_or_single_delta))
         plt.close()
 
-    def plot_full_env(self):
-        x = self.IP_or_EA
-        plt.plot(self.radii, -self.mean_full_env, LineStyle='-', marker='o')
-        plt.xlabel('R, A')
-        plt.ylabel('{}, eV'.format(x))
-        plt.savefig('{}_vs_R_fe.png'.format(x))
-        plt.close()
-
-        plt.plot(10/self.radii, -self.mean_full_env, LineStyle='-', marker='o')
-        plt.xlabel('10/R, A')
-        plt.ylabel('{}, eV'.format(x))
-        plt.savefig('{}_vs_1_over_R_fe.png'.format(x))
-        plt.close()
-
     def save(self):
         x = self.IP_or_EA
         print("I save data to {}.dat and R.dat".format(x))
@@ -273,7 +267,7 @@ class RunTimeOutput:
                 path2yaml = folder + '/' + yaml_name
                 energies = load_yaml_from_gzip(path2yaml)
                 mol_number = path2yaml.split('/')[1].split('_')[1]
-                energy = energies[mol_number]['total']
+                energy = energies[mol_number]['damped_energies']['vacuum']
                 nested_dict[int(mol_number)] = energy
             return nested_dict
 
@@ -283,13 +277,12 @@ class RunTimeOutput:
                 path2yaml = folder + '/' + yaml_name
                 energies = load_yaml_from_gzip(path2yaml)
                 mol_number = positive_folders[i].split('/')[1].split('_')[1]
-                energy = energies[mol_number]['total']
-                nested_dict[mol_number] = energy
+                energy = energies[mol_number]['damped_energies']['vacuum']
+                nested_dict[int(mol_number)] = energy
             return nested_dict
 
         def mean_for_dict(x):
             return np.array(list(x.values())).mean().tolist()
-
 
         yaml_name = 'energies.ene.yml.gz'  # yaml file (first-time)
 
@@ -321,10 +314,70 @@ class RunTimeOutput:
             print("\nQuick load of already extracted vacuum energies")
 
     def compute_vacuum_binding_energies(self):
+        self.vacuum_ip = self.vacuum_energies_dict["positive"]['mean'] - self.vacuum_energies_dict["neutral"]['mean']
+        self.vacuum_ea = self.vacuum_energies_dict["neutral"]['mean'] - self.vacuum_energies_dict["negative"]['mean']
+
+        print('\nvacuum ip', self.vacuum_ip)
+        print('vacuum ea', self.vacuum_ea)
 
 
-        print('nix')
+class Output:
+    def __init__(self, run_time_output, ip_output, ea_output):
+        self.run_time_output = run_time_output
+        self.ip_output = ip_output
+        self.ea_output = ea_output
+        self.polarization_anion_vs_R = {"single_delta": []}
+        self.polarization_cation_vs_R = {"single_delta": []}
+        self.polarization_physical_vs_R = {"single_delta": []}
+        self.polarization_nonphysical_vs_R = {"single_delta": []}
+        self.radii = np.array(self.ip_output.binding_energies_dict["radii"])
+        print('kd;l')
 
+
+    def compute_polarization(self):
+        self.polarization_anion_vs_R["single_delta"] = \
+            np.array(self.ea_output.binding_energies_dict["single_delta"]) - self.run_time_output.vacuum_ea
+        self.polarization_cation_vs_R["single_delta"] = \
+            -np.array(self.ip_output.binding_energies_dict["single_delta"]) + self.run_time_output.vacuum_ip
+        self.polarization_physical_vs_R["single_delta"] = \
+            0.5*(self.polarization_anion_vs_R["single_delta"] + self.polarization_cation_vs_R["single_delta"])
+        self.polarization_nonphysical_vs_R["single_delta"] = \
+            0.5*(self.polarization_cation_vs_R["single_delta"] - self.polarization_anion_vs_R["single_delta"])
+
+        print("\nPolarization computed")
+
+    def plot_polarization(self, single_delta_or_full_env='single_delta'):
+        # short-hand:
+        x = single_delta_or_full_env
+        p_a = self.polarization_anion_vs_R[single_delta_or_full_env]
+        p_c = self.polarization_cation_vs_R[single_delta_or_full_env]
+        p_phys = self.polarization_physical_vs_R[single_delta_or_full_env]
+        p_non_p = self.polarization_nonphysical_vs_R[single_delta_or_full_env]
+        r = self.radii
+        inv_r = np.array(10.0/r)
+
+        plt.figure(figsize=[4,6])
+        plt.plot(inv_r, p_c, marker='o', label='cation')
+        plt.plot(inv_r, p_a,  marker='o', label='anion')
+        plt.plot(inv_r, p_phys,  marker='o', label='physical')
+        plt.plot(inv_r, p_non_p,  marker='o', label='nonphysical')
+
+        plt.xlim(left = 0.0)
+        plt.ylim(bottom = 0.0)
+
+
+        plt.xlabel('10/R, A')
+        plt.ylabel('Polarization Energy, A')
+        plt.ylabel('{}, eV'.format(x))
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig('P_vs_1_over_R_{}.png'.format(x), dpi = 600)
+        plt.close()
+
+    def plot_ea_ip_and_vacuum(self, single_delta_or_full_env='single_delta'):
+        min_max = plt.xlim()
+        plt.plot(min_max, [self.run_time_output.vacuum_ip]*2, color='C0', marker=None, linestyle='--', label='cation')
+        plt.plot(min_max, [self.run_time_output.vacuum_ea]*2, color='C1', marker=None, linestyle='--', label='anion')
 
 
 def load_yaml_from_gzip(file):
