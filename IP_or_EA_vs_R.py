@@ -274,7 +274,7 @@ class RunTimeOutput:
                 energies = load_yaml_from_gzip(path2yaml)
                 mol_number = path2yaml.split('/')[1].split('_')[1]
                 energy = energies[mol_number]['total']
-                nested_dict[mol_number] = energy
+                nested_dict[int(mol_number)] = energy
             return nested_dict
 
         def extract_neutral_energies(folder, yaml_name, positive_folders):
@@ -286,6 +286,10 @@ class RunTimeOutput:
                 energy = energies[mol_number]['total']
                 nested_dict[mol_number] = energy
             return nested_dict
+
+        def mean_for_dict(x):
+            return np.array(list(x.values())).mean().tolist()
+
 
         yaml_name = 'energies.ene.yml.gz'  # yaml file (first-time)
 
@@ -299,8 +303,15 @@ class RunTimeOutput:
             self.vacuum_energies_dict['positive'] = extract_charged_energies(self.positive_folders, yaml_name)
             print("cations folders extracted")
             # neutral
-            self.vacuum_energies_dict['neutral'] = extract_neutral_energies(self.neutral_folder, yaml_name, self.positive_folders)
+            self.vacuum_energies_dict['neutral'] = \
+                extract_neutral_energies(self.neutral_folder, yaml_name, self.positive_folders)
             print("neutral energies extracted")
+
+            # mean for all
+            for charged_state in self.vacuum_energies_dict.keys():
+                self.vacuum_energies_dict[charged_state]['mean'] = \
+                    mean_for_dict(self.vacuum_energies_dict[charged_state])
+
             with open(vacuum_energies_lib_filename, 'w+') as fid:
                 yaml.dump(self.vacuum_energies_dict, fid, default_flow_style=False)
 
@@ -310,11 +321,7 @@ class RunTimeOutput:
             print("\nQuick load of already extracted vacuum energies")
 
     def compute_vacuum_binding_energies(self):
-        def mean_for_dict(x):
-            return np.array(list(x.values())).mean()
 
-        for charged_state in self.vacuum_energies_dict.keys():
-            self.vacuum_energies_dict[charged_state]['mean'] = mean_for_dict(self.vacuum_energies_dict[charged_state])
 
         print('nix')
 
