@@ -66,9 +66,11 @@ def main():
     my_output.save_polarization()
 
     # pcs output
-    pcs_pcs_output = PcsPcsOutput()
-    pcs_pcs_output.compute_polarization()
-    pcs_pcs_output.plot_polarization()
+    pcs_pcs_polarization_path = 'polarization_SD_core_pcs/output.yaml'
+    if os.path.exists(pcs_pcs_polarization_path):
+        pcs_pcs_output = PcsPcsOutput()
+        pcs_pcs_output.compute_polarization()
+        pcs_pcs_output.plot_polarization()
 
 
     print("\nI am done")
@@ -338,7 +340,6 @@ class Output:
         self.polarization_nonphysical_vs_R = {"single_delta": []}
         self.radii = np.array(self.ip_output.binding_energies_dict["radii"])
 
-
     def compute_polarization(self):
         self.polarization_anion_vs_R["single_delta"] = \
             np.array(self.ea_output.binding_energies_dict["single_delta"]) - self.run_time_output.vacuum_ea
@@ -361,28 +362,24 @@ class Output:
         r = self.radii
         inv_r = np.array(10.0/r)
 
-        plt.figure(figsize=[4,5])
-        plt.plot(inv_r, p_c, marker='o', label='cation')
-        plt.plot(inv_r, p_a,  marker='o', label='anion')
-        plt.plot(inv_r, p_phys,  marker='o', label='physical')
-        plt.plot(inv_r, p_non_p,  marker='o', label='nonphysical')
-
-        plt.xlim(left = 0.0, right=10.0)
-        plt.ylim(bottom = 0.0)
+        figure, ax1 = plt.subplots()
 
 
-        plt.xlabel('10/R, A')
-        plt.ylabel('Polarization Energy, A')
-        plt.ylabel('{}, eV'.format(x))
-        plt.legend()
-        plt.tight_layout()
-        plt.savefig('{}_P_vs_1_over_R_{}.png'.format(name_prefix, x), dpi=600)
-        plt.close()
+        ax1.plot(inv_r, p_c, marker='o', label='cation')
+        ax1.plot(inv_r, p_a,  marker='o', label='anion')
+        ax1.plot(inv_r, p_phys,  marker='o', label='physical')
+        ax1.plot(inv_r, p_non_p,  marker='o', label='nonphysical')
 
-    def plot_ea_ip_and_vacuum(self, single_delta_or_full_env='single_delta'):
-        min_max = plt.xlim()
-        plt.plot(min_max, [self.run_time_output.vacuum_ip]*2, color='C0', marker=None, linestyle='--', label='cation')
-        plt.plot(min_max, [self.run_time_output.vacuum_ea]*2, color='C1', marker=None, linestyle='--', label='anion')
+        ax1.set_xlim(left=0.0, right=10.0)
+        ax1.set_ylim(bottom=0.0)
+        ax1.set_xlabel('10/R, 10/A')
+        ax1.set_ylabel('Polarization Energy {}, eV'.format(x))
+        ax1.legend()
+
+        add_inverse_axis(initial_axis=ax1)
+
+        figure.tight_layout()
+        figure.savefig('{}_P_vs_1_over_R_{}.png'.format(name_prefix, x), dpi=600)
 
     def save_polarization(self):
 
@@ -413,18 +410,22 @@ class PcsPcsOutput:
                           'polarization_nonphysical_vs_R':  []}
 
     def compute_polarization(self):
-        pcs_pcs_file = 'polarization_SD_core_pcs/dictionary.yaml'
-        with open(pcs_pcs_file) as fid:
-            pcs_out_dict = yaml.load(fid, Loader=yaml.FullLoader)
-        print("\nLoading pre-computed pcs-pcs polarization energies")
 
-        self.polarization_anion_vs_R["single_delta"] = np.array(pcs_out_dict["averaged_EA_corr"])
-        self.polarization_cation_vs_R["single_delta"] = -np.array(pcs_out_dict['averaged_IP_corr'])
-        self.polarization_physical_vs_R["single_delta"] = \
-            0.5 * (self.polarization_anion_vs_R["single_delta"] + self.polarization_cation_vs_R["single_delta"])
-        self.polarization_nonphysical_vs_R["single_delta"] = \
-            0.5*(self.polarization_cation_vs_R["single_delta"] - self.polarization_anion_vs_R["single_delta"])
-        self.radii = np.array(pcs_out_dict["radii"])
+        pcs_pcs_file = 'polarization_SD_core_pcs/output.yaml'
+        if os.path.exists(pcs_pcs_file):
+            with open(pcs_pcs_file) as fid:
+                pcs_out_dict = yaml.load(fid, Loader=yaml.FullLoader)
+            print("\nLoading pre-computed pcs-pcs polarization energies")
+
+            self.polarization_anion_vs_R["single_delta"] = np.array(pcs_out_dict["polarization_anion_vs_R"])
+            self.polarization_cation_vs_R["single_delta"] = np.array(pcs_out_dict['polarization_cation_vs_R'])
+            self.polarization_physical_vs_R["single_delta"] = \
+                0.5 * (self.polarization_anion_vs_R["single_delta"] + self.polarization_cation_vs_R["single_delta"])
+            self.polarization_nonphysical_vs_R["single_delta"] = \
+                0.5*(self.polarization_cation_vs_R["single_delta"] - self.polarization_anion_vs_R["single_delta"])
+            self.radii = np.array(pcs_out_dict["radii"])
+        else:
+            Warning("You tried to load pcs-pcs polarization, but the file {} is not found.".format(pcs_pcs_file))
 
     def plot_polarization(self, single_delta_or_full_env='single_delta', name_prefix='Pcs_Pcs'):
         # short-hand:
@@ -438,35 +439,17 @@ class PcsPcsOutput:
 
         figure, ax1 = plt.subplots()
 
-
         ax1.plot(inv_r, p_c, label='cation')
         ax1.plot(inv_r, p_a, label='anion')
         ax1.plot(inv_r, p_phys, label='physical')
         ax1.plot(inv_r, p_non_p, label='nonphysical')
-
         ax1.set_xlim(left=0, right=10.0)
         ax1.set_ylim(bottom=0.0, top=1.4)
-
-
         ax1.set_xlabel('10/R, A')
         ax1.set_ylabel('Polarization Energy, eV')
-
-        ax1Xs = ax1.get_xticks()
         #
 
-        def inv(x):
-            return 10/x
-
-        ax2 = ax1.twiny()
-        ax2.set_xlabel('R, A')
-        rs_plot = np.array([1, 2, 3, 4, 5, 7, 10, 20, 50])  # hard
-        rs_grid = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70])  # hard
-        ax2.set_xticks(inv(rs_plot), minor=False)
-        ax2.set_xticks(inv(rs_grid), minor=True)
-        ax2.set_xticklabels(rs_plot)
-        ax2.set_xbound(ax1.get_xbound())
-        ax2.grid(True, which='minor')
-        ax2.grid(True, which='major')
+        add_inverse_axis(initial_axis=ax1)
 
         #  begin: plot pcs-pcs at the same figure if exist
         if os.path.exists('polarization_dict_QP.yaml'):
@@ -498,7 +481,6 @@ class PcsPcsOutput:
         ax1.legend()
         figure.tight_layout()
         figure.savefig('{}_P_vs_1_over_R_{}.png'.format(name_prefix, x), dpi=600)
-        plt.close()
 
 
 def load_yaml_from_gzip(file):
@@ -509,6 +491,19 @@ def load_yaml_from_gzip(file):
             print(exc)
     return file_content
 
+
+def add_inverse_axis(initial_axis, rs_plot=np.array([1, 2, 3, 4, 5, 7, 10, 20, 50]),
+                     rs_grid=np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70])):
+    def inv(x):
+        return 10 / x
+    ax2 = initial_axis.twiny()
+    ax2.set_xlabel('R, A')
+    ax2.set_xticks(inv(rs_plot), minor=False)
+    ax2.set_xticks(inv(rs_grid), minor=True)
+    ax2.set_xticklabels(rs_plot)
+    ax2.set_xbound(initial_axis.get_xbound())
+    ax2.grid(True, which='minor')
+    ax2.grid(True, which='major')
 
 
 if __name__ == '__main__':
