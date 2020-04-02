@@ -437,15 +437,14 @@ class PcsPcsOutput:
         r = self.radii
         inv_r = np.array(10.0/r)
 
-        figure, ax1 = plt.subplots()
-
+        figure, ax1 = plt.subplots(figsize=[6, 6])
         ax1.plot(inv_r, p_c, label='cation')
         ax1.plot(inv_r, p_a, label='anion')
         ax1.plot(inv_r, p_phys, label='physical')
         ax1.plot(inv_r, p_non_p, label='nonphysical')
-        ax1.set_xlim(left=0, right=10.0)
-        ax1.set_ylim(bottom=0.0, top=1.4)
-        ax1.set_xlabel('10/R, A')
+        ax1.set_xlim(left=0, right=2.0)
+        ax1.set_ylim(bottom=-0.1, top=1.4)
+        ax1.set_xlabel('10/R, 10/A')
         ax1.set_ylabel('Polarization Energy, eV')
         #
 
@@ -472,12 +471,13 @@ class PcsPcsOutput:
             qp_np = self.qp_output["polarization_nonphysical_vs_R"]
 
             marker_style = '.'
-            ax1.plot(qp_inv_r, qp_c, marker=marker_style,  label='QP: cation', color='C0')
-            ax1.plot(qp_inv_r, qp_a,  marker=marker_style,  label='QP: anion', color='C1')
-            ax1.plot(qp_inv_r, qp_p,  marker=marker_style,  label='QP: physical', color='C2')
-            ax1.plot(qp_inv_r, qp_np,  marker=marker_style,  label='QP: nonphysical', color='C3')
+            ax1.plot(qp_inv_r, qp_c, marker=marker_style,  label='QP: cation', color='C0', LineStyle='')
+            ax1.plot(qp_inv_r, qp_a,  marker=marker_style,  label='QP: anion', color='C1', LineStyle='')
+            ax1.plot(qp_inv_r, qp_p,  marker=marker_style,  label='QP: physical', color='C2', LineStyle='')
+            ax1.plot(qp_inv_r, qp_np,  marker=marker_style,  label='QP: nonphysical', color='C3', LineStyle='')
         # end: plot the same pcs-pcs if exists
 
+        ax1.grid()
         ax1.legend()
         figure.tight_layout()
         figure.savefig('{}_P_vs_1_over_R_{}.png'.format(name_prefix, x), dpi=600)
