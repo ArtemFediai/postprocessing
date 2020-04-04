@@ -57,6 +57,9 @@ def main():
     # get vacuum IP, EA
     my_runtime_output.compute_vacuum_binding_energies()
 
+    # compute and plot ea, ip from runtime
+    my_runtime_output.compute_vacuum_ea_ip()
+
     # combine outputs into a single object
     my_output = Output(my_runtime_output, ip_output=ip_output, ea_output=ea_output)
 
@@ -225,6 +228,7 @@ class RunTimeOutput:
     def __init__(self):
         self.return_runtime_folders()
         self.vacuum_energies_dict = {'positive': [], 'negative': [], 'neutral': []}  # ini
+        self.damped_energies_dict = {'positive': [], 'negative': [], 'neutral': [], 'radii': []}  # ini
 
     def return_runtime_folders(self):
         """
@@ -270,45 +274,63 @@ class RunTimeOutput:
     def extract_vacuum_energies(self):
 
         def extract_charged_energies(folders, yaml_name):
-            nested_dict = {}
+            vacuum_energies_all_mols = {}
+            damped_energies_all_mols = {}
             for i, folder in enumerate(folders):
                 path2yaml = folder + '/' + yaml_name
                 energies = load_yaml_from_gzip(path2yaml)
                 mol_number = path2yaml.split('/')[1].split('_')[1]
-                energy = energies[mol_number]['damped_energies']['vacuum']
-                nested_dict[int(mol_number)] = energy
-            return nested_dict
+                vacuum_energy = energies[mol_number]['damped_energies']['vacuum']  #
+                vacuum_energies_all_mols[int(mol_number)] = vacuum_energy
+
+                del energies[mol_number]['damped_energies']['vacuum']  #remove vacuum energy to avoid confusion
+                damped_energies_lib = energies[mol_number]['damped_energies']
+                damped_energies_all_mols[int(mol_number)] = \
+                    [damped_energies_lib[key] for key in damped_energies_lib if key.split('_')[1] == mol_number]
+                radii = \
+                    [float(key.split('_')[3]) for key in damped_energies_lib.keys() if key.split('_')[1] == mol_number]
+            return vacuum_energies_all_mols, damped_energies_all_mols, radii
 
         def extract_neutral_energies(folder, yaml_name, positive_folders):
-            nested_dict = {}
+            vacuum_energies_all_mols = {}
+            damped_energies_all_mols = {}
             for i in range(self.n_mol):
                 path2yaml = folder + '/' + yaml_name
                 energies = load_yaml_from_gzip(path2yaml)
                 mol_number = positive_folders[i].split('/')[1].split('_')[1]
                 energy = energies[mol_number]['damped_energies']['vacuum']
-                nested_dict[int(mol_number)] = energy
-            return nested_dict
+                vacuum_energies_all_mols[int(mol_number)] = energy
+
+                del energies[mol_number]['damped_energies']['vacuum']  #remove vacuum energy to avoid confusion
+                damped_energies_lib = energies[mol_number]['damped_energies']
+                damped_energies_all_mols[int(mol_number)] = \
+                    [damped_energies_lib[key] for key in damped_energies_lib if key.split('_')[1] == mol_number]
+                radii = \
+                    [float(key.split('_')[3]) for key in damped_energies_lib.keys() if key.split('_')[1] == mol_number]
+
+            return vacuum_energies_all_mols, damped_energies_all_mols, radii
 
         def mean_for_dict(x):
-            return np.array(list(x.values())).mean().tolist()
+            return np.array(list(x.values())).mean(0).tolist()
 
         yaml_name = 'energies.ene.yml.gz'  # yaml file (first-time)
 
         vacuum_energies_lib_filename = "quantumpatch_runtime_files/vacuum_energies_lib.yaml"
+        damped_energies_lib_filename = "quantumpatch_runtime_files/damped_energies_lib.yaml"
+
         if not os.path.exists(vacuum_energies_lib_filename):
-            print('\nExtracting vacuum energies. Please wait ...')
+            print('\nExtracting damped and vacuum energies. Please wait ...')
             # negative
-            self.vacuum_energies_dict['negative'] = extract_charged_energies(self.negative_folders, yaml_name)
+            self.vacuum_energies_dict['negative'], self.damped_energies_dict['negative'], self.damped_energies_dict['radii'] = extract_charged_energies(self.negative_folders, yaml_name)
             print("anions energies extracted")
             # positive
-            self.vacuum_energies_dict['positive'] = extract_charged_energies(self.positive_folders, yaml_name)
+            self.vacuum_energies_dict['positive'], self.damped_energies_dict['positive'], self.damped_energies_dict['radii'] = extract_charged_energies(self.positive_folders, yaml_name)
             print("cations folders extracted")
             # neutral
-            self.vacuum_energies_dict['neutral'] = \
-                extract_neutral_energies(self.neutral_folder, yaml_name, self.positive_folders)
+            self.vacuum_energies_dict['neutral'], self.damped_energies_dict['neutral'], self.damped_energies_dict['radii'] = extract_neutral_energies(self.neutral_folder, yaml_name, self.positive_folders)
             print("neutral energies extracted")
 
-            # mean for all
+            # mean for vacuum
             for charged_state in self.vacuum_energies_dict.keys():
                 self.vacuum_energies_dict[charged_state]['mean'] = \
                     mean_for_dict(self.vacuum_energies_dict[charged_state])
@@ -316,10 +338,23 @@ class RunTimeOutput:
             with open(vacuum_energies_lib_filename, 'w+') as fid:
                 yaml.dump(self.vacuum_energies_dict, fid, default_flow_style=False)
 
+            # mean for damped energies
+            for charged_state in self.vacuum_energies_dict.keys():
+                self.damped_energies_dict[charged_state]['mean'] = \
+                    mean_for_dict(self.damped_energies_dict[charged_state])
+
+            with open(damped_energies_lib_filename, 'w+') as fid:
+                yaml.dump(self.damped_energies_dict, fid, default_flow_style=False)
+
         else:
             with open(vacuum_energies_lib_filename) as fid:
                 self.vacuum_energies_dict = yaml.load(fid, Loader=yaml.FullLoader)
             print("\nQuick load of already extracted vacuum energies")
+
+            with open(damped_energies_lib_filename) as fid:
+                self.damped_energies_dict = yaml.load(fid, Loader=yaml.FullLoader)
+            print("\nQuick load of already extracted damped energies")
+
 
     def compute_vacuum_binding_energies(self):
         self.vacuum_ip = self.vacuum_energies_dict["positive"]['mean'] - self.vacuum_energies_dict["neutral"]['mean']
@@ -327,6 +362,61 @@ class RunTimeOutput:
 
         print('\nvacuum ip', self.vacuum_ip)
         print('vacuum ea', self.vacuum_ea)
+
+    def compute_vacuum_ea_ip(self):
+        self.e_plus = np.array(self.damped_energies_dict['positive']['mean'])
+        self.e_minus = np.array(self.damped_energies_dict['negative']['mean'])
+        self.e_0 = np.array(self.damped_energies_dict['neutral']['mean'])
+        self.r = np.array(self.damped_energies_dict['radii'])
+
+        self.ip = self.e_plus - self.e_0
+        self.ea = self.e_0 - self.e_minus
+
+        self.V = self.e_0 - self.e_0[0]
+
+
+        plt.plot(10/self.r, self.e_0 - self.e_0[0], label = 'e_0')
+        plt.plot(10/self.r, self.e_plus - self.e_plus[0], label = 'eplus')
+        plt.plot(10/self.r, self.e_minus - self.e_minus[0], label = 'eminus')
+        plt.plot(10/self.r, self.e_plus - self.e_plus[0] - self.V, label = 'eplus corrected', marker = 'o', color = 'C1')
+        plt.plot(10/self.r, self.e_minus - self.e_minus[0] + self.V, label = 'eminus corrected', marker = 'o', color = 'C2')
+        plt.xlim([0, 2.5])
+        plt.legend()
+        plt.savefig('energies_runtime.png')
+        plt.close()
+
+
+        self.v_plus = self.e_plus - self.e_plus[0]
+        self.v_0 = self.e_0 - self.e_0[0]
+        self.v_minus = self.e_minus - self.e_minus[0]
+
+        self.p_cation = -(self.v_plus - self.v_0)
+        self.p_anion = self.v_0 - self.v_minus
+
+        plt.plot(10/self.r, self.p_cation, label='cation')
+        plt.plot(10/self.r, self.p_anion, label='anion')
+
+        plt.plot(10/self.r, self.p_cation + self.v_0, label='cation corrected', marker='o', color='C0')
+        plt.plot(10/self.r, self.p_anion - self.v_0, label='anion corrected', marker='o', color='C1')
+
+        plt.legend()
+
+        plt.xlim([0, 2.0])
+        plt.ylim([-0.1, 1.4])
+        plt.grid()
+        plt.savefig('polarization.png')
+        plt.close()
+
+
+
+        plt.plot(10/self.r, self.ip)
+        plt.savefig('ip_from_runtime.png')
+        plt.close()
+
+        plt.plot(10/self.r, self.ea)
+        plt.savefig('ea_from_runtime.png')
+        plt.close()
+
 
 
 class Output:
