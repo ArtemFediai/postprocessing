@@ -23,8 +23,9 @@ def main():
 
 
     # my_mol_name = '7b043a1428ff586ba119947b48219969' #TPD
-    my_mol_name = 'f273d730b77306e88fc77abb9fa56671' #aNPD
-    ab = [10, 20]
+    #my_mol_name = 'f273d730b77306e88fc77abb9fa56671' #aNPD
+    my_mol_name = '0ea4d81ac970d3f4fdbbe46acd91a041'  # C60
+    ab = [20, 40]
 
     # get ea/ip output
     ip_output = QPOutput(my_mol_name, IP_or_EA='IP')  # ini: returns target folders for IP
@@ -156,7 +157,7 @@ class QPOutput:
             with open(energies_file, 'w+') as fid:
                 yaml.dump(self.energies_dict, fid)
 
-    def extract_eps(self, ab=[0, 50], full_env_or_single_delta='single_delta'):
+    def extract_eps(self, ab=[0, 50], full_env_or_single_delta='single_delta', a1b1=[5, 1E100]):
         # fit the slope --> get the eps
         if full_env_or_single_delta == "full_env":
             mean_energies = self.mean_full_env  # TODO: all energies to IP, EA
@@ -166,24 +167,36 @@ class QPOutput:
             raise Warning("\"full_env_or_single_delta\" must be either \"full_env\" or \"single_delta\"")
 
         c = 7.1997176734999995  # coefficient in the formula
-        a, b = ab[0], ab[1]
+        a, b, a1, b1 = ab[0], ab[1], a1b1[0], a1b1[1]  # analyze interval; plot interval
 
         target_i = np.where(np.logical_and(self.radii > a, self.radii < b))[0]
         selected_r = self.radii[target_i]  # selected interval to compute epsilon
         selected_energies = mean_energies[target_i]  # TODO: all energies to IP/EA
 
         coef_poly = np.polyfit(1.0 / selected_r, -selected_energies, 1)
-        epsilon = (c / (c - coef_poly[0]), c / (c + coef_poly[0])) [full_env_or_single_delta == "single_delta"]
+
+        if self.IP_or_EA == 'IP':
+            epsilon = c / (c - coef_poly[0])
+        elif self.IP_or_EA == 'EA':
+            epsilon = c / (c + coef_poly[0])
+        else:
+            Warning('\"self.EA_or_IP\" must be either \"EA\" or \"IP\"')
+
+
+        #epsilon = (c / (c - coef_poly[0]), c / (c + coef_poly[0])) [self.IP_or_EA == 'IP']
+        #print("IP_or_EA:", self.IP_or_EA)
         selected_fitted_energies = coef_poly[0] / selected_r + coef_poly[1]
 
         print("\nAnalysis of {}(R). Type: {}".format(self.IP_or_EA, full_env_or_single_delta))
-        print("Slope: ", coef_poly)
+        print("Slope: ", coef_poly[0])
         print("Dielectric permittivity :", epsilon)
 
         plt.plot(10 / self.radii, -mean_energies, LineStyle='-', marker='o')  # whole curve
         plt.plot(10 / selected_r, selected_fitted_energies)  # ??
         plt.xlabel('10/R, A')
         plt.ylabel('{}, eV'.format(self.IP_or_EA))
+        plt.xlim([10/b1, 10/a1])
+        # plt.ylim([3.2, 3.5])  # hard-coded
         ym_ym = plt.gca().get_ylim()
         plt.plot(10.0/np.array([20, 20]), ym_ym, label='20 A')  # TODO: make it professional
         plt.plot(10.0/np.array([30, 30]), ym_ym, label='30 A')
@@ -360,35 +373,44 @@ class RunTimeOutput:
         self.vacuum_ip = self.vacuum_energies_dict["positive"]['mean'] - self.vacuum_energies_dict["neutral"]['mean']
         self.vacuum_ea = self.vacuum_energies_dict["neutral"]['mean'] - self.vacuum_energies_dict["negative"]['mean']
 
+
+
         print('\nvacuum ip', self.vacuum_ip)
         print('vacuum ea', self.vacuum_ea)
 
     def compute_vacuum_ea_ip(self):
-        self.e_plus = np.array(self.damped_energies_dict['positive']['mean'])
+        self.e_plus = np.array(self.damped_energies_dict['positive']['mean'])  # damped -->
         self.e_minus = np.array(self.damped_energies_dict['negative']['mean'])
         self.e_0 = np.array(self.damped_energies_dict['neutral']['mean'])
+        self.e_plus_vacuum = self.vacuum_energies_dict["positive"]['mean']  # vacuum -->
+        self.e_minus_vacuum = self.vacuum_energies_dict["negative"]['mean']
+        self.e_0_vacuum = self.vacuum_energies_dict["neutral"]['mean']
+
         self.r = np.array(self.damped_energies_dict['radii'])
 
         self.ip = self.e_plus - self.e_0
         self.ea = self.e_0 - self.e_minus
 
-        self.V = self.e_0 - self.e_0[0]
+        self.V = self.e_0 - self.e_0_vacuum
 
 
-        plt.plot(10/self.r, self.e_0 - self.e_0[0], label = 'e_0')
-        plt.plot(10/self.r, self.e_plus - self.e_plus[0], label = 'eplus')
-        plt.plot(10/self.r, self.e_minus - self.e_minus[0], label = 'eminus')
-        plt.plot(10/self.r, self.e_plus - self.e_plus[0] - self.V, label = 'eplus corrected', marker = 'o', color = 'C1')
-        plt.plot(10/self.r, self.e_minus - self.e_minus[0] + self.V, label = 'eminus corrected', marker = 'o', color = 'C2')
-        plt.xlim([0, 2.5])
+        plt.plot(10/self.r, self.e_0 - self.e_0_vacuum, label = 'e_0')
+        plt.plot(10/self.r, self.e_plus - self.e_plus_vacuum, label = 'eplus')
+        plt.plot(10/self.r, self.e_minus - self.e_minus_vacuum, label = 'eminus')
+        #plt.plot(10/self.r, self.e_plus - self.e_plus_vacuum - self.V, label = 'eplus corrected', marker = 'o', color = 'C1')
+        #plt.plot(10/self.r, self.e_minus - self.e_minus_vacuum + self.V, label = 'eminus corrected', marker = 'o', color = 'C2')
+        plt.plot(10/self.r, 0.5*(self.e_plus - self.e_plus_vacuum + self.e_minus - self.e_minus_vacuum), LineStyle='-.', label='mean')
+        plt.xlim([0, 0.5])
+        plt.ylim([-1.4, -1])
+
         plt.legend()
         plt.savefig('energies_runtime.png')
         plt.close()
 
 
-        self.v_plus = self.e_plus - self.e_plus[0]
-        self.v_0 = self.e_0 - self.e_0[0]
-        self.v_minus = self.e_minus - self.e_minus[0]
+        self.v_plus = self.e_plus - self.e_plus_vacuum
+        self.v_0 = self.e_0 - self.e_0_vacuum
+        self.v_minus = self.e_minus - self.e_minus_vacuum
 
         self.p_cation = -(self.v_plus - self.v_0)
         self.p_anion = self.v_0 - self.v_minus
@@ -396,8 +418,10 @@ class RunTimeOutput:
         plt.plot(10/self.r, self.p_cation, label='cation')
         plt.plot(10/self.r, self.p_anion, label='anion')
 
-        plt.plot(10/self.r, self.p_cation + self.v_0, label='cation corrected', marker='o', color='C0')
-        plt.plot(10/self.r, self.p_anion - self.v_0, label='anion corrected', marker='o', color='C1')
+        #plt.plot(10/self.r, self.p_cation + self.v_0, label='cation corrected', marker='.', color='C0', LineStyle='')
+        #plt.plot(10/self.r, self.p_anion - self.v_0, label='anion corrected', marker='.', color='C1', LineStyle='')
+
+        plt.plot(10/self.r, 0.5*(self.p_cation + self.p_anion), LineStyle='-.', label='mean')
 
         plt.legend()
 
