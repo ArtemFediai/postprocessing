@@ -10,6 +10,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 import numpy as np
 import matplotlib
+
 matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 import os
@@ -19,13 +20,13 @@ import scipy.constants as const
 import time
 import gzip
 
+
 def main():
-
-
     # my_mol_name = '7b043a1428ff586ba119947b48219969' #TPD
-    #my_mol_name = 'f273d730b77306e88fc77abb9fa56671' #aNPD
+    # my_mol_name = 'f273d730b77306e88fc77abb9fa56671' #aNPD
     my_mol_name = '0ea4d81ac970d3f4fdbbe46acd91a041'  # C60
-    ab = [20, 40]
+    ab = [10, 20]
+    R = 20  # A; TM scf shell radius
 
     # get ea/ip output
     ip_output = QPOutput(my_mol_name, IP_or_EA='IP')  # ini: returns target folders for IP
@@ -53,13 +54,16 @@ def main():
 
     # get vacuum energies from runtime output
     my_runtime_output = RunTimeOutput()
-    my_runtime_output.extract_vacuum_energies()  # creates energies_dict with vacuum energies
+    my_runtime_output.extract_vacuum_energies(R=20)  # creates dicts with vacuum/damped energies
 
     # get vacuum IP, EA
     my_runtime_output.compute_vacuum_binding_energies()
 
     # compute and plot ea, ip from runtime
     my_runtime_output.compute_vacuum_ea_ip()
+
+    # compute full env damp
+    my_runtime_output.compute_damped_full_env_energies()
 
     # combine outputs into a single object
     my_output = Output(my_runtime_output, ip_output=ip_output, ea_output=ea_output)
@@ -75,7 +79,6 @@ def main():
         pcs_pcs_output = PcsPcsOutput()
         pcs_pcs_output.compute_polarization()
         pcs_pcs_output.plot_polarization()
-
 
     print("\nI am done")
 
@@ -98,7 +101,6 @@ class QPOutput:
             {'radii': self.radii, 'single_delta': np.empty(len(self.folders)), 'full_env': np.empty(len(self.folders))}
         self.energies_dict = \
             {'radii': self.radii, 'single_delta': np.empty(len(self.folders)), 'full_env': np.empty(len(self.folders))}
-
 
     def return_analysis_folders(self):
         folder_list = os.listdir("Analysis")
@@ -182,9 +184,8 @@ class QPOutput:
         else:
             Warning('\"self.EA_or_IP\" must be either \"EA\" or \"IP\"')
 
-
-        #epsilon = (c / (c - coef_poly[0]), c / (c + coef_poly[0])) [self.IP_or_EA == 'IP']
-        #print("IP_or_EA:", self.IP_or_EA)
+        # epsilon = (c / (c - coef_poly[0]), c / (c + coef_poly[0])) [self.IP_or_EA == 'IP']
+        # print("IP_or_EA:", self.IP_or_EA)
         selected_fitted_energies = coef_poly[0] / selected_r + coef_poly[1]
 
         print("\nAnalysis of {}(R). Type: {}".format(self.IP_or_EA, full_env_or_single_delta))
@@ -195,14 +196,14 @@ class QPOutput:
         plt.plot(10 / selected_r, selected_fitted_energies)  # ??
         plt.xlabel('10/R, A')
         plt.ylabel('{}, eV'.format(self.IP_or_EA))
-        plt.xlim([10/b1, 10/a1])
+        plt.xlim([10 / b1, 10 / a1])
         # plt.ylim([3.2, 3.5])  # hard-coded
         ym_ym = plt.gca().get_ylim()
-        plt.plot(10.0/np.array([20, 20]), ym_ym, label='20 A')  # TODO: make it professional
-        plt.plot(10.0/np.array([30, 30]), ym_ym, label='30 A')
-        plt.plot(10.0/np.array([40, 40]), ym_ym, label='40 A')
-        plt.plot(10.0/np.array([50, 50]), ym_ym, label='50 A')
-        plt.plot(10.0/np.array([60, 60]), ym_ym, label='60 A')
+        plt.plot(10.0 / np.array([20, 20]), ym_ym, label='20 A')  # TODO: make it professional
+        plt.plot(10.0 / np.array([30, 30]), ym_ym, label='30 A')
+        plt.plot(10.0 / np.array([40, 40]), ym_ym, label='40 A')
+        plt.plot(10.0 / np.array([50, 50]), ym_ym, label='50 A')
+        plt.plot(10.0 / np.array([60, 60]), ym_ym, label='60 A')
         plt.legend()
         plt.savefig('{}_vs_1_over_R_{}_epsilon.png'.format(self.IP_or_EA, full_env_or_single_delta))
         plt.close()
@@ -223,7 +224,7 @@ class QPOutput:
         plt.savefig('{}_vs_R_{}.png'.format(x, full_env_or_single_delta))
         plt.close()
 
-        plt.plot(10/self.radii, -mean_energies, LineStyle='-', marker='o')
+        plt.plot(10 / self.radii, -mean_energies, LineStyle='-', marker='o')
         plt.xlabel('10/R, A')
         plt.ylabel('{}, eV'.format(x))
         plt.savefig('{}_vs_1_over_R_{}.png'.format(x, full_env_or_single_delta))
@@ -240,8 +241,9 @@ class QPOutput:
 class RunTimeOutput:
     def __init__(self):
         self.return_runtime_folders()
-        self.vacuum_energies_dict = {'positive': [], 'negative': [], 'neutral': []}  # ini
-        self.damped_energies_dict = {'positive': [], 'negative': [], 'neutral': [], 'radii': []}  # ini
+        self.vacuum_energies_dict = {'positive': {}, 'negative': {}, 'neutral': {}}  # ini
+        self.damped_energies_dict = {'positive': {}, 'negative': {}, 'neutral': {}, 'radii': {}}  # ini
+        self.full_env_dict = {}
 
     def return_runtime_folders(self):
         """
@@ -251,6 +253,7 @@ class RunTimeOutput:
         negative folders
         neutral folder
         """
+
         def append_last_folder(path):
             path = np.atleast_1d(path)
             path_new = []
@@ -271,7 +274,8 @@ class RunTimeOutput:
         neg_paths = append_last_folder(neg_paths)
 
         if len(pos_paths) == len(neg_paths):
-            Warning("number of negative molecules is not the same as the number of positive. Is this what you expected?")
+            Warning(
+                "number of negative molecules is not the same as the number of positive. Is this what you expected?")
 
         self.n_mol = len(pos_paths)
         neutral_path = path_prefix + '/uncharged'
@@ -281,47 +285,55 @@ class RunTimeOutput:
         self.negative_folders = neg_paths
         self.neutral_folder = neutral_path
 
-        # print('neutral folder: \n', self.neutral_folder)
-        # print('positive folders: \n', self.positive_folders)
-        # print('negative folders: \n', self.negative_folders)
-    def extract_vacuum_energies(self):
+    def return_all_TM_molecules(self, file_name='structurePBC.cml', R=20):
+        """
+        uses QP parser
+        :return:
+        all TM molecules idxs
+        all core_mol-env_mols idxs
+        """
 
-        def extract_charged_energies(folders, yaml_name):
-            vacuum_energies_all_mols = {}
-            damped_energies_all_mols = {}
+        from Shredder.Parsers.ParserCommon import parse_system
+        self.system = parse_system(file_name)
+        num_mols_all = len(self.system.cogs)
+        mol_idxs_all = np.linspace(0, num_mols_all - 1, num_mols_all, dtype=int).tolist()
+        for folder in self.negative_folders:
+            core_id = int(folder.split('/')[1].split('_')[1])  # core molecule number
+            dists_core_env = np.linalg.norm(self.system.cogs[core_id] - self.system.cogs,
+                                            axis=1).tolist()  # R_core - R_env[i]
+            self.full_env_dict[core_id] = \
+                {mol_id: {'dist': dists_core_env[mol_id]} for mol_id in mol_idxs_all if dists_core_env[mol_id] <= R}
+            # includes core molecule!
+
+    def extract_vacuum_energies(self, R=20):
+        def extract_charged_energies(folders, yaml_name, pos_or_neg):
             for i, folder in enumerate(folders):
                 path2yaml = folder + '/' + yaml_name
                 energies = load_yaml_from_gzip(path2yaml)
-                mol_number = path2yaml.split('/')[1].split('_')[1]
-                vacuum_energy = energies[mol_number]['damped_energies']['vacuum']  #
-                vacuum_energies_all_mols[int(mol_number)] = vacuum_energy
-
-                del energies[mol_number]['damped_energies']['vacuum']  #remove vacuum energy to avoid confusion
-                damped_energies_lib = energies[mol_number]['damped_energies']
-                damped_energies_all_mols[int(mol_number)] = \
-                    [damped_energies_lib[key] for key in damped_energies_lib if key.split('_')[1] == mol_number]
-                radii = \
-                    [float(key.split('_')[3]) for key in damped_energies_lib.keys() if key.split('_')[1] == mol_number]
-            return vacuum_energies_all_mols, damped_energies_all_mols, radii
+                core_id = path2yaml.split('/')[1].split('_')[1]  # core molecule number
+                vacuum_energy = energies[core_id]['damped_energies']['vacuum']  # core vacuum energy
+                for mol_id in self.full_env_dict[int(core_id)]:  # full env
+                    self.full_env_dict[int(core_id)][mol_id][pos_or_neg] = energies[str(mol_id)]['damped_energies']['vacuum']
+                self.vacuum_energies_dict[pos_or_neg][int(core_id)] = vacuum_energy
+                del energies[core_id]['damped_energies']['vacuum']  # remove vacuum energy to avoid confusion
+                damped_energies_lib = energies[core_id]['damped_energies']
+                self.damped_energies_dict[pos_or_neg][int(core_id)] = [damped_energies_lib[key] for key in damped_energies_lib if key.split('_')[1] == core_id]
 
         def extract_neutral_energies(folder, yaml_name, positive_folders):
-            vacuum_energies_all_mols = {}
-            damped_energies_all_mols = {}
             for i in range(self.n_mol):
                 path2yaml = folder + '/' + yaml_name
                 energies = load_yaml_from_gzip(path2yaml)
-                mol_number = positive_folders[i].split('/')[1].split('_')[1]
-                energy = energies[mol_number]['damped_energies']['vacuum']
-                vacuum_energies_all_mols[int(mol_number)] = energy
-
-                del energies[mol_number]['damped_energies']['vacuum']  #remove vacuum energy to avoid confusion
-                damped_energies_lib = energies[mol_number]['damped_energies']
-                damped_energies_all_mols[int(mol_number)] = \
-                    [damped_energies_lib[key] for key in damped_energies_lib if key.split('_')[1] == mol_number]
-                radii = \
-                    [float(key.split('_')[3]) for key in damped_energies_lib.keys() if key.split('_')[1] == mol_number]
-
-            return vacuum_energies_all_mols, damped_energies_all_mols, radii
+                core_id = positive_folders[i].split('/')[1].split('_')[1]
+                energy = energies[core_id]['damped_energies']['vacuum']
+                for mol_id in self.full_env_dict[int(core_id)]:  # full env
+                    self.full_env_dict[int(core_id)][mol_id]['neutral'] = energies[str(mol_id)]['damped_energies']['vacuum']
+                self.vacuum_energies_dict['neutral'][int(core_id)] = energy  # core vacuum energy
+                del energies[core_id]['damped_energies']['vacuum']  # remove vacuum energy to avoid confusion
+                damped_energies_lib = energies[core_id]['damped_energies']
+                self.damped_energies_dict['neutral'][int(core_id)] = \
+                    [damped_energies_lib[key] for key in damped_energies_lib if key.split('_')[1] == core_id]
+                self.damped_energies_dict['radii'] = \
+                    [float(key.split('_')[3]) for key in damped_energies_lib.keys() if key.split('_')[1] == core_id]
 
         def mean_for_dict(x):
             return np.array(list(x.values())).mean(0).tolist()
@@ -330,34 +342,40 @@ class RunTimeOutput:
 
         vacuum_energies_lib_filename = "quantumpatch_runtime_files/vacuum_energies_lib.yaml"
         damped_energies_lib_filename = "quantumpatch_runtime_files/damped_energies_lib.yaml"
+        full_env_energies_lib_filename = "quantumpatch_runtime_files/full_env_energies_lib.yaml"
 
         if not os.path.exists(vacuum_energies_lib_filename):
             print('\nExtracting damped and vacuum energies. Please wait ...')
+            # env mol ids
+            self.return_all_TM_molecules()
+            print("env mols ids and distances extracted")
             # negative
-            self.vacuum_energies_dict['negative'], self.damped_energies_dict['negative'], self.damped_energies_dict['radii'] = extract_charged_energies(self.negative_folders, yaml_name)
+            extract_charged_energies(self.negative_folders, yaml_name, pos_or_neg='negative')
             print("anions energies extracted")
             # positive
-            self.vacuum_energies_dict['positive'], self.damped_energies_dict['positive'], self.damped_energies_dict['radii'] = extract_charged_energies(self.positive_folders, yaml_name)
+            extract_charged_energies(self.positive_folders, yaml_name, pos_or_neg='positive')
             print("cations folders extracted")
             # neutral
-            self.vacuum_energies_dict['neutral'], self.damped_energies_dict['neutral'], self.damped_energies_dict['radii'] = extract_neutral_energies(self.neutral_folder, yaml_name, self.positive_folders)
+            extract_neutral_energies(self.neutral_folder, yaml_name, self.positive_folders)
             print("neutral energies extracted")
 
-            # mean for vacuum
+            # mean for vacuum energies
             for charged_state in self.vacuum_energies_dict.keys():
                 self.vacuum_energies_dict[charged_state]['mean'] = \
                     mean_for_dict(self.vacuum_energies_dict[charged_state])
-
+            # save vacuum energies
             with open(vacuum_energies_lib_filename, 'w+') as fid:
                 yaml.dump(self.vacuum_energies_dict, fid, default_flow_style=False)
-
             # mean for damped energies
             for charged_state in self.vacuum_energies_dict.keys():
                 self.damped_energies_dict[charged_state]['mean'] = \
                     mean_for_dict(self.damped_energies_dict[charged_state])
-
+            # save damped energies
             with open(damped_energies_lib_filename, 'w+') as fid:
                 yaml.dump(self.damped_energies_dict, fid, default_flow_style=False)
+            # save full_env energies
+            with open(full_env_energies_lib_filename, 'w+') as fid:
+                yaml.dump(self.full_env_dict, fid, default_flow_style=False)
 
         else:
             with open(vacuum_energies_lib_filename) as fid:
@@ -368,17 +386,22 @@ class RunTimeOutput:
                 self.damped_energies_dict = yaml.load(fid, Loader=yaml.FullLoader)
             print("\nQuick load of already extracted damped energies")
 
+            with open(full_env_energies_lib_filename) as fid:
+                self.full_env_dict = yaml.load(fid, Loader=yaml.FullLoader)
+            print("\nQuick load of already extracted full env vacuum energies")
 
     def compute_vacuum_binding_energies(self):
         self.vacuum_ip = self.vacuum_energies_dict["positive"]['mean'] - self.vacuum_energies_dict["neutral"]['mean']
         self.vacuum_ea = self.vacuum_energies_dict["neutral"]['mean'] - self.vacuum_energies_dict["negative"]['mean']
 
-
-
         print('\nvacuum ip', self.vacuum_ip)
         print('vacuum ea', self.vacuum_ea)
 
     def compute_vacuum_ea_ip(self):
+        """
+        polarization from runtime
+        :return:
+        """
         self.e_plus = np.array(self.damped_energies_dict['positive']['mean'])  # damped -->
         self.e_minus = np.array(self.damped_energies_dict['negative']['mean'])
         self.e_0 = np.array(self.damped_energies_dict['neutral']['mean'])
@@ -393,20 +416,19 @@ class RunTimeOutput:
 
         self.V = self.e_0 - self.e_0_vacuum
 
-
-        plt.plot(10/self.r, self.e_0 - self.e_0_vacuum, label = 'e_0')
-        plt.plot(10/self.r, self.e_plus - self.e_plus_vacuum, label = 'eplus')
-        plt.plot(10/self.r, self.e_minus - self.e_minus_vacuum, label = 'eminus')
-        #plt.plot(10/self.r, self.e_plus - self.e_plus_vacuum - self.V, label = 'eplus corrected', marker = 'o', color = 'C1')
-        #plt.plot(10/self.r, self.e_minus - self.e_minus_vacuum + self.V, label = 'eminus corrected', marker = 'o', color = 'C2')
-        plt.plot(10/self.r, 0.5*(self.e_plus - self.e_plus_vacuum + self.e_minus - self.e_minus_vacuum), LineStyle='-.', label='mean')
+        plt.plot(10 / self.r, self.e_0 - self.e_0_vacuum, label='e_0')
+        plt.plot(10 / self.r, self.e_plus - self.e_plus_vacuum, label='eplus')
+        plt.plot(10 / self.r, self.e_minus - self.e_minus_vacuum, label='eminus')
+        # plt.plot(10/self.r, self.e_plus - self.e_plus_vacuum - self.V, label = 'eplus corrected', marker = 'o', color = 'C1')
+        # plt.plot(10/self.r, self.e_minus - self.e_minus_vacuum + self.V, label = 'eminus corrected', marker = 'o', color = 'C2')
+        plt.plot(10 / self.r, 0.5 * (self.e_plus - self.e_plus_vacuum + self.e_minus - self.e_minus_vacuum),
+                 LineStyle='-.', label='mean')
         plt.xlim([0, 0.5])
         plt.ylim([-1.4, -1])
 
         plt.legend()
         plt.savefig('energies_runtime.png')
         plt.close()
-
 
         self.v_plus = self.e_plus - self.e_plus_vacuum
         self.v_0 = self.e_0 - self.e_0_vacuum
@@ -415,13 +437,13 @@ class RunTimeOutput:
         self.p_cation = -(self.v_plus - self.v_0)
         self.p_anion = self.v_0 - self.v_minus
 
-        plt.plot(10/self.r, self.p_cation, label='cation')
-        plt.plot(10/self.r, self.p_anion, label='anion')
+        plt.plot(10 / self.r, self.p_cation, label='cation')
+        plt.plot(10 / self.r, self.p_anion, label='anion')
 
-        #plt.plot(10/self.r, self.p_cation + self.v_0, label='cation corrected', marker='.', color='C0', LineStyle='')
-        #plt.plot(10/self.r, self.p_anion - self.v_0, label='anion corrected', marker='.', color='C1', LineStyle='')
+        # plt.plot(10/self.r, self.p_cation + self.v_0, label='cation corrected', marker='.', color='C0', LineStyle='')
+        # plt.plot(10/self.r, self.p_anion - self.v_0, label='anion corrected', marker='.', color='C1', LineStyle='')
 
-        plt.plot(10/self.r, 0.5*(self.p_cation + self.p_anion), LineStyle='-.', label='mean')
+        plt.plot(10 / self.r, 0.5 * (self.p_cation + self.p_anion), LineStyle='-.', label='mean')
 
         plt.legend()
 
@@ -431,15 +453,61 @@ class RunTimeOutput:
         plt.savefig('polarization.png')
         plt.close()
 
-
-
-        plt.plot(10/self.r, self.ip)
+        plt.plot(10 / self.r, self.ip)
         plt.savefig('ip_from_runtime.png')
         plt.close()
 
-        plt.plot(10/self.r, self.ea)
+        plt.plot(10 / self.r, self.ea)
         plt.savefig('ea_from_runtime.png')
         plt.close()
+
+    def compute_damped_full_env_energies(self):
+        radii = self.damped_energies_dict['radii'] # I use damped radii by default
+        n_r = len(radii)
+        n_c = len(self.full_env_dict)
+        # vacuum things -->
+        ip0 = self.vacuum_energies_dict['positive']['mean'] - self.vacuum_energies_dict['neutral']['mean']
+        ea0 = self.vacuum_energies_dict['neutral']['mean'] - self.vacuum_energies_dict['negative']['mean']
+        # <--vacuum things
+        e_plus_full_env, e_minus_full_env, e_0_full_env, ip_fe, ea_fe, polarization_cation, polarization_anion = \
+            np.zeros(n_r), np.zeros(n_r), np.zeros(n_r), np.zeros(n_r), np.zeros(n_r), np.zeros(n_r), np.zeros(n_r)
+        for i, r in enumerate(radii):
+            for i_core, core_id in enumerate(self.full_env_dict.keys()):
+                env_ids = [env_id for env_id in self.full_env_dict[core_id] if self.full_env_dict[core_id][env_id]['dist'] <= r]
+                tmp = [self.full_env_dict[core_id][env_id]['positive'] for env_id in self.full_env_dict[core_id] if self.full_env_dict[core_id][env_id]['dist'] <= r]  # energies
+                e_plus_full_env[i] += sum(tmp)
+                tmp = [self.full_env_dict[core_id][env_id]['negative'] for env_id in self.full_env_dict[core_id] if self.full_env_dict[core_id][env_id]['dist'] <= r]
+                e_minus_full_env[i] += sum(tmp)
+                tmp = [self.full_env_dict[core_id][env_id]['neutral'] for env_id in self.full_env_dict[core_id] if self.full_env_dict[core_id][env_id]['dist'] <= r]
+                e_0_full_env[i] += sum(tmp)
+            e_plus_full_env[i] /= n_c
+            e_minus_full_env[i] /= n_c
+            e_0_full_env[i] /= n_c
+            ip_fe[i] = e_plus_full_env[i] - e_0_full_env[i]
+            ea_fe[i] = e_0_full_env[i] - e_minus_full_env[i]
+
+            polarization_cation[i] = ip0 - ip_fe[i]
+            polarization_anion[i] = ea_fe[i] - ea0
+
+
+        self.p_full_env_cation= polarization_cation  # negative. this means that this reduces the polarization!
+        self.p_full_env_anion = polarization_anion  # also negative
+
+        print('I am here')
+        inv_r = 10.0/np.array(radii)
+        plt.plot(inv_r, self.p_full_env_anion, label='p due to env (-)', marker='.')
+        plt.plot(inv_r, self.p_full_env_cation, label='p due tu env (+)', marker='.')
+        plt.plot(inv_r, self.p_anion, label='single-delta (-)', marker='x')
+        plt.plot(inv_r, self.p_cation, label='single-delta (+)', marker='x')
+        plt.plot(inv_r, self.p_anion + self.p_full_env_anion, label='full-env (-)', marker='o')
+        plt.plot(inv_r, self.p_cation + self.p_full_env_cation, label='full-env (+)', marker='o')
+        plt.legend()
+        plt.xlabel('10/R, 10/A')
+        plt.ylabel('polarization, eV')
+        plt.xlim(right=1.0)
+        plt.savefig('polarization_full_env.png')
+        plt.close()
+
 
 
 
@@ -448,10 +516,17 @@ class Output:
         self.run_time_output = run_time_output
         self.ip_output = ip_output
         self.ea_output = ea_output
+        #  single-delta -->
         self.polarization_anion_vs_R = {"single_delta": []}
         self.polarization_cation_vs_R = {"single_delta": []}
         self.polarization_physical_vs_R = {"single_delta": []}
         self.polarization_nonphysical_vs_R = {"single_delta": []}
+        #  full_env -->
+        self.polarization_anion_vs_R = {"full_env": []}
+        self.polarization_cation_vs_R = {"full_env": []}
+        self.polarization_physical_vs_R = {"full_env": []}
+        self.polarization_nonphysical_vs_R = {"full_env": []}
+
         self.radii = np.array(self.ip_output.binding_energies_dict["radii"])
 
     def compute_polarization(self):
@@ -460,9 +535,9 @@ class Output:
         self.polarization_cation_vs_R["single_delta"] = \
             -np.array(self.ip_output.binding_energies_dict["single_delta"]) + self.run_time_output.vacuum_ip
         self.polarization_physical_vs_R["single_delta"] = \
-            0.5*(self.polarization_anion_vs_R["single_delta"] + self.polarization_cation_vs_R["single_delta"])
+            0.5 * (self.polarization_anion_vs_R["single_delta"] + self.polarization_cation_vs_R["single_delta"])
         self.polarization_nonphysical_vs_R["single_delta"] = \
-            0.5*(self.polarization_cation_vs_R["single_delta"] - self.polarization_anion_vs_R["single_delta"])
+            0.5 * (self.polarization_cation_vs_R["single_delta"] - self.polarization_anion_vs_R["single_delta"])
 
         print("\nPolarization computed")
 
@@ -474,15 +549,14 @@ class Output:
         p_phys = self.polarization_physical_vs_R[single_delta_or_full_env]
         p_non_p = self.polarization_nonphysical_vs_R[single_delta_or_full_env]
         r = self.radii
-        inv_r = np.array(10.0/r)
+        inv_r = np.array(10.0 / r)
 
         figure, ax1 = plt.subplots()
 
-
         ax1.plot(inv_r, p_c, marker='o', label='cation')
-        ax1.plot(inv_r, p_a,  marker='o', label='anion')
-        ax1.plot(inv_r, p_phys,  marker='o', label='physical')
-        ax1.plot(inv_r, p_non_p,  marker='o', label='nonphysical')
+        ax1.plot(inv_r, p_a, marker='o', label='anion')
+        ax1.plot(inv_r, p_phys, marker='o', label='physical')
+        ax1.plot(inv_r, p_non_p, marker='o', label='nonphysical')
 
         ax1.set_xlim(left=0.0, right=10.0)
         ax1.set_ylim(bottom=0.0)
@@ -496,7 +570,6 @@ class Output:
         figure.savefig('{}_P_vs_1_over_R_{}.png'.format(name_prefix, x), dpi=600)
 
     def save_polarization(self):
-
         dict2save = {
             'radii': self.radii.tolist(),
             'polarization_anion_vs_R': self.polarization_anion_vs_R["single_delta"].tolist(),
@@ -518,10 +591,10 @@ class PcsPcsOutput:
         self.polarization_nonphysical_vs_R = {}
         self.radii = []
         self.qp_output = {'radii': [],
-                          'polarization_anion_vs_R':  [],
+                          'polarization_anion_vs_R': [],
                           'polarization_cation_vs_R': [],
-                          'polarization_physical_vs_R':  [],
-                          'polarization_nonphysical_vs_R':  []}
+                          'polarization_physical_vs_R': [],
+                          'polarization_nonphysical_vs_R': []}
 
     def compute_polarization(self):
 
@@ -536,7 +609,7 @@ class PcsPcsOutput:
             self.polarization_physical_vs_R["single_delta"] = \
                 0.5 * (self.polarization_anion_vs_R["single_delta"] + self.polarization_cation_vs_R["single_delta"])
             self.polarization_nonphysical_vs_R["single_delta"] = \
-                0.5*(self.polarization_cation_vs_R["single_delta"] - self.polarization_anion_vs_R["single_delta"])
+                0.5 * (self.polarization_cation_vs_R["single_delta"] - self.polarization_anion_vs_R["single_delta"])
             self.radii = np.array(pcs_out_dict["radii"])
         else:
             Warning("You tried to load pcs-pcs polarization, but the file {} is not found.".format(pcs_pcs_file))
@@ -549,7 +622,7 @@ class PcsPcsOutput:
         p_phys = self.polarization_physical_vs_R[single_delta_or_full_env]
         p_non_p = self.polarization_nonphysical_vs_R[single_delta_or_full_env]
         r = self.radii
-        inv_r = np.array(10.0/r)
+        inv_r = np.array(10.0 / r)
 
         figure, ax1 = plt.subplots(figsize=[6, 6])
         ax1.plot(inv_r, p_c, label='cation')
@@ -578,17 +651,17 @@ class PcsPcsOutput:
             self.qp_output["polarization_nonphysical_vs_R"] = \
                 np.array(out_dict_QP["polarization_nonphysical_vs_R"])
             qp_r = self.qp_output["radii"]
-            qp_inv_r = 10/qp_r
+            qp_inv_r = 10 / qp_r
             qp_a = self.qp_output["polarization_anion_vs_R"]
             qp_c = self.qp_output["polarization_cation_vs_R"]
             qp_p = self.qp_output["polarization_physical_vs_R"]
             qp_np = self.qp_output["polarization_nonphysical_vs_R"]
 
             marker_style = '.'
-            ax1.plot(qp_inv_r, qp_c, marker=marker_style,  label='QP: cation', color='C0', LineStyle='')
-            ax1.plot(qp_inv_r, qp_a,  marker=marker_style,  label='QP: anion', color='C1', LineStyle='')
-            ax1.plot(qp_inv_r, qp_p,  marker=marker_style,  label='QP: physical', color='C2', LineStyle='')
-            ax1.plot(qp_inv_r, qp_np,  marker=marker_style,  label='QP: nonphysical', color='C3', LineStyle='')
+            ax1.plot(qp_inv_r, qp_c, marker=marker_style, label='QP: cation', color='C0', LineStyle='')
+            ax1.plot(qp_inv_r, qp_a, marker=marker_style, label='QP: anion', color='C1', LineStyle='')
+            ax1.plot(qp_inv_r, qp_p, marker=marker_style, label='QP: physical', color='C2', LineStyle='')
+            ax1.plot(qp_inv_r, qp_np, marker=marker_style, label='QP: nonphysical', color='C3', LineStyle='')
         # end: plot the same pcs-pcs if exists
 
         ax1.grid()
@@ -610,6 +683,7 @@ def add_inverse_axis(initial_axis, rs_plot=np.array([1, 2, 3, 4, 5, 7, 10, 20, 5
                      rs_grid=np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70])):
     def inv(x):
         return 10 / x
+
     ax2 = initial_axis.twiny()
     ax2.set_xlabel('R, A')
     ax2.set_xticks(inv(rs_plot), minor=False)
