@@ -22,69 +22,80 @@ import gzip
 
 
 def main():
-    # my_mol_name = '7b043a1428ff586ba119947b48219969' #TPD
-    # my_mol_name = 'f273d730b77306e88fc77abb9fa56671' #aNPD
-    my_mol_name = '0ea4d81ac970d3f4fdbbe46acd91a041'  # C60
-    ab = [20, 40]
-    R = 40  # A; TM scf shell radius
+    with Timer() as t:
+        qp_settings_file = 'settings_ng.yml' # default name of the QP settings file
+        with open(qp_settings_file, 'r') as fid:
+            qp_settings = yaml.load(fid, Loader=yaml.FullLoader)
+        R = int(qp_settings['System']['Shells']['0']['cutoff'])
+        ab = [R//2, R] #  ab is the left/right limit of the epsilon evaluation interval
+        my_mol_name = os.listdir('Analysis')[0].split('_')[1] #will work only for 1-component material
 
-    # get ea/ip output
-    ip_output = QPOutput(my_mol_name, IP_or_EA='IP')  # ini: returns target folders for IP
-    ea_output = QPOutput(my_mol_name, IP_or_EA='EA')  # ini: returns target folders for EA
-
-    # extract averaged energies
-    ip_output.extract_mean_energies(mol_name=my_mol_name)
-    ea_output.extract_mean_energies(mol_name=my_mol_name)
-
-    # plot ip and ea vs R and 1/R
-    ip_output.plot_energies(full_env_or_single_delta='single_delta')
-    ip_output.plot_energies(full_env_or_single_delta='full_env')
-    ea_output.plot_energies(full_env_or_single_delta='single_delta')
-    ea_output.plot_energies(full_env_or_single_delta='full_env')
-
-    # save ip and ea
-    ea_output.save()
-    ip_output.save()
-
-    # extract and plot eps
-    ip_output.extract_eps(ab, full_env_or_single_delta='single_delta')
-    ip_output.extract_eps(ab, full_env_or_single_delta='full_env')
-    ea_output.extract_eps(ab, full_env_or_single_delta='single_delta')
-    ea_output.extract_eps(ab, full_env_or_single_delta='full_env')
-
-    # get vacuum energies from runtime output
-    my_runtime_output = RunTimeOutput()
-    my_runtime_output.extract_vacuum_energies(R)  # creates dicts with vacuum/damped energies
-
-    # get vacuum IP, EA
-    my_runtime_output.compute_vacuum_binding_energies()
-
-    # compute and plot ea, ip from runtime
-    my_runtime_output.compute_vacuum_ea_ip()
-
-    # compute full env damp
-    my_runtime_output.compute_damped_full_env_energies()
-
-    # extract eps full env
-    my_runtime_output.extract_eps_from_polarization()
+        # here you can re-define R, ab, my_mol_name if necessary -->
+        # R = 40
+        # ab = [20, 40]
+        # my_mol_name ='0ea4d81ac970d3f4fdbbe46acd91a041'
+        # <--
 
 
-    # combine outputs into a single object
-    my_output = Output(my_runtime_output, ip_output=ip_output, ea_output=ea_output)
+        # get ea/ip output
+        ip_output = QPOutput(my_mol_name, IP_or_EA='IP')  # ini: returns target folders for IP
+        ea_output = QPOutput(my_mol_name, IP_or_EA='EA')  # ini: returns target folders for EA
 
-    # compute and plot polarizations
-    my_output.compute_polarization()
-    my_output.plot_polarization()
-    my_output.save_polarization()
+        # extract averaged energies
+        ip_output.extract_mean_energies(mol_name=my_mol_name)
+        ea_output.extract_mean_energies(mol_name=my_mol_name)
 
-    # pcs output
-    pcs_pcs_polarization_path = 'polarization_SD_core_pcs/output.yaml'
-    if os.path.exists(pcs_pcs_polarization_path):
-        pcs_pcs_output = PcsPcsOutput()
-        pcs_pcs_output.compute_polarization()
-        pcs_pcs_output.plot_polarization()
+        # plot ip and ea vs R and 1/R
+        ip_output.plot_energies(full_env_or_single_delta='single_delta')
+        ip_output.plot_energies(full_env_or_single_delta='full_env')
+        ea_output.plot_energies(full_env_or_single_delta='single_delta')
+        ea_output.plot_energies(full_env_or_single_delta='full_env')
+
+        # save ip and ea
+        ea_output.save()
+        ip_output.save()
+
+        # extract and plot eps
+        ip_output.extract_eps(ab, full_env_or_single_delta='single_delta')
+        ip_output.extract_eps(ab, full_env_or_single_delta='full_env')
+        ea_output.extract_eps(ab, full_env_or_single_delta='single_delta')
+        ea_output.extract_eps(ab, full_env_or_single_delta='full_env')
+
+        # get vacuum energies from runtime output
+        my_runtime_output = RunTimeOutput()
+        my_runtime_output.extract_vacuum_energies(R)  # creates dicts with vacuum/damped energies
+
+        # get vacuum IP, EA
+        my_runtime_output.compute_vacuum_binding_energies()
+
+        # compute and plot ea, ip from runtime
+        my_runtime_output.compute_vacuum_ea_ip()
+
+        # compute full env damp
+        my_runtime_output.compute_damped_full_env_energies()
+
+        # extract eps full env
+        my_runtime_output.extract_eps_from_polarization(ab)
+
+
+        # combine outputs into a single object
+        my_output = Output(my_runtime_output, ip_output=ip_output, ea_output=ea_output)
+
+        # compute and plot polarizations
+        my_output.compute_polarization()
+        my_output.plot_polarization()
+        my_output.save_polarization()
+
+        # pcs output
+        pcs_pcs_polarization_path = 'polarization_SD_core_pcs/output.yaml'
+        if os.path.exists(pcs_pcs_polarization_path):
+            pcs_pcs_output = PcsPcsOutput()
+            pcs_pcs_output.compute_polarization()
+            pcs_pcs_output.plot_polarization()
 
     print("\nI am done")
+    print("Total Computation Time: {} sec".format(t.interval))
+
 
 
 ############ FUNCTIONS ################
@@ -163,7 +174,7 @@ class QPOutput:
             with open(energies_file, 'w+') as fid:
                 yaml.dump(self.energies_dict, fid)
 
-    def extract_eps(self, ab=[0, 50], full_env_or_single_delta='single_delta', a1b1=[5, 1E100]):
+    def extract_eps(self, ab, full_env_or_single_delta='single_delta', a1b1=[5, 1E100]):
         # fit the slope --> get the eps
         if full_env_or_single_delta == "full_env":
             mean_energies = self.mean_full_env  # TODO: all energies to IP, EA
@@ -209,10 +220,13 @@ class QPOutput:
         plt.plot(10.0 / np.array([50, 50]), ym_ym, label='50 A')
         plt.plot(10.0 / np.array([60, 60]), ym_ym, label='60 A')
         plt.legend()
-        plt.savefig('{}_vs_1_over_R_{}_epsilon.png'.format(self.IP_or_EA, full_env_or_single_delta))
+        eps_fol_name = 'epsilon'
+        if not os.path.exists(eps_fol_name):
+            os.mkdir(eps_fol_name)  # the folder to save dielectric permittivity
+        plt.savefig(eps_fol_name + '/{}_vs_1_over_R_{}_epsilon.png'.format(self.IP_or_EA, full_env_or_single_delta))
         plt.close()
 
-    def plot_energies(self, full_env_or_single_delta='single_delta'):
+    def plot_energies(self, full_env_or_single_delta='single_delta'):  #TODO does not make sense to plot energies vs 1/R twice! this time it is plotted without extracting epsilon
         # fit the slope --> get the eps
         if full_env_or_single_delta == "full_env":
             mean_energies = self.mean_full_env  # TODO: all energies to IP, EA
@@ -221,17 +235,21 @@ class QPOutput:
         else:
             raise Warning("\"full_env_or_single_delta\" must be either \"full_env\" or \"single_delta\"")
 
+        ipea_folder = 'ipea'
+        if not os.path.exists(ipea_folder ):
+            os.mkdir(ipea_folder )  # the folder to save dielectric permittivity
+
         x = self.IP_or_EA
         plt.plot(self.radii, -mean_energies, LineStyle='-', marker='o')
         plt.xlabel('R, A')
         plt.ylabel('{}, eV'.format(x))
-        plt.savefig('{}_vs_R_{}.png'.format(x, full_env_or_single_delta))
+        plt.savefig(ipea_folder + '/{}_vs_R_{}.png'.format(x, full_env_or_single_delta))
         plt.close()
 
         plt.plot(10 / self.radii, -mean_energies, LineStyle='-', marker='o')
         plt.xlabel('10/R, A')
         plt.ylabel('{}, eV'.format(x))
-        plt.savefig('{}_vs_1_over_R_{}.png'.format(x, full_env_or_single_delta))
+        plt.savefig(ipea_folder + '/{}_vs_1_over_R_{}.png'.format(x, full_env_or_single_delta))
         plt.close()
 
     def save(self):
@@ -289,7 +307,7 @@ class RunTimeOutput:
         self.negative_folders = neg_paths
         self.neutral_folder = neutral_path
 
-    def return_all_TM_molecules(self, file_name='structurePBC.cml', R=40):
+    def return_all_TM_molecules(self, R, file_name='structurePBC.cml'):  #TODO extract R as the radius
         """
         uses QP parser
         :return:
@@ -309,7 +327,7 @@ class RunTimeOutput:
                 {mol_id: {'dist': dists_core_env[mol_id]} for mol_id in mol_idxs_all if dists_core_env[mol_id] <= R}
             # includes core molecule!
 
-    def extract_vacuum_energies(self, R=40):
+    def extract_vacuum_energies(self, R):
         def extract_charged_energies(folders, yaml_name, pos_or_neg):
             for i, folder in enumerate(folders):
                 path2yaml = folder + '/' + yaml_name
@@ -356,7 +374,7 @@ class RunTimeOutput:
             print('\nExtracting damped and vacuum energies. Please wait ...')
             print('(R ={} A)'.format(R))
             # env mol ids
-            self.return_all_TM_molecules()
+            self.return_all_TM_molecules(R)
             print("env mols ids and distances extracted")
             # negative
             extract_charged_energies(self.negative_folders, yaml_name, pos_or_neg='negative')
@@ -524,7 +542,7 @@ class RunTimeOutput:
         self.p_full_env_anion = self.p_anion + self.dp_full_env_anion
         self.p_full_env_cation = self.p_cation + self.dp_full_env_cation
 
-    def extract_eps_from_polarization(self, ab=[20, 40], a1b1=[5, 1E100]):
+    def extract_eps_from_polarization(self, ab, a1b1=[5, 1E100]):
         # fit the slope --> get the eps
         self.radii = np.array(self.damped_energies_dict['radii'])
         mean_energies = 0.5 * (self.p_full_env_cation + self.p_full_env_anion)  # mean polarization energy
@@ -743,6 +761,16 @@ def add_inverse_axis(initial_axis, rs_plot=np.array([1, 2, 3, 4, 5, 7, 10, 20, 5
     ax2.set_xbound(initial_axis.get_xbound())
     ax2.grid(True, which='minor')
     ax2.grid(True, which='major')
+    
+
+class Timer:
+    def __enter__(self):
+        self.start = time.process_time()
+        return self
+
+    def __exit__(self, *args):
+        self.end = time.process_time()
+        self.interval = self.end - self.start
 
 
 if __name__ == '__main__':
