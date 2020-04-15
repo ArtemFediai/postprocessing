@@ -25,8 +25,8 @@ def main():
     # my_mol_name = '7b043a1428ff586ba119947b48219969' #TPD
     # my_mol_name = 'f273d730b77306e88fc77abb9fa56671' #aNPD
     my_mol_name = '0ea4d81ac970d3f4fdbbe46acd91a041'  # C60
-    ab = [10, 20]
-    R = 20  # A; TM scf shell radius
+    ab = [20, 40]
+    R = 40  # A; TM scf shell radius
 
     # get ea/ip output
     ip_output = QPOutput(my_mol_name, IP_or_EA='IP')  # ini: returns target folders for IP
@@ -54,7 +54,7 @@ def main():
 
     # get vacuum energies from runtime output
     my_runtime_output = RunTimeOutput()
-    my_runtime_output.extract_vacuum_energies(R=20)  # creates dicts with vacuum/damped energies
+    my_runtime_output.extract_vacuum_energies(R)  # creates dicts with vacuum/damped energies
 
     # get vacuum IP, EA
     my_runtime_output.compute_vacuum_binding_energies()
@@ -64,6 +64,10 @@ def main():
 
     # compute full env damp
     my_runtime_output.compute_damped_full_env_energies()
+
+    # extract eps full env
+    my_runtime_output.extract_eps_from_polarization()
+
 
     # combine outputs into a single object
     my_output = Output(my_runtime_output, ip_output=ip_output, ea_output=ea_output)
@@ -285,7 +289,7 @@ class RunTimeOutput:
         self.negative_folders = neg_paths
         self.neutral_folder = neutral_path
 
-    def return_all_TM_molecules(self, file_name='structurePBC.cml', R=20):
+    def return_all_TM_molecules(self, file_name='structurePBC.cml', R=40):
         """
         uses QP parser
         :return:
@@ -305,7 +309,7 @@ class RunTimeOutput:
                 {mol_id: {'dist': dists_core_env[mol_id]} for mol_id in mol_idxs_all if dists_core_env[mol_id] <= R}
             # includes core molecule!
 
-    def extract_vacuum_energies(self, R=20):
+    def extract_vacuum_energies(self, R=40):
         def extract_charged_energies(folders, yaml_name, pos_or_neg):
             for i, folder in enumerate(folders):
                 path2yaml = folder + '/' + yaml_name
@@ -313,11 +317,14 @@ class RunTimeOutput:
                 core_id = path2yaml.split('/')[1].split('_')[1]  # core molecule number
                 vacuum_energy = energies[core_id]['damped_energies']['vacuum']  # core vacuum energy
                 for mol_id in self.full_env_dict[int(core_id)]:  # full env
-                    self.full_env_dict[int(core_id)][mol_id][pos_or_neg] = energies[str(mol_id)]['damped_energies']['vacuum']
+                    self.full_env_dict[int(core_id)][mol_id][pos_or_neg] = energies[str(mol_id)]['damped_energies'][
+                        'vacuum']
                 self.vacuum_energies_dict[pos_or_neg][int(core_id)] = vacuum_energy
                 del energies[core_id]['damped_energies']['vacuum']  # remove vacuum energy to avoid confusion
                 damped_energies_lib = energies[core_id]['damped_energies']
-                self.damped_energies_dict[pos_or_neg][int(core_id)] = [damped_energies_lib[key] for key in damped_energies_lib if key.split('_')[1] == core_id]
+                self.damped_energies_dict[pos_or_neg][int(core_id)] = [damped_energies_lib[key] for key in
+                                                                       damped_energies_lib if
+                                                                       key.split('_')[1] == core_id]
 
         def extract_neutral_energies(folder, yaml_name, positive_folders):
             for i in range(self.n_mol):
@@ -326,7 +333,8 @@ class RunTimeOutput:
                 core_id = positive_folders[i].split('/')[1].split('_')[1]
                 energy = energies[core_id]['damped_energies']['vacuum']
                 for mol_id in self.full_env_dict[int(core_id)]:  # full env
-                    self.full_env_dict[int(core_id)][mol_id]['neutral'] = energies[str(mol_id)]['damped_energies']['vacuum']
+                    self.full_env_dict[int(core_id)][mol_id]['neutral'] = energies[str(mol_id)]['damped_energies'][
+                        'vacuum']
                 self.vacuum_energies_dict['neutral'][int(core_id)] = energy  # core vacuum energy
                 del energies[core_id]['damped_energies']['vacuum']  # remove vacuum energy to avoid confusion
                 damped_energies_lib = energies[core_id]['damped_energies']
@@ -346,6 +354,7 @@ class RunTimeOutput:
 
         if not os.path.exists(vacuum_energies_lib_filename):
             print('\nExtracting damped and vacuum energies. Please wait ...')
+            print('(R ={} A)'.format(R))
             # env mol ids
             self.return_all_TM_molecules()
             print("env mols ids and distances extracted")
@@ -462,7 +471,7 @@ class RunTimeOutput:
         plt.close()
 
     def compute_damped_full_env_energies(self):
-        radii = self.damped_energies_dict['radii'] # I use damped radii by default
+        radii = self.damped_energies_dict['radii']  # I use damped radii by default
         n_r = len(radii)
         n_c = len(self.full_env_dict)
         # vacuum things -->
@@ -473,12 +482,16 @@ class RunTimeOutput:
             np.zeros(n_r), np.zeros(n_r), np.zeros(n_r), np.zeros(n_r), np.zeros(n_r), np.zeros(n_r), np.zeros(n_r)
         for i, r in enumerate(radii):
             for i_core, core_id in enumerate(self.full_env_dict.keys()):
-                env_ids = [env_id for env_id in self.full_env_dict[core_id] if self.full_env_dict[core_id][env_id]['dist'] <= r]
-                tmp = [self.full_env_dict[core_id][env_id]['positive'] for env_id in self.full_env_dict[core_id] if self.full_env_dict[core_id][env_id]['dist'] <= r]  # energies
+                env_ids = [env_id for env_id in self.full_env_dict[core_id] if
+                           self.full_env_dict[core_id][env_id]['dist'] <= r]
+                tmp = [self.full_env_dict[core_id][env_id]['positive'] for env_id in self.full_env_dict[core_id] if
+                       self.full_env_dict[core_id][env_id]['dist'] <= r]  # energies
                 e_plus_full_env[i] += sum(tmp)
-                tmp = [self.full_env_dict[core_id][env_id]['negative'] for env_id in self.full_env_dict[core_id] if self.full_env_dict[core_id][env_id]['dist'] <= r]
+                tmp = [self.full_env_dict[core_id][env_id]['negative'] for env_id in self.full_env_dict[core_id] if
+                       self.full_env_dict[core_id][env_id]['dist'] <= r]
                 e_minus_full_env[i] += sum(tmp)
-                tmp = [self.full_env_dict[core_id][env_id]['neutral'] for env_id in self.full_env_dict[core_id] if self.full_env_dict[core_id][env_id]['dist'] <= r]
+                tmp = [self.full_env_dict[core_id][env_id]['neutral'] for env_id in self.full_env_dict[core_id] if
+                       self.full_env_dict[core_id][env_id]['dist'] <= r]
                 e_0_full_env[i] += sum(tmp)
             e_plus_full_env[i] /= n_c
             e_minus_full_env[i] /= n_c
@@ -489,18 +502,17 @@ class RunTimeOutput:
             polarization_cation[i] = ip0 - ip_fe[i]
             polarization_anion[i] = ea_fe[i] - ea0
 
-
-        self.p_full_env_cation= polarization_cation  # negative. this means that this reduces the polarization!
-        self.p_full_env_anion = polarization_anion  # also negative
+        self.dp_full_env_cation = polarization_cation  # negative. this means that this reduces the polarization!
+        self.dp_full_env_anion = polarization_anion  # also negative
 
         print('I am here')
-        inv_r = 10.0/np.array(radii)
-        plt.plot(inv_r, self.p_full_env_anion, label='p due to env (-)', marker='.')
-        plt.plot(inv_r, self.p_full_env_cation, label='p due tu env (+)', marker='.')
+        inv_r = 10.0 / np.array(radii)
+        plt.plot(inv_r, self.dp_full_env_anion, label='dp due to env (-)', marker='.')
+        plt.plot(inv_r, self.dp_full_env_cation, label='dp due tu env (+)', marker='.')
         plt.plot(inv_r, self.p_anion, label='single-delta (-)', marker='x')
         plt.plot(inv_r, self.p_cation, label='single-delta (+)', marker='x')
-        plt.plot(inv_r, self.p_anion + self.p_full_env_anion, label='full-env (-)', marker='o')
-        plt.plot(inv_r, self.p_cation + self.p_full_env_cation, label='full-env (+)', marker='o')
+        plt.plot(inv_r, self.p_anion + self.dp_full_env_anion, label='full-env (-)', marker='o')
+        plt.plot(inv_r, self.p_cation + self.dp_full_env_cation, label='full-env (+)', marker='o')
         plt.legend()
         plt.xlabel('10/R, 10/A')
         plt.ylabel('polarization, eV')
@@ -508,7 +520,46 @@ class RunTimeOutput:
         plt.savefig('polarization_full_env.png')
         plt.close()
 
+        #  save full_env_polarization
+        self.p_full_env_anion = self.p_anion + self.dp_full_env_anion
+        self.p_full_env_cation = self.p_cation + self.dp_full_env_cation
 
+    def extract_eps_from_polarization(self, ab=[20, 40], a1b1=[5, 1E100]):
+        # fit the slope --> get the eps
+        self.radii = np.array(self.damped_energies_dict['radii'])
+        mean_energies = 0.5 * (self.p_full_env_cation + self.p_full_env_anion)  # mean polarization energy
+
+        c = 7.1997176734999995  # coefficient in the formula
+        a, b, a1, b1 = ab[0], ab[1], a1b1[0], a1b1[1]  # analyze interval; plot interval
+
+        target_i = np.where(np.logical_and(self.radii > a, self.radii < b))[0]
+        selected_r = self.radii[target_i]  # selected interval to compute epsilon
+        selected_energies = mean_energies[target_i]  # TODO: all energies to IP/EA
+
+        coef_poly = np.polyfit(1.0 / selected_r, selected_energies, 1)
+
+        selected_fitted_energies = coef_poly[0] / selected_r + coef_poly[1]
+
+        epsilon = c / (c + coef_poly[0])
+
+        print("Slope FULL-ENV CUSTOM: ", coef_poly[0])
+        print("Dielectric permittivity FULL-ENV CUSTOM :", epsilon)
+
+        plt.plot(10 / self.radii, mean_energies, LineStyle='-', marker='o')  # whole curve
+        plt.plot(10 / selected_r, selected_fitted_energies)  # ??
+        plt.xlabel('10/R, A')
+        plt.ylabel('polarization, eV')
+        plt.xlim([10 / b1, 10 / a1])
+        # plt.ylim([3.2, 3.5])  # hard-coded
+        ym_ym = plt.gca().get_ylim()
+        plt.plot(10.0 / np.array([20, 20]), ym_ym, label='20 A')  # TODO: make it professional
+        plt.plot(10.0 / np.array([30, 30]), ym_ym, label='30 A')
+        plt.plot(10.0 / np.array([40, 40]), ym_ym, label='40 A')
+        plt.plot(10.0 / np.array([50, 50]), ym_ym, label='50 A')
+        plt.plot(10.0 / np.array([60, 60]), ym_ym, label='60 A')
+        plt.legend()
+        plt.savefig('EPS_FULL_ENV_CUSTOM.png')
+        plt.close()
 
 
 class Output:
