@@ -41,46 +41,15 @@ def main():
         # <--
 
         # get ea/ip output
-        Analysis_output = QPOutput(my_mol_name)  # ini: returns target folders for IP
+        Analysis_output = QPOutput(my_mol_name)  # ini: returns target folders
 
-        # get E0, E+, E- (s-d)
-        # get E0, E+, E- (s-d)
-        # from Analysis folder
+        Analysis_output.extract_energies()
 
-        # extract averaged energies
-        Analysis_output.extract_mean_energies(mol_name=my_mol_name)
+        Analysis_output.extract_true_vacuum_energies()
 
+        Analysis_output.get_polarization_elementwise()
 
-        # get vacuum energies from runtime output
-        my_runtime_output = RunTimeOutput()
-        my_runtime_output.extract_vacuum_energies(R)  # creates dicts with vacuum/damped energies
-
-        # get vacuum IP, EA
-        my_runtime_output.compute_vacuum_binding_energies()
-
-        # compute and plot ea, ip from runtime
-        my_runtime_output.compute_vacuum_ea_ip()
-
-        # compute full env damp
-        my_runtime_output.compute_damped_full_env_energies()
-
-        # extract eps full env
-        my_runtime_output.extract_eps_from_polarization(ab)
-
-        # combine outputs into a single object
-        my_output = Output(my_runtime_output, ip_output=ip_output, ea_output=ea_output)
-
-        # compute and plot polarizations
-        my_output.compute_polarization()
-        my_output.plot_polarization()
-        my_output.save_polarization()
-
-        # pcs output
-        pcs_pcs_polarization_path = 'polarization_SD_core_pcs/output.yaml'
-        if os.path.exists(pcs_pcs_polarization_path):
-            pcs_pcs_output = PcsPcsOutput()
-            pcs_pcs_output.compute_polarization()
-            pcs_pcs_output.plot_polarization()
+        Analysis_output.plot_p()
 
     print("\nI am done")
     print("Total Computation Time: {} sec".format(t.interval))
@@ -96,6 +65,7 @@ class QPOutput:
         self.folders_EA, \
         self.radii,\
         self.dict_radii_folder_EA = self.return_analysis_folders(IP_or_EA='EA')
+        self.inv_radii = 1.0/np.asarray(self.radii)
         self.extract_core_ids()
         self.n_mol = len(self.core_ids)
 
@@ -107,7 +77,7 @@ class QPOutput:
         self.E_sum_env_minus = {}
         self.E_sum_env_0 = {}
 
-        # 4 components of energy -->
+        # 4 components of the polarization energy -->
         self.E0_plus = {}  # E0
         self.E0_minus = {} # (DFT)
         self.E0_0 = {}
@@ -125,16 +95,18 @@ class QPOutput:
         self.V_env_0 = {}
         # <--
 
-        self.extract_energies(IP_or_EA='IP')
-        self.extract_energies(IP_or_EA='EA')
 
-        # old
-        self.mean_single_delta = np.zeros(len(self.folders))
-        self.mean_full_env = np.zeros(len(self.folders))
-        self.binding_energies_dict = \
-            {'radii': self.radii, 'single_delta': np.empty(len(self.folders)), 'full_env': np.empty(len(self.folders))}
-        self.energies_dict = \
-            {'radii': self.radii, 'single_delta': np.empty(len(self.folders)), 'full_env': np.empty(len(self.folders))}
+        #self.extract_energies()
+
+        # --> 5-th component of the polarization energy
+        self.E0_plus_vacuum = {}  # E0
+        self.E0_minus_vacuum = {} # (DFT)
+        self.E0_0_vacuum = {} # true vacuum
+
+        self.vacuum_folder_path = './vacuum' #where to look it for
+        #self.extract_true_vacuum_energies()
+        # <--
+
 
     def return_analysis_folders(self, IP_or_EA):  #
         # return relevant folders in Analysis
@@ -161,86 +133,92 @@ class QPOutput:
         dirs = [dir for dir in os.listdir(path2folder) if dir.endswith('1.yml')]
         self.core_ids = [int(this_dir.split('_')[2]) for this_dir in dirs]
 
-    def extract_energies(self, IP_or_EA):
+    def extract_energies(self):
         """
-        neutral, charged energies: sd,fe
-        :param IP_or_EA:
-        :return:
+        extract all components of the polarization (except for the true vacuum)
         """
-        # name files to save to
-        charge_str = '_plus' if IP_or_EA == 'IP' else '_minus'
-        charge_int = '1' if IP_or_EA == 'IP' else '-1'
-        E_charged = "Analysis/{}_{}.yaml".format(self.mol_name, charge_str)
-        E_0 =  "Analysis/{}_{}.yaml".format(self.mol_name, '_0')
+
 
         for i, radius in enumerate(self.radii):
-            if IP_or_EA == 'IP':
-                self.E_sd_plus[radius] = {}
-                self.E_sum_env_plus[radius] = {}
-                self.V0_plus[radius] = {}
-                self.V0_0[radius] = {}
-                self.E_env_plus[radius] = {}
-                self.E_env_0[radius] = {}
-                self.V_env_plus[radius] = {}
-                self.V_env_0[radius] = {}
-            else:
-                self.E_sd_minus[radius] = {}
-                self.E_sum_env_minus[radius] = {}
+            self.E_sd_plus[radius] = {}
             self.E_sd_0[radius] = {}
+            self.E_sd_minus[radius] = {}
+
+            self.E_sum_env_plus[radius] = {}
             self.E_sum_env_0[radius] = {}
+            self.E_sum_env_minus[radius] = {}
+
+            self.V0_plus[radius] = {}
+            self.V0_0[radius] = {}
+            self.V0_minus[radius] = {}
+
+            self.E_env_plus[radius] = {}
+            self.E_env_0[radius] = {}
+            self.E_env_minus[radius] = {}
+
+            self.V_env_plus[radius] = {}
+            self.V_env_0[radius] = {}
+            self.V_env_minus[radius] = {}
+
             for j, core_id in enumerate(self.core_ids):
-                if IP_or_EA == 'IP':
-                    path2file = \
-                        'Analysis/' + self.dict_radii_folder_IP[radius] + '/Matrix-analysis-' + IP_or_EA + '_' \
-                        + self.mol_name + '-Mol_' + str(core_id) + '_C_' + charge_int + '.yml'
-                else:
-                    path2file == \
-                        'Analysis/' + self.dict_radii_folder_EA[radius] + '/Matrix-analysis-' + IP_or_EA + '_' \
-                        + self.mol_name + '-Mol_' + str(core_id) + '_C_' + charge_int[IP_or_EA] + '.yml'
+                path2file_ip = \
+                    'Analysis/' + self.dict_radii_folder_IP[radius] + '/Matrix-analysis-IP_' \
+                    + self.mol_name + '-Mol_' + str(core_id) + '_C_1.yml'
+                path2file_ea = \
+                    'Analysis/' + self.dict_radii_folder_EA[radius] + '/Matrix-analysis-EA_' \
+                    + self.mol_name + '-Mol_' + str(core_id) + '_C_-1.yml'
 
-                with open(path2file) as fid:
-                    this_dict = yaml.load(fid, Loader=yaml.SafeLoader)
-                if IP_or_EA == 'IP':
-                    #sd extraction
-                    self.E_sd_plus[radius][core_id] = this_dict[int(core_id)]['total_e_charged']
-                    self.E_sd_0[radius][core_id] = this_dict[core_id]['total_e_uncharged']
-                    self.E0_plus[core_id] = this_dict[int(core_id)]['total_e_charged_vacuum']
-                    self.E0_0[core_id] = this_dict[int(core_id)]['total_e_uncharged_vacuum']
+                # IP. Charged states: "+" and "0"
+                with open(path2file_ip) as fid:
+                    ip_dict = yaml.load(fid, Loader=yaml.SafeLoader)
+                with open(path2file_ea) as fid:
+                    ea_dict = yaml.load(fid, Loader=yaml.SafeLoader)
 
-                    #sd processing
-                    self.V0_plus[radius][core_id] = self.E_sd_plus[radius][core_id] - self.E0_plus[core_id]
-                    self.V0_0[radius][core_id] = self.E_sd_0[radius][core_id] - self.E0_0[core_id]
 
-                    #env extraction
-                    env_sub_dict = this_dict[int(core_id)]['environment_molecules']
-                    all_env_e = [env_sub_dict[env_id]['total_e_charged'] for env_id in env_sub_dict]
-                    self.E_sum_env_plus[radius][int(core_id)] = np.sum(all_env_e) if not all_env_e == [] else 0.0
-                    all_env_e = [env_sub_dict[env_id]['total_e_uncharged'] for env_id in env_sub_dict]
-                    self.E_sum_env_0[radius][int(core_id)] = np.sum(all_env_e) if not all_env_e == [] else 0.0
-                    all_env_e = [env_sub_dict[env_id]['total_e_charged_vacuum'] for env_id in env_sub_dict]
-                    self.E_env_plus[radius][int(core_id)] = np.sum(all_env_e) if not all_env_e == [] else 0.0
-                    all_env_e = [env_sub_dict[env_id]['total_e_uncharged_vacuum'] for env_id in env_sub_dict]
-                    self.E_env_0[radius][int(core_id)] = np.sum(all_env_e) if not all_env_e == [] else 0.0
+                # sd extraction. E_sd = E_0 + V_0
+                self.E_sd_plus[radius][core_id] = ip_dict[int(core_id)]['total_e_charged']
+                self.E_sd_0[radius][core_id] = ip_dict[core_id]['total_e_uncharged']
+                self.E_sd_minus[radius][core_id] = ea_dict[int(core_id)]['total_e_charged']
+                # E_0
+                self.E0_plus[core_id] = ip_dict[int(core_id)]['total_e_charged_vacuum']
+                self.E0_0[core_id] = ip_dict[int(core_id)]['total_e_uncharged_vacuum']
+                self.E0_minus[core_id] = ea_dict[int(core_id)]['total_e_charged_vacuum']
+                # V_0
+                self.V0_plus[radius][core_id] = self.E_sd_plus[radius][core_id] - self.E0_plus[core_id]
+                self.V0_0[radius][core_id] = self.E_sd_0[radius][core_id] - self.E0_0[core_id]
+                self.V0_minus[radius][core_id] = self.E_sd_minus[radius][core_id] - self.E0_minus[core_id]
 
-                    #fe and sd processing
-                    self.V_env_plus[radius][core_id] = 0.5 * (self.E_sum_env_plus[radius][core_id]
-                                                              - self.E_env_plus[radius][core_id]
-                                                              - self.V0_plus[radius][core_id])
+                # E_sum_env = \sum_i\ne 0  E_i  \sum_{j=0}^{N} V_{ij}
+                ip_env_sub_dict = ip_dict[int(core_id)]['environment_molecules']
+                ea_env_sub_dict = ea_dict[int(core_id)]['environment_molecules']
 
-                    self.V_env_0[radius][core_id] = 0.5 * (self.E_sum_env_0[radius][core_id]
-                                                              - self.E_env_0[radius][core_id]
-                                                              - self.V0_0[radius][core_id])
+                list_total_e_env_plus = [ip_env_sub_dict[env_id]['total_e_charged'] for env_id in ip_env_sub_dict]
+                self.E_sum_env_plus[radius][int(core_id)] = np.sum(list_total_e_env_plus) if not list_total_e_env_plus == [] else 0.0
+                list_total_e_env_0 = [ip_env_sub_dict[env_id]['total_e_uncharged'] for env_id in ip_env_sub_dict]
+                self.E_sum_env_0[radius][int(core_id)] = np.sum(list_total_e_env_0) if not list_total_e_env_0 == [] else 0.0
+                list_total_e_env_minus = [ea_env_sub_dict[env_id]['total_e_charged'] for env_id in ea_env_sub_dict]
+                self.E_sum_env_minus[radius][int(core_id)] = np.sum(list_total_e_env_minus) if not list_total_e_env_minus == [] else 0.0
 
-                else:
-                    self.E_sd_minus[radius][core_id] = this_dict[int(core_id)]['total_e_charged']
-                    self.E_sd_0[radius][core_id] = this_dict[int(core_id)]['total_e_uncharged']
-                    self.E0_minus[core_id] = this_dict[int(core_id)]['total_e_charged_vacuum']
-                    self.E0_0[core_id] = this_dict[int(core_id)]['total_e_uncharged_vacuum']
-                    env_sub_dict = this_dict[int(core_id)]['environment_molecules']
-                    all_env_e = [env_sub_dict[env_id]['total_e_charged'] for env_id in env_sub_dict]
-                    self.E_sum_env_minus[radius][int(core_id)] = np.sum(all_env_e) if not all_env_e == [] else 0.0
-                    all_env_e = [env_sub_dict[env_id]['total_e_uncharged'] for env_id in env_sub_dict]
-                    self.E_sum_env_0[radius][int(core_id)] = np.sum(all_env_e) if not all_env_e == [] else 0.0
+                # E_env = \sum_i \ne 0  E_i. sum of DFT env energies.
+                list_vacuum_env_e_plus = [ip_env_sub_dict[env_id]['total_e_charged_vacuum'] for env_id in ip_env_sub_dict]
+                self.E_env_plus[radius][int(core_id)] = np.sum(list_vacuum_env_e_plus) if not list_vacuum_env_e_plus == [] else 0.0
+                list_vacuum_env_e_0 = [ip_env_sub_dict[env_id]['total_e_uncharged_vacuum'] for env_id in ip_env_sub_dict]
+                self.E_env_0[radius][int(core_id)] = np.sum(list_vacuum_env_e_0) if not list_vacuum_env_e_0 == [] else 0.0
+                list_vacuum_env_e_minus = [ea_env_sub_dict[env_id]['total_e_charged_vacuum'] for env_id in ea_env_sub_dict]
+                self.E_env_minus[radius][int(core_id)] = np.sum(list_vacuum_env_e_minus) if not list_vacuum_env_e_minus == [] else 0.0
+
+                # V_env = 0.5 (\sum_{i=1} \sum_{j=1} V_{ij}). classical interaction of env. mols
+                self.V_env_plus[radius][core_id] = 0.5 * (self.E_sum_env_plus[radius][core_id]
+                                                          - self.E_env_plus[radius][core_id]
+                                                          - self.V0_plus[radius][core_id])
+
+                self.V_env_0[radius][core_id] = 0.5 * (self.E_sum_env_0[radius][core_id]
+                                                          - self.E_env_0[radius][core_id]
+                                                          - self.V0_0[radius][core_id])
+
+                self.V_env_minus[radius][core_id] = 0.5 * (self.E_sum_env_minus[radius][core_id]
+                                                          - self.E_env_minus[radius][core_id]
+                                                          - self.V0_minus[radius][core_id])
 
         with open('Analysis/energies.pkl', 'wb') as fid:
             pickle.dump([self.E0_plus, self.E0_0, self.E0_minus,
@@ -248,547 +226,120 @@ class QPOutput:
                          self.V_env_plus, self.V_env_0, self.V_env_minus,
                          self.E_env_plus, self.E_env_0, self.E_env_minus],
                          fid)
-        # TODO delete to check ifexist above and do load without doing
+        # TODO delete to check if exists above and do load without doing
         with open('Analysis/energies.pkl', 'rb') as fid:
             [self.E0_plus, self.E0_0, self.E0_minus,
              self.V0_plus, self.V0_0, self.V0_minus,
              self.V_env_plus, self.V_env_0, self.V_env_minus,
              self.E_env_plus, self.E_env_0, self.E_env_minus] \
                 = pickle.load(fid)
-        print('here now')
 
 
-    def extract_mean_energies(self, mol_name):
-        binding_energies_file = "Analysis/{}_{}.yaml".format(self.IP_or_EA, self.mol_name)
-        energies_file = "Analysis/minus_{}_{}.yaml".format(self.IP_or_EA, self.mol_name)
+        append_dict_with_mean(self.V0_plus, self.V0_0, self.V0_minus,
+                              self.V_env_plus, self.V_env_0, self.V_env_minus,
+                              self.E_env_plus, self.E_env_0, self.E_env_minus,
+                              self.E0_plus, self.E0_0, self.E0_minus)  # compute and add "mean" to all mentioned dicts
 
-        files_exist = os.path.exists(binding_energies_file) | os.path.exists(energies_file)
+        print('here')
 
-        if files_exist:
-            with open(binding_energies_file, 'r') as fid:
-                self.binding_energies_dict = yaml.load(fid, Loader=yaml.FullLoader)
-            with open(energies_file, 'r') as fid:
-                self.energies_dict = yaml.load(fid, Loader=yaml.FullLoader)
-            self.mean_single_delta = np.array(self.energies_dict['single_delta'])
-            self.mean_full_env = np.array(self.energies_dict['full_env'])
+    def extract_true_vacuum_energies(self):
+        if os.path.exists(self.vacuum_folder_path):
+            ip_vacuum_dir = self.vacuum_folder_path + '/Analysis/' + self.folders_IP[0].split('_')[0]  + '_' + self.folders_IP[0].split('_')[1]
+            ea_vacuum_dir = self.vacuum_folder_path + '/Analysis/' + self.folders_EA[0].split('_')[0]  + '_' + self.folders_EA[0].split('_')[1]
+            for core_id in self.core_ids:
+                with open(ip_vacuum_dir+'/Matrix-analysis-IP_'+self.mol_name+ '-Mol_'+str(core_id) + '_C_1.yml') as fid:
+                    ip_dict = yaml.load(fid, Loader=yaml.SafeLoader)
+                with open(ea_vacuum_dir+'/Matrix-analysis-EA_'+self.mol_name+ '-Mol_'+str(core_id) + '_C_-1.yml') as fid:
+                    ea_dict = yaml.load(fid, Loader=yaml.SafeLoader)
 
-
-        else:
-            for i, radius in enumerate(self.radii):
-                path2file = \
-                    'Analysis/' + self.dict_radii_folder[radius] + '/' + self.IP_or_EA + '_' + mol_name + '_summary.yml'
-                with open(path2file) as fid:
-                    this_dict = yaml.load(fid, Loader=yaml.SafeLoader)
-                self.mean_single_delta[i] = this_dict['mean_single_delta']
-                self.mean_full_env[i] = this_dict['mean_full_env']
-
-            # dictionary for ip and ea (binding energies)
-            self.binding_energies_dict['radii'] = self.radii.tolist()
-            self.binding_energies_dict['single_delta'] = (-self.mean_single_delta).tolist()
-            self.binding_energies_dict['full_env'] = (-self.mean_full_env).tolist()
-            with open(binding_energies_file, 'w+') as fid:
-                yaml.dump(self.binding_energies_dict, fid)
-
-            # dictionary for -ip and -ea (energies)
-            self.energies_dict['radii'] = self.radii.tolist()
-            self.energies_dict['single_delta'] = (self.mean_single_delta).tolist()
-            self.energies_dict['full_env'] = (self.mean_full_env).tolist()
-            with open(energies_file, 'w+') as fid:
-                yaml.dump(self.energies_dict, fid)
-
-    def save(self):
-        x = self.IP_or_EA
-        print("I save data to {}.dat and R.dat".format(x))
-        np.savetxt('r.dat', self.radii)
-        np.savetxt('{}_single_delta.dat'.format(x), -self.mean_single_delta)
-        np.savetxt('{}_full_env.dat'.format(x), -self.mean_full_env)
-
-
-class RunTimeOutput:
-    def __init__(self):
-        self.positive_folders, \
-        self.negative_folders, \
-        self.neutral_folder = self.return_runtime_folders(path_prefix='quantumpatch_runtime_files', min_or_max='max')
-        self.n_mol = len(self.negative_folders)
-        self.positive_folders_vacuum, \
-        self.negative_folders_vacuum, \
-        self.neutral_folder_vacuum = \
-        self.return_runtime_folders(path_prefix='vacuum/quantumpatch_runtime_files', min_or_max='min')  # 'vacuum'
-        self.vacuum_energies_dict = {'positive': {}, 'negative': {}, 'neutral': {}}  # ini
-        self.damped_energies_dict = {'positive': {}, 'negative': {}, 'neutral': {}, 'radii': {}}  # ini
-        self.full_env_dict = {}
-
-    def return_runtime_folders(self, path_prefix, min_or_max):
-        """
-        returns paths to the folders of the last charged/neutral steps
-        :return:
-        positive folders
-        negative folders
-        neutral folder
-        (all with the last iteration)
-        """
-        all_folders = os.listdir(path_prefix)
-        pos_paths = [path_prefix + '/' + folder for folder in all_folders if folder.endswith("_C_1")]
-        neg_paths = [path_prefix + '/' + folder for folder in all_folders if folder.endswith("_C_-1")]
-        neutral_path = path_prefix + '/uncharged'
-        pos_paths = append_folder(pos_paths, min_or_max)
-        neg_paths = append_folder(neg_paths, min_or_max)
-        neutral_path = append_folder(neutral_path, min_or_max)[0]
-        if not len(pos_paths) == len(neg_paths):
-            warnings.warn("number of +/- molecules are not equal!")
-        return pos_paths, neg_paths, neutral_path
-
-    def return_all_TM_molecules(self, R, file_name='structurePBC.cml'):  # TODO extract R as the radius
-        """
-        uses QP parser
-        :return:
-        all TM molecules idxs
-        all core_mol-env_mols idxs
-        """
-
-        from Shredder.Parsers.ParserCommon import parse_system
-        self.system = parse_system(file_name)
-        num_mols_all = len(self.system.cogs)
-        mol_idxs_all = np.linspace(0, num_mols_all - 1, num_mols_all, dtype=int).tolist()
-        for folder in self.negative_folders:
-            core_id = int(folder.split('/')[1].split('_')[1])  # core molecule number
-            dists_core_env = np.linalg.norm(self.system.cogs[core_id] - self.system.cogs,
-                                            axis=1).tolist()  # R_core - R_env[i]
-            self.full_env_dict[core_id] = \
-                {mol_id: {'dist': dists_core_env[mol_id]} for mol_id in mol_idxs_all if dists_core_env[mol_id] <= R}
-            # includes core molecule!
-
-    def extract_vacuum_energies(self, R):
-        def extract_charged_energies(folders, yaml_name, pos_or_neg):
-            for i, folder in enumerate(folders):
-                path2yaml = folder + '/' + yaml_name
-                energies = load_yaml_from_gzip(path2yaml)
-                core_id = path2yaml.split('/')[1].split('_')[1]  # core molecule number
-                vacuum_energy = energies[core_id]['damped_energies']['vacuum']  # core vacuum energy
-                for mol_id in self.full_env_dict[int(core_id)]:  # full env
-                    self.full_env_dict[int(core_id)][mol_id][pos_or_neg] = energies[str(mol_id)]['damped_energies'][
-                        'vacuum']
-                self.vacuum_energies_dict[pos_or_neg][int(core_id)] = vacuum_energy
-                del energies[core_id]['damped_energies']['vacuum']  # remove vacuum energy to avoid confusion
-                damped_energies_lib = energies[core_id]['damped_energies']
-                self.damped_energies_dict[pos_or_neg][int(core_id)] = [damped_energies_lib[key] for key in
-                                                                       damped_energies_lib if
-                                                                       key.split('_')[1] == core_id]
-
-
-        def extract_neutral_energies(folder, yaml_name, positive_folders):
-            for i in range(self.n_mol):
-                path2yaml = folder + '/' + yaml_name
-                energies = load_yaml_from_gzip(path2yaml)
-                core_id = positive_folders[i].split('/')[1].split('_')[1]
-                energy = energies[core_id]['damped_energies']['vacuum']
-                for mol_id in self.full_env_dict[int(core_id)]:  # full env
-                    self.full_env_dict[int(core_id)][mol_id]['neutral'] = energies[str(mol_id)]['damped_energies'][
-                        'vacuum']
-                self.vacuum_energies_dict['neutral'][int(core_id)] = energy  # core vacuum energy
-                del energies[core_id]['damped_energies']['vacuum']  # remove vacuum energy to avoid confusion
-                damped_energies_lib = energies[core_id]['damped_energies']
-                self.damped_energies_dict['neutral'][int(core_id)] = \
-                    [damped_energies_lib[key] for key in damped_energies_lib if key.split('_')[1] == core_id]
-                self.damped_energies_dict['radii'] = \
-                    [float(key.split('_')[3]) for key in damped_energies_lib.keys() if key.split('_')[1] == core_id]
-
-        yaml_name = 'energies.ene.yml.gz'  # yaml file (first-time)
-
-        vacuum_energies_lib_filename = "quantumpatch_runtime_files/vacuum_energies_lib.yaml"
-        damped_energies_lib_filename = "quantumpatch_runtime_files/damped_energies_lib.yaml"
-        full_env_energies_lib_filename = "quantumpatch_runtime_files/full_env_energies_lib.yaml"
-
-        if not os.path.exists(vacuum_energies_lib_filename):
-            print('\nExtracting damped and vacuum energies. Please wait ...')
-            print('(R ={} A)'.format(R))
-            # env mol ids
-            self.return_all_TM_molecules(R)
-            print("env mols ids and distances extracted")
-            # negative
-            extract_charged_energies(self.negative_folders, yaml_name, pos_or_neg='negative')
-            print("anions energies extracted")
-            # positive
-            extract_charged_energies(self.positive_folders, yaml_name, pos_or_neg='positive')
-            print("cations folders extracted")
-            # neutral
-            extract_neutral_energies(self.neutral_folder, yaml_name, self.positive_folders)
-            print("neutral energies extracted")
-
-            # mean for vacuum energies
-            for charged_state in self.vacuum_energies_dict.keys():
-                self.vacuum_energies_dict[charged_state]['mean'] = \
-                    mean_for_dict(self.vacuum_energies_dict[charged_state])
-            # save vacuum energies
-            with open(vacuum_energies_lib_filename, 'w+') as fid:
-                yaml.dump(self.vacuum_energies_dict, fid, default_flow_style=False)
-            # mean for damped energies
-            for charged_state in self.vacuum_energies_dict.keys():
-                self.damped_energies_dict[charged_state]['mean'] = \
-                    mean_for_dict(self.damped_energies_dict[charged_state])
-            # save damped energies
-            with open(damped_energies_lib_filename, 'w+') as fid:
-                yaml.dump(self.damped_energies_dict, fid, default_flow_style=False)
-            # save full_env energies
-            with open(full_env_energies_lib_filename, 'w+') as fid:
-                yaml.dump(self.full_env_dict, fid, default_flow_style=False)
+                self.E0_plus_vacuum[core_id] = ip_dict[core_id]['total_e_charged_vacuum']
+                self.E0_0_vacuum[core_id] = ip_dict[core_id]['total_e_uncharged_vacuum']
+                self.E0_minus_vacuum[core_id] = ea_dict[core_id]['total_e_charged_vacuum']
+            append_dict_with_mean(self.E0_plus_vacuum, self.E0_0_vacuum, self.E0_minus_vacuum)
 
         else:
-            with open(vacuum_energies_lib_filename) as fid:
-                self.vacuum_energies_dict = yaml.load(fid, Loader=yaml.FullLoader)
-            print("\nQuick load of already extracted vacuum energies")
+            self.E0_plus_vacuum = self.E0_plus
+            self.E0_0_vacuum = self.E0_0
+            self.E0_minus_vacuum = self.E0_minus
 
-            with open(damped_energies_lib_filename) as fid:
-                self.damped_energies_dict = yaml.load(fid, Loader=yaml.FullLoader)
-            print("\nQuick load of already extracted damped energies")
+    def get_polarization_elementwise(self):
+        e0p_v = self.E0_plus_vacuum['mean']
+        e0m_v = self.E0_minus_vacuum['mean']
+        e00_v = self.E0_0_vacuum['mean']
 
-            with open(full_env_energies_lib_filename) as fid:
-                self.full_env_dict = yaml.load(fid, Loader=yaml.FullLoader)
-            print("\nQuick load of already extracted full env vacuum energies")
+        e0p = self.E0_plus['mean']
+        e0m = self.E0_minus['mean']
+        e00 = self.E0_0['mean']
 
-    def compute_vacuum_binding_energies(self):  # ip or ea
-        self.vacuum_ip = self.vacuum_energies_dict["positive"]['mean'] - self.vacuum_energies_dict["neutral"]['mean']
-        self.vacuum_ea = self.vacuum_energies_dict["neutral"]['mean'] - self.vacuum_energies_dict["negative"]['mean']
+        v0p = [self.V0_plus[radius]['mean'] for radius in self.V0_plus]
+        v0m = [self.V0_minus[radius]['mean'] for radius in self.V0_minus]
+        v00 = [self.V0_0[radius]['mean'] for radius in self.V0_0]
 
-        print('\nvacuum ip', self.vacuum_ip)
-        print('vacuum ea', self.vacuum_ea)
+        vep = [self.V_env_plus[radius]['mean'] for radius in self.V_env_plus]
+        vem = [self.V_env_minus[radius]['mean'] for radius in self.V_env_minus]
+        ve0 = [self.V_env_0[radius]['mean'] for radius in self.V_env_0]
 
-    def compute_vacuum_ea_ip(self):  # short hand function
-        """
-        polarization from runtime
-        :return:
-        """
-        self.e_plus = np.array(self.damped_energies_dict['positive']['mean'])  # damped -->
-        self.e_minus = np.array(self.damped_energies_dict['negative']['mean'])
-        self.e_0 = np.array(self.damped_energies_dict['neutral']['mean'])
-        self.e_plus_vacuum = self.vacuum_energies_dict["positive"]['mean']  # vacuum -->
-        self.e_minus_vacuum = self.vacuum_energies_dict["negative"]['mean']
-        self.e_0_vacuum = self.vacuum_energies_dict["neutral"]['mean']
+        eep = [self.E_env_plus[radius]['mean'] for radius in self.E_env_plus]
+        eem = [self.E_env_minus[radius]['mean'] for radius in self.E_env_minus]
+        ee0 = [self.E_env_0[radius]['mean'] for radius in self.E_env_0]
 
-        self.r = np.array(self.damped_energies_dict['radii'])
+        v0p, v0m, v00, vep, vem, ve0, eep, eem, ee0 = list2arr(v0p, v0m, v00, vep, vem, ve0, eep, eem, ee0)
 
-        self.ip = self.e_plus - self.e_0
-        self.ea = self.e_0 - self.e_minus
+        # cation
+        p1 = (e0p_v - e00_v) - (e0p - e00)
+        p2 = -(v0p - v00)
+        p3 = -(vep - ve0)
+        p4 = -(eep - ee0)
 
-        self.V = self.e_0 - self.e_0_vacuum
+        self.dE0_cation = p1  # vacuum; core
+        self.dV0_cation = p2  # core-env
+        self.dVe_cation = p3  # env-env
+        self.dEe_cation = p4  # env DFT
+        self.P_cation = p1+p2+p3+p4
 
-        plt.plot(10 / self.r, self.e_0 - self.e_0_vacuum, label='e_0')
-        plt.plot(10 / self.r, self.e_plus - self.e_plus_vacuum, label='eplus')
-        plt.plot(10 / self.r, self.e_minus - self.e_minus_vacuum, label='eminus')
-        # plt.plot(10/self.r, self.e_plus - self.e_plus_vacuum - self.V, label = 'eplus corrected', marker = 'o', color = 'C1')
-        # plt.plot(10/self.r, self.e_minus - self.e_minus_vacuum + self.V, label = 'eminus corrected', marker = 'o', color = 'C2')
-        plt.plot(10 / self.r, 0.5 * (self.e_plus - self.e_plus_vacuum + self.e_minus - self.e_minus_vacuum),
-                 LineStyle='-.', label='mean')
-        plt.xlim([0, 0.5])
-        plt.ylim([-1.4, -1])
+        # anion
+        p1 = (e0m_v - e00_v) - (e0m - e00)
+        p2 = -(v0m - v00)
+        p3 = -(vem - ve0)
+        p4 = -(eem - ee0)
 
+        self.dE0_anion = p1  # vacuum; core
+        self.dV0_anion = p2  # core-env
+        self.dVe_anion = p3  # env-env
+        self.dEe_anion = p4  # env DFT
+
+        self.P_anion = p1+p2+p3+p4
+
+
+    def plot_p(self, xlim = [0, 1.25]):
+        plt.plot(10*self.inv_radii, self.dE0_cation*np.ones(len(self.radii)), label = '$ \Delta E_{core}$ ')
+        plt.plot(10*self.inv_radii, self.dV0_cation, label = '$\Delta V_{core}$')
+        plt.plot(10*self.inv_radii, self.dVe_cation, label = '$\Delta V_{env}$')
+        plt.plot(10*self.inv_radii, self.dEe_cation, label = '$\Delta E_{env}$')
+        plt.plot(10*self.inv_radii, self.P_cation, label = '$P$')
+        plt.xlabel('$10/R,  10 / \AA^{-1} $')
+        plt.ylabel('$P^+$, eV')
         plt.legend()
-        plt.savefig('energies_runtime.png')
-        plt.close()
-
-        self.v_plus = self.e_plus - self.e_plus_vacuum
-        self.v_0 = self.e_0 - self.e_0_vacuum
-        self.v_minus = self.e_minus - self.e_minus_vacuum
-
-        self.p_cation = -(self.v_plus - self.v_0)
-        self.p_anion = self.v_0 - self.v_minus
-
-        plt.plot(10 / self.r, self.p_cation, label='cation')
-        plt.plot(10 / self.r, self.p_anion, label='anion')
-
-        # plt.plot(10/self.r, self.p_cation + self.v_0, label='cation corrected', marker='.', color='C0', LineStyle='')
-        # plt.plot(10/self.r, self.p_anion - self.v_0, label='anion corrected', marker='.', color='C1', LineStyle='')
-
-        plt.plot(10 / self.r, 0.5 * (self.p_cation + self.p_anion), LineStyle='-.', label='mean')
-
-        plt.legend()
-
-        plt.xlim([0, 2.0])
-        plt.ylim([-0.1, 1.4])
+        plt.xlim(xlim)
         plt.grid()
-        plt.savefig('polarization.png')
-        plt.close()
-
-        plt.plot(10 / self.r, self.ip)
-        plt.savefig('ip_from_runtime.png')
-        plt.close()
-
-        plt.plot(10 / self.r, self.ea)
-        plt.savefig('ea_from_runtime.png')
-        plt.close()
-
-    def compute_damped_full_env_energies(self):
-        radii = self.damped_energies_dict['radii']  # I use damped radii by default
-        n_r = len(radii)
-        n_c = len(self.full_env_dict)
-        # vacuum things -->
-        ip0 = self.vacuum_energies_dict['positive']['mean'] - self.vacuum_energies_dict['neutral']['mean']
-        ea0 = self.vacuum_energies_dict['neutral']['mean'] - self.vacuum_energies_dict['negative']['mean']
-        # <--vacuum things
-        e_plus_full_env, e_minus_full_env, e_0_full_env, ip_fe, ea_fe, polarization_cation, polarization_anion = \
-            np.zeros(n_r), np.zeros(n_r), np.zeros(n_r), np.zeros(n_r), np.zeros(n_r), np.zeros(n_r), np.zeros(n_r)
-        for i, r in enumerate(radii):
-            for i_core, core_id in enumerate(self.full_env_dict.keys()):
-                env_ids = [env_id for env_id in self.full_env_dict[core_id] if
-                           self.full_env_dict[core_id][env_id]['dist'] <= r]
-                tmp = [self.full_env_dict[core_id][env_id]['positive'] for env_id in self.full_env_dict[core_id] if
-                       self.full_env_dict[core_id][env_id]['dist'] <= r]  # energies
-                e_plus_full_env[i] += sum(tmp)
-                tmp = [self.full_env_dict[core_id][env_id]['negative'] for env_id in self.full_env_dict[core_id] if
-                       self.full_env_dict[core_id][env_id]['dist'] <= r]
-                e_minus_full_env[i] += sum(tmp)
-                tmp = [self.full_env_dict[core_id][env_id]['neutral'] for env_id in self.full_env_dict[core_id] if
-                       self.full_env_dict[core_id][env_id]['dist'] <= r]
-                e_0_full_env[i] += sum(tmp)
-            e_plus_full_env[i] /= n_c
-            e_minus_full_env[i] /= n_c
-            e_0_full_env[i] /= n_c
-            ip_fe[i] = e_plus_full_env[i] - e_0_full_env[i]
-            ea_fe[i] = e_0_full_env[i] - e_minus_full_env[i]
-
-            polarization_cation[i] = ip0 - ip_fe[i]
-            polarization_anion[i] = ea_fe[i] - ea0
-
-        self.dp_full_env_cation = polarization_cation  # negative. this means that this reduces the polarization!
-        self.dp_full_env_anion = polarization_anion  # also negative
-
-        print('I am here')
-        inv_r = 10.0 / np.array(radii)
-        plt.plot(inv_r, self.dp_full_env_anion, label='dp due to env (-)', marker='.')
-        plt.plot(inv_r, self.dp_full_env_cation, label='dp due tu env (+)', marker='.')
-        plt.plot(inv_r, self.p_anion, label='single-delta (-)', marker='x')
-        plt.plot(inv_r, self.p_cation, label='single-delta (+)', marker='x')
-        plt.plot(inv_r, self.p_anion + self.dp_full_env_anion, label='full-env (-)', marker='o')
-        plt.plot(inv_r, self.p_cation + self.dp_full_env_cation, label='full-env (+)', marker='o')
-        plt.legend()
-        plt.xlabel('10/R, 10/A')
-        plt.ylabel('polarization, eV')
-        plt.xlim(right=1.0)
-        plt.savefig('polarization_full_env.png')
-        plt.close()
-
-        #  save full_env_polarization
-        self.p_full_env_anion = self.p_anion + self.dp_full_env_anion
-        self.p_full_env_cation = self.p_cation + self.dp_full_env_cation
-
-    def extract_eps_from_polarization(self, ab, a1b1=[5, 1E100]):
-        # fit the slope --> get the eps
-        self.radii = np.array(self.damped_energies_dict['radii'])
-        mean_energies = 0.5 * (self.p_full_env_cation + self.p_full_env_anion)  # mean polarization energy
-
-        c = 7.1997176734999995  # coefficient in the formula
-        a, b, a1, b1 = ab[0], ab[1], a1b1[0], a1b1[1]  # analyze interval; plot interval
-
-        target_i = np.where(np.logical_and(self.radii > a, self.radii < b))[0]
-        selected_r = self.radii[target_i]  # selected interval to compute epsilon
-        selected_energies = mean_energies[target_i]  # TODO: all energies to IP/EA
-
-        coef_poly = np.polyfit(1.0 / selected_r, selected_energies, 1)
-
-        selected_fitted_energies = coef_poly[0] / selected_r + coef_poly[1]
-
-        epsilon = c / (c + coef_poly[0])
-
-        print("Slope FULL-ENV CUSTOM: ", coef_poly[0])
-        print("Dielectric permittivity FULL-ENV CUSTOM :", epsilon)
-
-        plt.plot(10 / self.radii, mean_energies, LineStyle='-', marker='o')  # whole curve
-        plt.plot(10 / selected_r, selected_fitted_energies)  # ??
-        plt.xlabel('10/R, A')
-        plt.ylabel('polarization, eV')
-        plt.xlim([10 / b1, 10 / a1])
-        # plt.ylim([3.2, 3.5])  # hard-coded
-        ym_ym = plt.gca().get_ylim()
-        plt.plot(10.0 / np.array([20, 20]), ym_ym, label='20 A')  # TODO: make it professional
-        plt.plot(10.0 / np.array([30, 30]), ym_ym, label='30 A')
-        plt.plot(10.0 / np.array([40, 40]), ym_ym, label='40 A')
-        plt.plot(10.0 / np.array([50, 50]), ym_ym, label='50 A')
-        plt.plot(10.0 / np.array([60, 60]), ym_ym, label='60 A')
-        plt.legend()
-        plt.savefig('EPS_FULL_ENV_CUSTOM.png')
-        plt.close()
-
-class Output:
-    def __init__(self, run_time_output, ip_output, ea_output):
-        self.run_time_output = run_time_output
-        self.ip_output = ip_output
-        self.ea_output = ea_output
-        #  single-delta -->
-        self.polarization_anion_vs_R = {"single_delta": []}
-        self.polarization_cation_vs_R = {"single_delta": []}
-        self.polarization_physical_vs_R = {"single_delta": []}
-        self.polarization_nonphysical_vs_R = {"single_delta": []}
-        #  full_env -->
-        self.polarization_anion_vs_R = {"full_env": []}
-        self.polarization_cation_vs_R = {"full_env": []}
-        self.polarization_physical_vs_R = {"full_env": []}
-        self.polarization_nonphysical_vs_R = {"full_env": []}
-
-        self.radii = np.array(self.ip_output.binding_energies_dict["radii"])
-
-    def compute_polarization(self):
-        self.polarization_anion_vs_R["single_delta"] = \
-            np.array(self.ea_output.binding_energies_dict["single_delta"]) - self.run_time_output.vacuum_ea
-        self.polarization_cation_vs_R["single_delta"] = \
-            -np.array(self.ip_output.binding_energies_dict["single_delta"]) + self.run_time_output.vacuum_ip
-        self.polarization_physical_vs_R["single_delta"] = \
-            0.5 * (self.polarization_anion_vs_R["single_delta"] + self.polarization_cation_vs_R["single_delta"])
-        self.polarization_nonphysical_vs_R["single_delta"] = \
-            0.5 * (self.polarization_cation_vs_R["single_delta"] - self.polarization_anion_vs_R["single_delta"])
-
-        print("\nPolarization computed")
-
-    def plot_polarization(self, single_delta_or_full_env='single_delta', name_prefix='QP'):
-        # short-hand:
-        x = single_delta_or_full_env
-        p_a = self.polarization_anion_vs_R[single_delta_or_full_env]
-        p_c = self.polarization_cation_vs_R[single_delta_or_full_env]
-        p_phys = self.polarization_physical_vs_R[single_delta_or_full_env]
-        p_non_p = self.polarization_nonphysical_vs_R[single_delta_or_full_env]
-        r = self.radii
-        inv_r = np.array(10.0 / r)
-
-        figure, ax1 = plt.subplots()
-
-        ax1.plot(inv_r, p_c, marker='o', label='cation')
-        ax1.plot(inv_r, p_a, marker='o', label='anion')
-        ax1.plot(inv_r, p_phys, marker='o', label='physical')
-        ax1.plot(inv_r, p_non_p, marker='o', label='nonphysical')
-
-        ax1.set_xlim(left=0.0, right=10.0)
-        ax1.set_ylim(bottom=0.0)
-        ax1.set_xlabel('10/R, 10/A')
-        ax1.set_ylabel('Polarization Energy {}, eV'.format(x))
-        ax1.legend()
-
-        add_inverse_axis(initial_axis=ax1)
-
-        figure.tight_layout()
-        figure.savefig('{}_P_vs_1_over_R_{}.png'.format(name_prefix, x), dpi=600)
-
-    def save_polarization(self):
-        dict2save = {
-            'radii': self.radii.tolist(),
-            'polarization_anion_vs_R': self.polarization_anion_vs_R["single_delta"].tolist(),
-            'polarization_cation_vs_R': self.polarization_cation_vs_R["single_delta"].tolist(),
-            'polarization_physical_vs_R': self.polarization_physical_vs_R["single_delta"].tolist(),
-            'polarization_nonphysical_vs_R': self.polarization_nonphysical_vs_R["single_delta"].tolist()
-        }
-
-        with open('polarization_dict_QP.yaml', 'w+') as fid:
-            yaml.dump(dict2save, stream=fid)
+        ax1 = plt.gca()
+        add_inverse_axis(ax1)
+        plt.savefig('P.png')
 
 
-class PcsPcsOutput:
-    def __init__(self, single_delta_or_full_env='single_delta'):
-        self.single_delta_or_full_env = single_delta_or_full_env
-        self.polarization_anion_vs_R = {}
-        self.polarization_cation_vs_R = {}
-        self.polarization_physical_vs_R = {}
-        self.polarization_nonphysical_vs_R = {}
-        self.radii = []
-        self.qp_output = {'radii': [],
-                          'polarization_anion_vs_R': [],
-                          'polarization_cation_vs_R': [],
-                          'polarization_physical_vs_R': [],
-                          'polarization_nonphysical_vs_R': []}
-
-    def compute_polarization(self):
-
-        pcs_pcs_file = 'polarization_SD_core_pcs/output.yaml'
-        if os.path.exists(pcs_pcs_file):
-            with open(pcs_pcs_file) as fid:
-                pcs_out_dict = yaml.load(fid, Loader=yaml.FullLoader)
-            print("\nLoading pre-computed pcs-pcs polarization energies")
-
-            self.polarization_anion_vs_R["single_delta"] = np.array(pcs_out_dict["polarization_anion_vs_R"])
-            self.polarization_cation_vs_R["single_delta"] = np.array(pcs_out_dict['polarization_cation_vs_R'])
-            self.polarization_physical_vs_R["single_delta"] = \
-                0.5 * (self.polarization_anion_vs_R["single_delta"] + self.polarization_cation_vs_R["single_delta"])
-            self.polarization_nonphysical_vs_R["single_delta"] = \
-                0.5 * (self.polarization_cation_vs_R["single_delta"] - self.polarization_anion_vs_R["single_delta"])
-            self.radii = np.array(pcs_out_dict["radii"])
-        else:
-            Warning("You tried to load pcs-pcs polarization, but the file {} is not found.".format(pcs_pcs_file))
-
-    def plot_polarization(self, single_delta_or_full_env='single_delta', name_prefix='Pcs_Pcs'):
-        # short-hand:
-        x = single_delta_or_full_env
-        p_a = self.polarization_anion_vs_R[single_delta_or_full_env]
-        p_c = self.polarization_cation_vs_R[single_delta_or_full_env]
-        p_phys = self.polarization_physical_vs_R[single_delta_or_full_env]
-        p_non_p = self.polarization_nonphysical_vs_R[single_delta_or_full_env]
-        r = self.radii
-        inv_r = np.array(10.0 / r)
-
-        figure, ax1 = plt.subplots(figsize=[6, 6])
-        ax1.plot(inv_r, p_c, label='cation')
-        ax1.plot(inv_r, p_a, label='anion')
-        ax1.plot(inv_r, p_phys, label='physical')
-        ax1.plot(inv_r, p_non_p, label='nonphysical')
-        ax1.set_xlim(left=0, right=2.0)
-        ax1.set_ylim(bottom=-0.1, top=1.4)
-        ax1.set_xlabel('10/R, 10/A')
-        ax1.set_ylabel('Polarization Energy, eV')
-        #
-
-        add_inverse_axis(initial_axis=ax1)
-
-        #  begin: plot pcs-pcs at the same figure if exist
-        if os.path.exists('polarization_dict_QP.yaml'):
-            with open('polarization_dict_QP.yaml') as fid:
-                out_dict_QP = yaml.load(fid, Loader=yaml.FullLoader)
-            self.qp_output["radii"] = np.array(out_dict_QP['radii'])
-            self.qp_output["polarization_anion_vs_R"] = \
-                np.array(out_dict_QP["polarization_anion_vs_R"])
-            self.qp_output["polarization_cation_vs_R"] = \
-                np.array(out_dict_QP["polarization_cation_vs_R"])
-            self.qp_output["polarization_physical_vs_R"] = \
-                np.array(out_dict_QP["polarization_physical_vs_R"])
-            self.qp_output["polarization_nonphysical_vs_R"] = \
-                np.array(out_dict_QP["polarization_nonphysical_vs_R"])
-            qp_r = self.qp_output["radii"]
-            qp_inv_r = 10 / qp_r
-            qp_a = self.qp_output["polarization_anion_vs_R"]
-            qp_c = self.qp_output["polarization_cation_vs_R"]
-            qp_p = self.qp_output["polarization_physical_vs_R"]
-            qp_np = self.qp_output["polarization_nonphysical_vs_R"]
-
-            marker_style = '.'
-            ax1.plot(qp_inv_r, qp_c, marker=marker_style, label='QP: cation', color='C0', LineStyle='')
-            ax1.plot(qp_inv_r, qp_a, marker=marker_style, label='QP: anion', color='C1', LineStyle='')
-            ax1.plot(qp_inv_r, qp_p, marker=marker_style, label='QP: physical', color='C2', LineStyle='')
-            ax1.plot(qp_inv_r, qp_np, marker=marker_style, label='QP: nonphysical', color='C3', LineStyle='')
-        # end: plot the same pcs-pcs if exists
-
-        ax1.grid()
-        ax1.legend()
-        figure.tight_layout()
-        figure.savefig('{}_P_vs_1_over_R_{}.png'.format(name_prefix, x), dpi=600)
-
-
-def load_yaml_from_gzip(file):
-    with gzip.open(file, 'rb') as stream:
-        try:
-            file_content = yaml.load(stream, Loader=yaml.FullLoader)
-        except yaml.YAMLError as exc:
-            print(exc)
-    return file_content
-
-
-def add_inverse_axis(initial_axis, rs_plot=np.array([1, 2, 3, 4, 5, 7, 10, 20, 50]),
-                     rs_grid=np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70])):
+def add_inverse_axis(initial_axis, rs_plot=np.array([1, 2, 3, 4, 5, 7, 10, 20, 30, 40, 50]),
+                     rs_grid=np.array([])):
     def inv(x):
         return 10 / x
 
     ax2 = initial_axis.twiny()
-    ax2.set_xlabel('R, A')
+    ax2.set_xlabel('$R, \AA$')
     ax2.set_xticks(inv(rs_plot), minor=False)
     ax2.set_xticks(inv(rs_grid), minor=True)
     ax2.set_xticklabels(rs_plot)
     ax2.set_xbound(initial_axis.get_xbound())
-    ax2.grid(True, which='minor')
-    ax2.grid(True, which='major')
+    ax2.grid(True, which='minor', color = 'blue')
+    ax2.grid(True, which='major', color = 'red', linestyle='dotted')
 
 
 class Timer:
@@ -820,36 +371,45 @@ def append_folder(paths_to_mols, max_or_min):
     paths_to_mols = [path + '/' + step for path in paths_to_mols]
     return paths_to_mols
 
+def append_dict_with_mean(*dictionaries):
+    """
+    d = [1: {1:2, 2:3}, 2: {1:2, 2:3}]
+    :param d:
+    :return:
+    d = [1: {1:2, 2:3, 'mean': 2.5}, 2: {1:2, 2:3, 'mean': 2.5}]
+    """
 
-def mean_for_dict(x):
-    return np.array(list(x.values())).mean(0).tolist()
 
-#TRASH
+    for d in dictionaries:
+        my_depth = depth(d)
+        if my_depth > 1:
+            raise UserWarning("I cannot handle dictionaries which are > 1 deep")
+        # print('depth of the vocabulary: ', my_depth)
+        if not isinstance(list(d.values())[0], dict):
+            this_mean = np.mean(list(d.values()))
+            d['mean'] = this_mean
+        else:
+            for key, value in d.items():
+                this_mean = np.mean(list(value.values()))
+                d[key]['mean'] = this_mean
 
+def depth(d):
+    depth = 0
+    q = [(i, depth + 1) for i in d.values() if isinstance(i, dict)]
+    max_depth = 0
+    while (q):
+        n, depth = q.pop()
+        max_depth = max(max_depth, depth)
+        q = q + [(i, depth + 1) for i in n.values() if isinstance(i, dict)]
+    return max_depth
 
-def Retriever(bar):
-    return (list(globals().keys()))[list(map(lambda x: id(x), list(globals().values()))).index(id(bar))]
+def list2arr(*lists):
 
-def save_vars_by_their_names(prefix, suffix, *args):
-    for arg in args:
-        retrieved_thing = mod_retrieve_name(arg)
-        retrieved_thing1 = retrieve_name(arg)
-        retrieved_thing2 = mod_mod_retrieve_name(arg)
-        file_name = prefix + mod_retrieve_name(arg) + suffix
-        with open(file_name,'w+') as fid:
-            yaml.dump(arg, fid)
-
-def mod_mod_retrieve_name(var):
-    callers_local_vars = inspect.currentframe().f_back.f_back.f_back.f_locals.items()
-    return [var_name for var_name, var_val in callers_local_vars if var_val is var]
-
-def mod_retrieve_name(var):
-    callers_local_vars = inspect.currentframe().f_back.f_back.f_locals.items()
-    return [var_name for var_name, var_val in callers_local_vars if var_val is var]
-
-def retrieve_name(var):
-    callers_local_vars = inspect.currentframe().f_back.f_locals.items()
-    return [var_name for var_name, var_val in callers_local_vars if var_val is var]
+    new_list = []
+    for list in lists:
+        new_list.append(np.asarray(list))
+    output = tuple(new_list)
+    return output
 
 if __name__ == '__main__':
     main()
