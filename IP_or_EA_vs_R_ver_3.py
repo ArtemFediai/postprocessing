@@ -55,7 +55,7 @@ def main():
     print("Total Computation Time: {} sec".format(t.interval))
 
 
-############ FUNCTIONS ################
+############################
 class QPOutput:
     def __init__(self, mol_name):
         self.mol_name = mol_name
@@ -400,7 +400,7 @@ def depth(d):
     while (q):
         n, depth = q.pop()
         max_depth = max(max_depth, depth)
-        q = q + [(i, depth + 1) for i in n.values() if isinstance(i, dict)]
+        # q = q + [(i, depth + 1) for i in n.values() if isinstance(i, dict)]
     return max_depth
 
 def list2arr(*lists):
