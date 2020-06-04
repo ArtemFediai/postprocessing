@@ -51,6 +51,7 @@ def main():
 
         Analysis_output.plot_p()
 
+        Analysis_output.plot_IPEA()
     print("\nI am done")
     print("Total Computation Time: {} sec".format(t.interval))
 
@@ -312,20 +313,63 @@ class QPOutput:
 
 
     def plot_p(self, xlim = [0, 1.25]):
-        plt.plot(10*self.inv_radii, self.dE0_cation*np.ones(len(self.radii)), label = '$ \Delta E_{core}$ ')
-        plt.plot(10*self.inv_radii, self.dV0_cation, label = '$\Delta V_{core}$')
-        plt.plot(10*self.inv_radii, self.dVe_cation, label = '$\Delta V_{env}$')
-        plt.plot(10*self.inv_radii, self.dEe_cation, label = '$\Delta E_{env}$')
-        plt.plot(10*self.inv_radii, self.P_cation, label = '$P$')
-        plt.xlabel('$10/R,  10 / \AA^{-1} $')
-        plt.ylabel('$P^+$, eV')
-        plt.legend()
-        plt.xlim(xlim)
-        plt.grid()
-        ax1 = plt.gca()
-        add_inverse_axis(ax1)
-        plt.savefig('P.png')
+        # plots cation and anion polarization: total end element-wise
 
+        x = 10*self.inv_radii
+
+        # cation
+        Pi = [self.dE0_cation*np.ones(len(self.radii)), self.dV0_cation, self.dVe_cation, self.dEe_cation]
+        p = self.P_cation
+        labels_Pi = ['$\Delta E_{core}$', '$\Delta V_{core}$', '$\Delta V_{env}$', '$\Delta E_{env}$']
+        label_p =  '$P$ '
+        y_name = '$P^+$'
+        filename = 'P_plus.png' # without extention
+        plot_4_plus_1(x, Pi,p, y_name, filename, labels_Pi, label_p, xlim)
+
+        # anion
+        Pi = [self.dE0_anion*np.ones(len(self.radii)), self.dV0_anion, self.dVe_anion, self.dEe_anion]
+        p = self.P_anion
+        y_name = '$P^-$'
+        filename = 'P_minus.png' # without extention
+        plot_4_plus_1(x, Pi,p, y_name, filename, labels_Pi, label_p, xlim)
+
+    def plot_IPEA(self, xlim = [0, 1.25]):
+        # plots cation and anion polarization: total end element-wise
+
+        x = 10*self.inv_radii
+        # cation
+        self.IP = (self.E0_plus_vacuum['mean'] - self.E0_0_vacuum['mean'])*np.ones(len(self.P_cation)) + self.P_cation
+        plot_1(x, self.IP, 'IP.png', 'IP', xlim)
+        # anion
+        self.EA = (self.E0_0_vacuum['mean'] - self.E0_minus_vacuum['mean'])*np.ones(len(self.P_anion)) - self.P_anion
+        plot_1(x, self.EA, 'EA.png', 'EA', xlim)
+
+def plot_4_plus_1(x, Pi, p, y_name, filename, labels_Pi, label_p, xlim):
+
+    for i in range(len(Pi)):
+        plt.plot(x, Pi[i], label = labels_Pi[i])
+    plt.plot(x, p, label=label_p)
+    plt.xlabel('$10/R,  10 / \AA^{-1} $')
+    plt.ylabel('{}, eV'.format(y_name))
+    plt.legend()
+    plt.xlim(xlim)
+    plt.grid()
+    ax1 = plt.gca()
+    add_inverse_axis(ax1)
+    plt.savefig(filename)
+    plt.close()
+
+def plot_1(x, y, filename, y_name, xlim):
+    plt.plot(x, y)
+    plt.xlabel('$10/R,  10 / \AA^{-1} $')
+    plt.ylabel('{}, eV'.format(y_name))
+    plt.legend()
+    plt.xlim(xlim)
+    plt.grid()
+    ax1 = plt.gca()
+    add_inverse_axis(ax1)
+    plt.savefig(filename)
+    plt.close()
 
 def add_inverse_axis(initial_axis, rs_plot=np.array([1, 2, 3, 4, 5, 7, 10, 20, 30, 40, 50]),
                      rs_grid=np.array([])):
