@@ -10,6 +10,8 @@ from __future__ import print_function
 from __future__ import absolute_import
 import numpy as np
 import matplotlib
+from numpy.core._multiarray_umath import ndarray
+import warnings
 
 matplotlib.use('pdf')
 import matplotlib.pyplot as plt
@@ -23,19 +25,18 @@ import gzip
 
 def main():
     with Timer() as t:
-        qp_settings_file = 'settings_ng.yml' # default name of the QP settings file
+        qp_settings_file = 'settings_ng.yml'  # default name of the QP settings file
         with open(qp_settings_file, 'r') as fid:
             qp_settings = yaml.load(fid, Loader=yaml.FullLoader)
         R = int(qp_settings['System']['Shells']['0']['cutoff'])
-        ab = [R//2, R] #  ab is the left/right limit of the epsilon evaluation interval
-        my_mol_name = os.listdir('Analysis')[0].split('_')[1] #will work only for 1-component material
+        ab = [R // 2, R]  # ab is the left/right limit of the epsilon evaluation interval
+        my_mol_name = os.listdir('Analysis')[0].split('_')[1]  # will work only for 1-component material
 
         # here you can re-define R, ab, my_mol_name if necessary -->
         # R = 40
         # ab = [20, 40]
         # my_mol_name ='0ea4d81ac970d3f4fdbbe46acd91a041'
         # <--
-
 
         # get ea/ip output
         ip_output = QPOutput(my_mol_name, IP_or_EA='IP')  # ini: returns target folders for IP
@@ -77,7 +78,6 @@ def main():
         # extract eps full env
         my_runtime_output.extract_eps_from_polarization(ab)
 
-
         # combine outputs into a single object
         my_output = Output(my_runtime_output, ip_output=ip_output, ea_output=ea_output)
 
@@ -95,7 +95,6 @@ def main():
 
     print("\nI am done")
     print("Total Computation Time: {} sec".format(t.interval))
-
 
 
 ############ FUNCTIONS ################
@@ -226,7 +225,8 @@ class QPOutput:
         plt.savefig(eps_fol_name + '/{}_vs_1_over_R_{}_epsilon.png'.format(self.IP_or_EA, full_env_or_single_delta))
         plt.close()
 
-    def plot_energies(self, full_env_or_single_delta='single_delta'):  #TODO does not make sense to plot energies vs 1/R twice! this time it is plotted without extracting epsilon
+    def plot_energies(self,
+                      full_env_or_single_delta='single_delta'):  # TODO does not make sense to plot energies vs 1/R twice! this time it is plotted without extracting epsilon
         # fit the slope --> get the eps
         if full_env_or_single_delta == "full_env":
             mean_energies = self.mean_full_env  # TODO: all energies to IP, EA
@@ -236,8 +236,8 @@ class QPOutput:
             raise Warning("\"full_env_or_single_delta\" must be either \"full_env\" or \"single_delta\"")
 
         ipea_folder = 'ipea'
-        if not os.path.exists(ipea_folder ):
-            os.mkdir(ipea_folder )  # the folder to save dielectric permittivity
+        if not os.path.exists(ipea_folder):
+            os.mkdir(ipea_folder)  # the folder to save dielectric permittivity
 
         x = self.IP_or_EA
         plt.plot(self.radii, -mean_energies, LineStyle='-', marker='o')
@@ -262,52 +262,39 @@ class QPOutput:
 
 class RunTimeOutput:
     def __init__(self):
-        self.return_runtime_folders()
+        self.positive_folders, \
+        self.negative_folders, \
+        self.neutral_folder = self.return_runtime_folders(path_prefix='quantumpatch_runtime_files', min_or_max='max')
+        self.n_mol = len(self.negative_folders)
+        self.positive_folders_vacuum, \
+        self.negative_folders_vacuum, \
+        self.neutral_folder_vacuum = \
+        self.return_runtime_folders(path_prefix='vacuum/quantumpatch_runtime_files', min_or_max='min')  # 'vacuum'
         self.vacuum_energies_dict = {'positive': {}, 'negative': {}, 'neutral': {}}  # ini
         self.damped_energies_dict = {'positive': {}, 'negative': {}, 'neutral': {}, 'radii': {}}  # ini
         self.full_env_dict = {}
 
-    def return_runtime_folders(self):
+    def return_runtime_folders(self, path_prefix, min_or_max):
         """
         returns paths to the folders of the last charged/neutral steps
         :return:
         positive folders
         negative folders
         neutral folder
+        (all with the last iteration)
         """
-
-        def append_last_folder(path):
-            path = np.atleast_1d(path)
-            path_new = []
-            for i in range(len(path)):
-                step_list = os.listdir(path[i])
-                all_numbers = [int(number) for number in step_list]
-                number = max(all_numbers)
-                item = path[i] + '/' + str(number)
-                path_new.append(item)
-            return path_new
-
-        path_prefix = 'quantumpatch_runtime_files'
         all_folders = os.listdir(path_prefix)
         pos_paths = [path_prefix + '/' + folder for folder in all_folders if folder.endswith("_C_1")]
         neg_paths = [path_prefix + '/' + folder for folder in all_folders if folder.endswith("_C_-1")]
-
-        pos_paths = append_last_folder(pos_paths)
-        neg_paths = append_last_folder(neg_paths)
-
-        if len(pos_paths) == len(neg_paths):
-            Warning(
-                "number of negative molecules is not the same as the number of positive. Is this what you expected?")
-
-        self.n_mol = len(pos_paths)
         neutral_path = path_prefix + '/uncharged'
-        neutral_path = append_last_folder(neutral_path)[0]
+        pos_paths = append_folder(pos_paths, min_or_max)
+        neg_paths = append_folder(neg_paths, min_or_max)
+        neutral_path = append_folder(neutral_path, min_or_max)[0]
+        if not len(pos_paths) == len(neg_paths):
+            warnings.warn("number of +/- molecules are not equal!")
+        return pos_paths, neg_paths, neutral_path
 
-        self.positive_folders = pos_paths
-        self.negative_folders = neg_paths
-        self.neutral_folder = neutral_path
-
-    def return_all_TM_molecules(self, R, file_name='structurePBC.cml'):  #TODO extract R as the radius
+    def return_all_TM_molecules(self, R, file_name='structurePBC.cml'):  # TODO extract R as the radius
         """
         uses QP parser
         :return:
@@ -344,6 +331,7 @@ class RunTimeOutput:
                                                                        damped_energies_lib if
                                                                        key.split('_')[1] == core_id]
 
+
         def extract_neutral_energies(folder, yaml_name, positive_folders):
             for i in range(self.n_mol):
                 path2yaml = folder + '/' + yaml_name
@@ -360,9 +348,6 @@ class RunTimeOutput:
                     [damped_energies_lib[key] for key in damped_energies_lib if key.split('_')[1] == core_id]
                 self.damped_energies_dict['radii'] = \
                     [float(key.split('_')[3]) for key in damped_energies_lib.keys() if key.split('_')[1] == core_id]
-
-        def mean_for_dict(x):
-            return np.array(list(x.values())).mean(0).tolist()
 
         yaml_name = 'energies.ene.yml.gz'  # yaml file (first-time)
 
@@ -417,14 +402,14 @@ class RunTimeOutput:
                 self.full_env_dict = yaml.load(fid, Loader=yaml.FullLoader)
             print("\nQuick load of already extracted full env vacuum energies")
 
-    def compute_vacuum_binding_energies(self):
+    def compute_vacuum_binding_energies(self):  # ip or ea
         self.vacuum_ip = self.vacuum_energies_dict["positive"]['mean'] - self.vacuum_energies_dict["neutral"]['mean']
         self.vacuum_ea = self.vacuum_energies_dict["neutral"]['mean'] - self.vacuum_energies_dict["negative"]['mean']
 
         print('\nvacuum ip', self.vacuum_ip)
         print('vacuum ea', self.vacuum_ea)
 
-    def compute_vacuum_ea_ip(self):
+    def compute_vacuum_ea_ip(self):  # short hand function
         """
         polarization from runtime
         :return:
@@ -578,7 +563,6 @@ class RunTimeOutput:
         plt.legend()
         plt.savefig('EPS_FULL_ENV_CUSTOM.png')
         plt.close()
-
 
 class Output:
     def __init__(self, run_time_output, ip_output, ea_output):
@@ -761,7 +745,7 @@ def add_inverse_axis(initial_axis, rs_plot=np.array([1, 2, 3, 4, 5, 7, 10, 20, 5
     ax2.set_xbound(initial_axis.get_xbound())
     ax2.grid(True, which='minor')
     ax2.grid(True, which='major')
-    
+
 
 class Timer:
     def __enter__(self):
@@ -771,6 +755,30 @@ class Timer:
     def __exit__(self, *args):
         self.end = time.process_time()
         self.interval = self.end - self.start
+
+
+def append_folder(paths_to_mols, max_or_min):
+    """
+    append the list of strings (which represent paths) with the last first number in these paths.
+    numbers are nested folders in path.
+    :param paths_to_mols: array of strings that mean paths to QP output for molecules
+    :param max_or_min: last or first step
+    :return: updated paths to mols
+    """
+
+    paths_to_mols = np.atleast_1d(paths_to_mols)
+    all_steps = [int(number) for number in
+                 os.listdir(paths_to_mols[0])]  # there must be the same number of steps for every molecule
+    if max_or_min == 'max':
+        step = str(max(all_steps))
+    else:
+        step = str(min(all_steps))
+    paths_to_mols = [path + '/' + step for path in paths_to_mols]
+    return paths_to_mols
+
+
+def mean_for_dict(x):
+    return np.array(list(x.values())).mean(0).tolist()
 
 
 if __name__ == '__main__':
