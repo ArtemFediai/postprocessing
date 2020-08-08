@@ -23,16 +23,64 @@ import multiprocessing
 
 def main():
 
-    ene_my = np.loadtxt('../aNPD_1_molecule_outershell_more/core_energies.txt')
-    ene_my_015 = np.loadtxt('../aNPD_1_mol_015_decay/core_energies.txt')
-    ene_my_015_more = np.loadtxt('../aNPD_1_mol_015_decay_more/core_energies.txt')
-    plt.plot(ene_my[0] - ene_my[2], label='0.3')
-    plt.plot(ene_my_015[0] - ene_my_015[2], label='0.15')
-    plt.plot(ene_my_015_more[0] - ene_my_015_more[2], label='0.15 more it.')
-    plt.legend()
-    plt.xlim([3,30])
-    plt.ylim([2, 4.65])
-    plt.savefig('test.png')
+    # ene_my = np.loadtxt('../aNPD_1_molecule_outershell_more/core_energies.txt')
+    # ene_my_015 = np.loadtxt('../aNPD_1_mol_015_decay/core_energies.txt')
+    # ene_my_015_more = np.loadtxt('../aNPD_1_mol_015_decay_more/core_energies.txt')
+    # ene_my_40A = np.loadtxt('../aNPD_1_mol_40A_outershell/core_energies.txt')
+    # ene_my_025 = np.loadtxt('../aNPD_1_mol_02_decay/core_energies.txt')
+    # ene_my_long_03 = np.loadtxt('../aNPD_1_molecule_outershell_more_more/core_energies.txt')
+
+#    ene_my_long_03 = np.loadtxt('../aNPD_1_molecule_outershell_more/core_energies.txt')
+#    ene_my_long_03 = np.loadtxt('../aNPD_1_mol_40A_outershell_SVPD/core_energies.txt')
+#    ene_my_long_03 = np.loadtxt('../aNPD_1_molecule_outershell_more_more/core_energies.txt')
+#    ene_my_long_03 = np.loadtxt('../aNPD_1_mol_015_decay_more/core_energies.txt')
+
+    # ene_my_long_03 = np.loadtxt('core_energies.txt')
+    # ene_my_long_03_ref = np.loadtxt('../aNPD_1_mol_40A_outershell/core_energies.txt')
+
+#    ene_my_long_03 = np.loadtxt('../aNPD_1_mol_40A_outershell/core_energies.txt')
+#    ene_my_long_03 = np.loadtxt('../aNPD_1_mol_015_decay/core_energies.txt')
+
+    # plt.plot(ene_my[0] - ene_my[2], label='0.3')
+    # plt.plot(ene_my[2] - ene_my[1], label='0.3 ea')
+    # plt.plot(ene_my_015[0] - ene_my_015[2], label='0.15')
+    # plt.plot(ene_my_015[2] - ene_my_015[1], label='0.15 ea')
+    # plt.plot(ene_my_015_more[0] - ene_my_015_more[2], label='0.15 more it.')
+    # plt.plot(ene_my_015_more[2] - ene_my_015_more[1], label='0.15 more it. ea')
+    # plt.plot(ene_my_40A[0] - ene_my_40A[2], label='40A')
+    # plt.plot(ene_my_40A[2] - ene_my_40A[1], label='40A')
+    # plt.plot(ene_my_025[0] - ene_my_025[2], label='0.25')
+    # plt.plot(ene_my_025[2] - ene_my_025[1], label='0.25')
+    # plt.plot(ene_my_long_03[0] - ene_my_long_03[2], label='0.3 long')
+    # plt.plot(ene_my_long_03[2] - ene_my_long_03[1], label='0.3 long')
+    # plt.plot(ene_my_long_03[2] - ene_my_long_03[1], label='0.3 long')
+    # plt.semilogy((ene_my_long_03[0] - ene_my_long_03[0][-1]), label='plus')
+    # plt.semilogy((ene_my_long_03[2] - ene_my_long_03[2][-1]), label='uncharged')
+    # plt.semilogy((ene_my_long_03[1] - ene_my_long_03[1][-1]), label='minus')
+    #
+    # plt.semilogy((ene_my_long_03_ref[0] - ene_my_long_03_ref[0][-1]), label='plus', linestyle=':')
+    # plt.semilogy((ene_my_long_03_ref[2] - ene_my_long_03_ref[2][-1]), label='uncharged', linestyle=':')
+    # plt.semilogy((ene_my_long_03_ref[1] - ene_my_long_03_ref[1][-1]), label='minus', linestyle=':')
+    #
+    # plt.legend()
+    # # plt.xlim([3,30])
+    # # plt.ylim([4.6, 4.7])
+    # plt.savefig('test.png')
+    # plt.close()
+    #
+    # plt.figure()
+    #
+    # plt.plot((ene_my_long_03[0] - ene_my_long_03[2]), label='IP')
+    # plt.plot((ene_my_long_03[2] - ene_my_long_03[1]), label='EA')
+    #
+    # plt.plot((ene_my_long_03_ref[0] - ene_my_long_03_ref[2]), label='IP', linestyle=':')
+    # plt.plot((ene_my_long_03_ref[2] - ene_my_long_03_ref[1]), label='EA', linestyle=':')
+    #
+    # plt.legend()
+    # # plt.xlim([3,30])
+    # plt.ylim([1, 4.7])
+    # plt.savefig('test_energy.png')
+
 
 
     with Timer() as t:
@@ -81,7 +129,7 @@ def main():
         ##########################3##########
         ####
 
-        num_cores = multiprocessing.cpu_count()
+        num_cores = multiprocessing.cpu_count()//2
         j_subfolders = [np.array([j,subfolder]) for [j,subfolder] in np.transpose(np.array([range(len_folders), folders_int]))]
 
 
