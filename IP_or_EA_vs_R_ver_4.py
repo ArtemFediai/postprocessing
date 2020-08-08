@@ -32,7 +32,7 @@ def main():
         with open(qp_settings_file, 'r') as fid:
             qp_settings = yaml.load(fid, Loader=yaml.FullLoader)
         R = int(qp_settings['System']['Shells']['0']['cutoff'])
-        ab = [R // 2, R]  # ab is the left/right limit of the epsilon evaluation interval
+        ab = [20, 30]  # ab is the left/right limit of the epsilon evaluation interval
 #        my_mol_name = os.listdir('Analysis')[0].split('_')[1]  # will work only for 1-component material #TODO: wrong
 
         # here you can re-define R, ab, my_mol_name if necessary -->
@@ -55,6 +55,9 @@ def main():
         Analysis_output.plot_IPEA()
 
         Analysis_output.save_polarization_elementwise()
+
+        Analysis_output.extract_eps_from_polarization(ab=ab)
+
     print("\nI am done")
     print("Total Computation Time: {} sec".format(t.interval))
 
@@ -198,6 +201,12 @@ class QPOutput:
                 self.E0_plus[core_id] = ip_dict[int(core_id)]['energies'][int(core_id)]['total_e_charged_vacuum']
                 self.E0_0[core_id] = ip_dict[int(core_id)]['energies'][int(core_id)]['total_e_uncharged_vacuum']
                 self.E0_minus[core_id] = ea_dict[int(core_id)]['energies'][int(core_id)]['total_e_charged_vacuum']
+                # # E_0_vacuum
+                # self.E0_plus_vacuum[core_id] =
+                # self.E0_0_vacuum[core_id] =
+                # self.E0_minus_vacuum[core_id] =
+
+
                 # V_0
                 self.V0_plus[radius][core_id] = self.E_sd_plus[radius][core_id] - self.E0_plus[core_id]
                 self.V0_0[radius][core_id] = self.E_sd_0[radius][core_id] - self.E0_0[core_id]
@@ -265,25 +274,43 @@ class QPOutput:
 
         print('here')
 
+    # def extract_true_vacuum_energies(self):
+    #     if os.path.exists(self.vacuum_folder_path):
+    #         ip_vacuum_dir = self.vacuum_folder_path + '/Analysis/' + self.folders_IP[0].split('_')[0]  + '_' + self.folders_IP[0].split('_')[1]
+    #         ea_vacuum_dir = self.vacuum_folder_path + '/Analysis/' + self.folders_EA[0].split('_')[0]  + '_' + self.folders_EA[0].split('_')[1]
+    #         for core_id in self.core_ids:
+    #             with open(ip_vacuum_dir+'/Matrix-analysis-IP_'+self.mol_name+ '-Mol_'+str(core_id) + '_C_1.yml') as fid:
+    #                 ip_dict = yaml.load(fid, Loader=yaml.SafeLoader)
+    #             with open(ea_vacuum_dir+'/Matrix-analysis-EA_'+self.mol_name+ '-Mol_'+str(core_id) + '_C_-1.yml') as fid:
+    #                 ea_dict = yaml.load(fid, Loader=yaml.SafeLoader)
+    #
+    #             self.E0_plus_vacuum[core_id] = ip_dict[core_id]['total_e_charged_vacuum']
+    #             self.E0_0_vacuum[core_id] = ip_dict[core_id]['total_e_uncharged_vacuum']
+    #             self.E0_minus_vacuum[core_id] = ea_dict[core_id]['total_e_charged_vacuum']
+    #         append_dict_with_mean(self.E0_plus_vacuum, self.E0_0_vacuum, self.E0_minus_vacuum)
+    #
+    #     else:
+    #         self.E0_plus_vacuum = self.E0_plus
+    #         self.E0_0_vacuum = self.E0_0
+    #         self.E0_minus_vacuum = self.E0_minus
+
     def extract_true_vacuum_energies(self):
-        if os.path.exists(self.vacuum_folder_path):
-            ip_vacuum_dir = self.vacuum_folder_path + '/Analysis/' + self.folders_IP[0].split('_')[0]  + '_' + self.folders_IP[0].split('_')[1]
-            ea_vacuum_dir = self.vacuum_folder_path + '/Analysis/' + self.folders_EA[0].split('_')[0]  + '_' + self.folders_EA[0].split('_')[1]
-            for core_id in self.core_ids:
-                with open(ip_vacuum_dir+'/Matrix-analysis-IP_'+self.mol_name+ '-Mol_'+str(core_id) + '_C_1.yml') as fid:
-                    ip_dict = yaml.load(fid, Loader=yaml.SafeLoader)
-                with open(ea_vacuum_dir+'/Matrix-analysis-EA_'+self.mol_name+ '-Mol_'+str(core_id) + '_C_-1.yml') as fid:
-                    ea_dict = yaml.load(fid, Loader=yaml.SafeLoader)
+        zero_dir = 'quantumpatch_runtime_files/uncharged'
+        zero_file = zero_dir + '/' + str((min([int(this_dir) for this_dir in os.listdir(zero_dir)]))) + '/energies.ene.yml.gz'
+        zero_dict = load_yaml_from_gzip(zero_file)
+        for core_id in self.core_ids:
+            plus_dir = 'quantumpatch_runtime_files/Mol_' + str(core_id) + '_C_1'
+            minus_dir = 'quantumpatch_runtime_files/Mol_' + str(core_id) + '_C_-1'
+            plus_file = plus_dir + '/' + str((min([int(this_dir) for this_dir in os.listdir(plus_dir)]))) + '/energies.ene.yml.gz'
+            minus_file = minus_dir + '/' + str((min([int(this_dir) for this_dir in os.listdir(minus_dir)])))  + '/energies.ene.yml.gz'
+            minus_dict = load_yaml_from_gzip(minus_file)
+            plus_dict = load_yaml_from_gzip(plus_file)
 
-                self.E0_plus_vacuum[core_id] = ip_dict[core_id]['total_e_charged_vacuum']
-                self.E0_0_vacuum[core_id] = ip_dict[core_id]['total_e_uncharged_vacuum']
-                self.E0_minus_vacuum[core_id] = ea_dict[core_id]['total_e_charged_vacuum']
-            append_dict_with_mean(self.E0_plus_vacuum, self.E0_0_vacuum, self.E0_minus_vacuum)
+            self.E0_plus_vacuum[core_id] = plus_dict[str(core_id)]['total']
+            self.E0_0_vacuum[core_id] = zero_dict[str(core_id)]['total']
+            self.E0_minus_vacuum[core_id] = minus_dict[str(core_id)]['total']
 
-        else:
-            self.E0_plus_vacuum = self.E0_plus
-            self.E0_0_vacuum = self.E0_0
-            self.E0_minus_vacuum = self.E0_minus
+        append_dict_with_mean(self.E0_plus_vacuum, self.E0_0_vacuum, self.E0_minus_vacuum)
 
     def get_polarization_elementwise(self):
         e0p_v = self.E0_plus_vacuum['mean']
@@ -377,11 +404,82 @@ class QPOutput:
 
         x = 10*self.inv_radii
         # cation
-        self.IP = (self.E0_plus_vacuum['mean'] - self.E0_0_vacuum['mean'])*np.ones(len(self.P_cation)) + self.P_cation
+        self.IP = (self.E0_plus_vacuum['mean'] - self.E0_0_vacuum['mean'])*np.ones(len(self.P_cation)) - self.P_cation #
         plot_1(x, self.IP, 'IP.png', 'IP', xlim)
         # anion
-        self.EA = (self.E0_0_vacuum['mean'] - self.E0_minus_vacuum['mean'])*np.ones(len(self.P_anion)) - self.P_anion
+        self.EA = (self.E0_0_vacuum['mean'] - self.E0_minus_vacuum['mean'])*np.ones(len(self.P_anion)) + self.P_anion #
         plot_1(x, self.EA, 'EA.png', 'EA', xlim)
+
+
+    def extract_eps_from_polarization(self, ab=[20, 60], a1b1=[5, 1E100]):
+        # fit the slope --> get the eps
+        self.radii = np.array(self.radii)
+        mean_energies = 0.5 * (self.P_cation + self.P_anion)  # mean polarization energy
+
+        #P_cation_relaxed = self.dE0_cation + self.dV0_cation + self.dVe_cation# + self.dEe_cation
+        #P_anion_relaxed = self.dE0_anion + self.dV0_anion + self.dVe_anion# + self.dEe_anion
+
+
+        #mean_energies = 0.5 * (P_cation_relaxed + P_anion_relaxed)  # mean polarization energy
+
+        c = 7.1997176734999995  # coefficient in the formula
+
+        a, b, a1, b1 = ab[0], ab[1], a1b1[0], a1b1[1]  # analyze interval; plot interval
+
+        target_i = np.where(np.logical_and(self.radii > a, self.radii < b))[0]
+        selected_r = self.radii[target_i]  # selected interval to compute epsilon
+        selected_energies = mean_energies[target_i]  # TODO: all energies to IP/EA
+
+        coef_poly = np.polyfit(1.0 / selected_r, selected_energies, 1)
+
+        selected_fitted_energies = coef_poly[0] / selected_r + coef_poly[1]
+
+        epsilon = c / (c + coef_poly[0])
+
+        point_a = [0, coef_poly[1]]
+        point_b = [10/selected_r[-1], selected_energies[-1]]
+
+        # fictitious eps
+        s_25 = c*(1-2.5)/2.5
+        s_30 = c*(1-3.0)/3.0
+        s_35 = c*(1-3.5)/3.5
+
+        point_a_25 = [0, selected_energies[-1] - s_25*1/selected_r[-1]]
+        point_a_30 = [0, selected_energies[-1] - s_30*1/selected_r[-1]]
+        point_a_35 = [0, selected_energies[-1] - s_35*1/selected_r[-1]]
+        # fictitious eps
+
+
+        self.epsilon = epsilon
+
+        print("Slope: ", coef_poly[0])
+        print("Polarization energy: ", coef_poly[1])
+        print("Dielectric permittivity:", epsilon)
+
+        plt.plot(10 / self.radii, mean_energies, LineStyle='-', marker='o')  # whole curve
+        plt.plot(10 / selected_r, selected_fitted_energies)  # ??
+
+        plt.plot([point_a[0], point_b[0]],[point_a[1],point_b[1]], label='approx')
+        plt.plot([point_a_25[0], point_b[0]],[point_a_25[1],point_b[1]], label='eps 2.5', linestyle=':')
+        plt.plot([point_a_30[0], point_b[0]],[point_a_30[1],point_b[1]], label='eps 3.0', linestyle=':')
+        plt.plot([point_a_35[0], point_b[0]],[point_a_35[1],point_b[1]], label='eps 3.5', linestyle=':')
+
+        plt.xlabel('10/R, A')
+        plt.ylabel('polarization, eV')
+        plt.xlim([10 / b1, 10 / a1])
+        # plt.ylim([3.2, 3.5])  # hard-coded
+        ym_ym = plt.gca().get_ylim()
+        plt.plot(10.0 / np.array([20, 20]), ym_ym, label='20 A')  # TODO: make it professional
+        plt.plot(10.0 / np.array([30, 30]), ym_ym, label='30 A')
+        plt.plot(10.0 / np.array([40, 40]), ym_ym, label='40 A')
+        plt.plot(10.0 / np.array([50, 50]), ym_ym, label='50 A')
+        plt.plot(10.0 / np.array([60, 60]), ym_ym, label='60 A')
+        plt.legend()
+        plt.savefig('EPS_FULL_ENV_CUSTOM.png', dpi=600)
+        plt.close()
+#
+
+
 
 def plot_4_plus_1(x, Pi, p, y_name, filename, labels_Pi, label_p, xlim):
 
@@ -493,6 +591,15 @@ def list2arr(*lists):
         new_list.append(np.asarray(list))
     output = tuple(new_list)
     return output
+
+
+def load_yaml_from_gzip(file):
+    with gzip.open(file, 'rb') as stream:
+        try:
+            file_content = yaml.load(stream, Loader=yaml.FullLoader)
+        except yaml.YAMLError as exc:
+            print(exc)
+    return file_content
 
 if __name__ == '__main__':
     main()
