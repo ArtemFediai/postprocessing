@@ -33,9 +33,14 @@ import gzip
 
 def main():
     with Timer() as t:
+
+        # for eps
+        ab = [20,30]
+        #
+
         folders = os.listdir('.')
-        folders: List[str] = [folder for folder in folders if os.path.exists(folder+'/Analysis')]
-        A,B,C = [],[],[]
+        folders: List[str] = [folder for folder in folders if os.path.exists(folder+'/Analysis') and os.path.exists(folder+'/Analysis'+'/IP_by_radius')]
+#        A,B,C = [],[],[]
         # compare_dict = {'dE0_cation': [], 'dE0_anion': [],
         #                 'dV0_cation': [], 'dV0_anion': [],
         #                 'dVe_cation': [], 'dVe_anion': [],
@@ -50,7 +55,7 @@ def main():
             with open(qp_settings_file, 'r') as fid:
                 qp_settings = yaml.load(fid, Loader=yaml.FullLoader)
             R = int(qp_settings['System']['Shells']['0']['cutoff'])
-            ab = [R // 2, R]  # ab is the left/right limit of the epsilon evaluation interval
+            #ab = [R // 2, R]  # ab is the left/right limit of the epsilon evaluation interval
 #            my_mol_name = os.listdir(f + '/Analysis')[0].split('_')[1]  # will work only for 1-component material #TODO: wrong
 
             # here you can re-define R, ab, my_mol_name if necessary -->
@@ -74,15 +79,17 @@ def main():
 
             Analysis_output.save_polarization_elementwise()
 
+            Analysis_output.extract_eps_from_polarization(ab=ab)
+
             os.chdir('../')
 
             #plt.plot(1./Analysis_output.inv_radii*10, Analysis_output.dEe_anion, label = f)
 
             quick_dir[f] = Analysis_output
 
-            A.append(Analysis_output.dEe_anion)
-            B.append(Analysis_output.dVe_anion)
-            C.append(Analysis_output.dV0_anion)
+            # A.append(Analysis_output.dEe_anion)
+            # B.append(Analysis_output.dVe_anion)
+            # C.append(Analysis_output.dV0_anion)
 
 #
         xlim = [0, 1.25]
@@ -107,8 +114,31 @@ def main():
         ax1 = plt.gca()
         add_inverse_axis(initial_axis=ax1)
         #plt.grid()
-        plt.savefig('test.png', dpi=600)
+        plt.savefig('P_componentswise.png', dpi=600)
         plt.close()
+
+
+        # Figure 2
+        plt.figure()
+        for i, f in enumerate(folders):
+            x = quick_dir[f]
+            r = x.inv_radii*10
+            plt.plot(r,0.5*(x.P_cation+x.P_anion), label = f + '; eps = {:.2f}'.format((x.epsilon)))
+
+        plt.legend(folders)
+        plt.ylabel('$0.5(P^{+} + P^{-})$')
+        plt.xlabel('1/r, $\AA^{-1}$')
+        plt.legend()
+        plt.xlim(xlim)
+        #plt.grid()
+        ax1 = plt.gca()
+        add_inverse_axis(initial_axis=ax1)
+        #plt.grid()
+        plt.savefig('P_average.png', dpi=600)
+        plt.close()
+
+
+
 
 
 
