@@ -1,37 +1,74 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="BranchesTreeState">
+    <expand>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="GROUP_NODE:origin" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+    </expand>
+    <select />
+  </component>
   <component name="ChangeListManager">
-    <list default="true" id="1e57dd70-923d-4503-952f-9d63c68dcb14" name="Default Changelist" comment="">
+    <list default="true" id="1e57dd70-923d-4503-952f-9d63c68dcb14" name="Default Changelist" comment="total energy convergence (normal and parallel). drafts">
+      <change afterPath="$PROJECT_DIR$/CompareBasisSet.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/postprocessing.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/postprocessing.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/postprocessing_depletion_ruaml.py" beforeDir="false" afterPath="$PROJECT_DIR$/postprocessing_depletion_ruaml.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IP_or_EA_vs_R_ver_4.py" beforeDir="false" afterPath="$PROJECT_DIR$/IP_or_EA_vs_R_ver_4.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/eps_paper/plot_p_average_for_all.py" beforeDir="false" afterPath="$PROJECT_DIR$/eps_paper/plot_p_average_for_all.py" afterDir="false" />
     </list>
-    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
-  </component>
-  <component name="ProjectId" id="1SVRwJDXDcgWin8YdokF8p9JtID" />
-  <component name="PropertiesComponent">
-    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../lightforge" />
-  </component>
-  <component name="RunDashboard">
-    <option name="ruleStates">
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
       <list>
-        <RuleState>
-          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
-        </RuleState>
-        <RuleState>
-          <option name="name" value="StatusDashboardGroupingRule" />
-        </RuleState>
+        <option value="Python Script" />
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.ruamel 01">
+  <component name="Git.Pull.Settings">
+    <option name="BRANCH" value="master" />
+  </component>
+  <component name="Git.Settings">
+    <option name="PREVIOUS_COMMIT_AUTHORS">
+      <list>
+        <option value="ArtemFediai &lt;artem.fedyay@gmail.com&gt;" />
+      </list>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectId" id="1SVRwJDXDcgWin8YdokF8p9JtID" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="com.intellij.ide.scratch.LRUPopupBuilder$1/New Scratch File" value="Python" />
+    <property name="last_opened_file_path" value="$USER_HOME$/work/Jonas_aNPD_C60_TCTA" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.plot_p_average_for_all">
     <configuration name="0-dis-010" type="PythonConfigurationType" factoryName="Python">
       <module name="postprocessing" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -74,7 +111,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="1-dis-015" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="1-dis-015" type="PythonConfigurationType" factoryName="Python">
       <module name="postprocessing" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -87,6 +124,363 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/postprocessing_current.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="C60_Jonas_home" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/work/Jonas_aNPD_C60_TCTA/C60" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/IP_or_EA_vs_R_ver_4.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="C60_test" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/int_nano/07042020/C60_20A" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/IP_or_EA_vs_R_ver_2.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TCTA_Jonas_home" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/work/Jonas_aNPD_C60_TCTA/TCTA" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/IP_or_EA_vs_R_ver_4.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="VER3 C60 large" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/int_nano/07042020/C60" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/IP_or_EA_vs_R_ver_3.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="VER3 from Cluster" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/int_nano/25072020/aNPD_1_molecule_outershell_more" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/IP_or_EA_vs_R_ver_3.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="VER4 50A" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/int_nano/25072020/aNPD_1_mol_40A_outershell_SVPD" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/IP_or_EA_vs_R_ver_4.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="VER4 aNPD SVPD" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/int_nano/05082020/aNPD_1_mol_40A_outershell_SVPD" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/IP_or_EA_vs_R_ver_4.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="VER4 compare different R" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/int_nano/25072020/different_R" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/compare_V4.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="VER4 compare" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/int_nano/05082020" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/compare_V4.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="VER4 from Cluster aNPD 1mol more" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/int_nano/25072020/aNPD_1_molecule_outershell_more" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/IP_or_EA_vs_R_ver_4.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="VER4 from Cluster aNPD 1mol" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/int_nano/25072020/aNPD_1_mol_40A_outershell_SVPD" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/IP_or_EA_vs_R_ver_4.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="VER4 from Cluster aNPD_morecutoff 1mol " type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/int_nano/25072020/aNPD_1_molecule_more_cutoff" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/IP_or_EA_vs_R_ver_4.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="VER4 from Cluster aNPD_static_shell 1mol" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/int_nano/25072020/aNPD_1_molecule_outershell" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/IP_or_EA_vs_R_ver_4.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="VER4 local aNPD" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/work/aNPD_1_mol_30A_outershell" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/IP_or_EA_vs_R_ver_4.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="aNPD_Jonas" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/int_nano/09102020/5_core_12its_03_8its_05_artem_rerun" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/IP_or_EA_vs_R_ver_4.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="aNPD_Jonas_home" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/work/Jonas_aNPD_C60_TCTA/aNPD" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/IP_or_EA_vs_R_ver_4.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="append_settings" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/29102020" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/append_settings.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -116,19 +510,334 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="ruamel 01" type="PythonConfigurationType" factoryName="Python">
+    <configuration name="converge energy 0304 decay" type="PythonConfigurationType" factoryName="Python">
       <module name="postprocessing" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
-      <option name="SDK_HOME" value="$PROJECT_DIR$/../anaconda3/bin/python" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../Desktop/fh/2019/092019/26092019/mobile_fraction/dis_0_CT_1/replay_20102019" />
-      <option name="IS_MODULE_SDK" value="false" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/int_nano/25072020/aNPD_1_mol_0304_decay" />
+      <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/postprocessing_depletion_ruaml.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/total_energy_convergence_par.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="converge energy 0508 ref" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/int_nano/05082020/test_damping_by_iter" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/total_energy_convergence_par.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="converge energy 0508" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/int_nano/05082020/test_damping_by_iter" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/total_energy_convergence_par.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="convergence_energy" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/int_nano/25072020/aNPD_1_molecule_outershell_more" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/total_energy_convergence.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="convergence_energy_02" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/int_nano/25072020/aNPD_1_mol_02_decay" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/total_energy_convergence_par.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="convergence_energy_40A" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/int_nano/25072020/aNPD_1_mol_40A_outershell" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/total_energy_convergence_par.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="convergence_energy_SVPD" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/int_nano/25072020/aNPD_1_mol_40A_outershell_SVPD" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/total_energy_convergence_par.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="convergence_energy_TCTA" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/int_nano/pure_TCTA" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/total_energy_convergence_par.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="convergence_energy_fast_par" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/work/aNPD_1_mol_30A_outershell" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/total_energy_convergence_par.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="convergence_energy_many_many" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/int_nano/25072020/aNPD_1_mol_02_decay" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/total_energy_convergence_par.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="local_C60_test" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/work/C60_20A" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/IP_or_EA_vs_R_ver_3.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="number density" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/number_density.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="plot_p_average_for_all" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/work/Jonas_aNPD_C60_TCTA" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/eps_paper/plot_p_average_for_all.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="pure TCTA SZVP" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/int_nano/pure_TCTA" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/IP_or_EA_vs_R_ver_4.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="test" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/test" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="test_par" type="PythonConfigurationType" factoryName="Python">
+      <module name="postprocessing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop/test" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test_par.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -140,16 +849,50 @@
     <list>
       <item itemvalue="Python.0-dis-010" />
       <item itemvalue="Python.0-dis-015" />
-      <item itemvalue="Python.ruamel 01" />
-      <item itemvalue="Python.compare-current" />
       <item itemvalue="Python.1-dis-015" />
+      <item itemvalue="Python.C60_Jonas_home" />
+      <item itemvalue="Python.C60_test" />
+      <item itemvalue="Python.TCTA_Jonas_home" />
+      <item itemvalue="Python.VER3 C60 large" />
+      <item itemvalue="Python.VER3 from Cluster" />
+      <item itemvalue="Python.VER4 50A" />
+      <item itemvalue="Python.VER4 aNPD SVPD" />
+      <item itemvalue="Python.VER4 compare different R" />
+      <item itemvalue="Python.VER4 compare" />
+      <item itemvalue="Python.VER4 from Cluster aNPD 1mol more" />
+      <item itemvalue="Python.VER4 from Cluster aNPD 1mol" />
+      <item itemvalue="Python.VER4 from Cluster aNPD_morecutoff 1mol " />
+      <item itemvalue="Python.VER4 from Cluster aNPD_static_shell 1mol" />
+      <item itemvalue="Python.VER4 local aNPD" />
+      <item itemvalue="Python.aNPD_Jonas" />
+      <item itemvalue="Python.aNPD_Jonas_home" />
+      <item itemvalue="Python.append_settings" />
+      <item itemvalue="Python.compare-current" />
+      <item itemvalue="Python.converge energy 0304 decay" />
+      <item itemvalue="Python.converge energy 0508 ref" />
+      <item itemvalue="Python.converge energy 0508" />
+      <item itemvalue="Python.convergence_energy" />
+      <item itemvalue="Python.convergence_energy_02" />
+      <item itemvalue="Python.convergence_energy_40A" />
+      <item itemvalue="Python.convergence_energy_SVPD" />
+      <item itemvalue="Python.convergence_energy_TCTA" />
+      <item itemvalue="Python.convergence_energy_fast_par" />
+      <item itemvalue="Python.convergence_energy_many_many" />
+      <item itemvalue="Python.local_C60_test" />
+      <item itemvalue="Python.number density" />
+      <item itemvalue="Python.plot_p_average_for_all" />
+      <item itemvalue="Python.pure TCTA SZVP" />
+      <item itemvalue="Python.test" />
+      <item itemvalue="Python.test_par" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.1-dis-015" />
+        <item itemvalue="Python.plot_p_average_for_all" />
+        <item itemvalue="Python.append_settings" />
       </list>
     </recent_temporary>
   </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration">
     <configuration />
   </component>
@@ -161,6 +904,49 @@
       <option name="presentableId" value="Default" />
       <updated>1563787981179</updated>
     </task>
+    <task id="LOCAL-00001" summary="second version of polarization">
+      <created>1588666866495</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1588666866495</updated>
+    </task>
+    <task id="LOCAL-00002" summary="third version of polarization. technical commit">
+      <created>1589285547253</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1589285547253</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Third version of polarization. Core functionality is implemented">
+      <created>1589329052161</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1589329052161</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Third version of polarization. Core functionality is implemented. Test">
+      <created>1591281383702</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1591281383702</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Added IP^-; EAIP printing">
+      <created>1591289259989</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1591289259989</updated>
+    </task>
+    <task id="LOCAL-00006" summary="total energy convergence (normal and parallel). drafts">
+      <created>1596320553930</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1596320553930</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -168,12 +954,169 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State>
-              <option name="COLUMN_ORDER" />
-            </State>
+            <State />
           </value>
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="second version of polarization" />
+    <MESSAGE value="third version of polarization. technical commit" />
+    <MESSAGE value="Third version of polarization. Core functionality is implemented" />
+    <MESSAGE value="Third version of polarization. Core functionality is implemented. Test" />
+    <MESSAGE value="Added IP^-; EAIP printing" />
+    <MESSAGE value="total energy convergence (normal and parallel). drafts" />
+    <option name="LAST_COMMIT_MESSAGE" value="total energy convergence (normal and parallel). drafts" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="851" y="654" width="1925" height="804" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1603993294454">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state x="851" y="654" width="1925" height="804" key="#com.intellij.execution.impl.EditConfigurationsDialog/67.27.3773.2133@67.27.3773.2133" timestamp="1603993294454" />
+    <state x="2574" y="895" width="614" height="396" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1602595187549">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state x="2574" y="895" width="614" height="396" key="#com.intellij.fileTypes.FileTypeChooser/67.27.3773.2133@67.27.3773.2133" timestamp="1602595187549" />
+    <state x="1748" y="829" width="2015" height="528" key="#xdebugger.XInspectDialog" timestamp="1603980895744">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state x="1748" y="829" width="2015" height="528" key="#xdebugger.XInspectDialog/67.27.3773.2133@67.27.3773.2133" timestamp="1603980895744" />
+    <state x="724" y="813" width="939" height="1213" key="#xdebugger.evaluate" timestamp="1602606408356">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state x="724" y="813" width="939" height="1213" key="#xdebugger.evaluate/67.27.3773.2133@67.27.3773.2133" timestamp="1602606408356" />
+    <state width="2331" height="506" key="DebuggerActiveHint" timestamp="1603965246994">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state width="2331" height="506" key="DebuggerActiveHint/67.27.3773.2133@67.27.3773.2133" timestamp="1603965246994" />
+    <state x="2070" y="127" width="1630" height="1933" key="DiffContextDialog" timestamp="1596221105364">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state x="2070" y="127" width="1630" height="1933" key="DiffContextDialog/67.27.3773.2133@67.27.3773.2133" timestamp="1596221105364" />
+    <state x="1294" y="977" width="1284" height="484" key="FileChooserDialogImpl" timestamp="1603980349568">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state x="1294" y="977" width="1284" height="484" key="FileChooserDialogImpl/67.27.3773.2133@67.27.3773.2133" timestamp="1603980349568" />
+    <state width="1824" height="551" key="GridCell.Tab.0.bottom" timestamp="1604009195345">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state width="1824" height="551" key="GridCell.Tab.0.bottom/67.27.3773.2133@67.27.3773.2133" timestamp="1604009195345" />
+    <state width="1824" height="551" key="GridCell.Tab.0.center" timestamp="1604009195345">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state width="1824" height="551" key="GridCell.Tab.0.center/67.27.3773.2133@67.27.3773.2133" timestamp="1604009195345" />
+    <state width="1824" height="551" key="GridCell.Tab.0.left" timestamp="1604009195345">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state width="1824" height="551" key="GridCell.Tab.0.left/67.27.3773.2133@67.27.3773.2133" timestamp="1604009195345" />
+    <state width="1824" height="551" key="GridCell.Tab.0.right" timestamp="1604009195345">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state width="1824" height="551" key="GridCell.Tab.0.right/67.27.3773.2133@67.27.3773.2133" timestamp="1604009195345" />
+    <state width="1824" height="551" key="GridCell.Tab.1.bottom" timestamp="1604009195345">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state width="1824" height="551" key="GridCell.Tab.1.bottom/67.27.3773.2133@67.27.3773.2133" timestamp="1604009195345" />
+    <state width="1824" height="551" key="GridCell.Tab.1.center" timestamp="1604009195345">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state width="1824" height="551" key="GridCell.Tab.1.center/67.27.3773.2133@67.27.3773.2133" timestamp="1604009195345" />
+    <state width="1824" height="551" key="GridCell.Tab.1.left" timestamp="1604009195345">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state width="1824" height="551" key="GridCell.Tab.1.left/67.27.3773.2133@67.27.3773.2133" timestamp="1604009195345" />
+    <state width="1824" height="551" key="GridCell.Tab.1.right" timestamp="1604009195345">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state width="1824" height="551" key="GridCell.Tab.1.right/67.27.3773.2133@67.27.3773.2133" timestamp="1604009195345" />
+    <state x="2491" y="828" width="800" height="528" key="Vcs.Push.Dialog.v2" timestamp="1596320567137">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state x="2491" y="828" width="800" height="528" key="Vcs.Push.Dialog.v2/67.27.3773.2133@67.27.3773.2133" timestamp="1596320567137" />
+    <state width="933" height="1066" key="XDebugger.FullValuePopup" timestamp="1602590043563">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state width="933" height="1066" key="XDebugger.FullValuePopup/67.27.3773.2133@67.27.3773.2133" timestamp="1602590043563" />
+    <state x="458" y="780" width="762" height="616" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1603986352979">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state x="458" y="780" width="762" height="616" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/67.27.3773.2133@67.27.3773.2133" timestamp="1603986352979" />
+    <state x="1999" y="275" width="925" height="1439" key="dock-window-1" timestamp="1596321073569">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state x="1999" y="275" width="925" height="1439" key="dock-window-1/67.27.3773.2133@67.27.3773.2133" timestamp="1596321073569" />
+    <state x="1013" y="43" width="886" height="1451" key="dock-window-2" timestamp="1596323904424">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state x="1013" y="43" width="886" height="1451" key="dock-window-2/67.27.3773.2133@67.27.3773.2133" timestamp="1596323904424" />
+    <state x="2446" y="583" width="871" height="1020" key="find.popup" timestamp="1596121078672">
+      <screen x="67" y="27" width="3773" height="2133" />
+    </state>
+    <state x="2446" y="583" width="871" height="1020" key="find.popup/67.27.3773.2133@67.27.3773.2133" timestamp="1596121078672" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/IP_or_EA_vs_R_ver_3.py</url>
+          <line>344</line>
+          <option name="timeStamp" value="84" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/IP_or_EA_vs_R_ver_3.py</url>
+          <line>192</line>
+          <option name="timeStamp" value="108" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/compare_V4.py</url>
+          <line>145</line>
+          <option name="timeStamp" value="117" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/test_par.py</url>
+          <line>27</line>
+          <option name="timeStamp" value="134" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/total_energy_convergence_par.py</url>
+          <line>85</line>
+          <option name="timeStamp" value="135" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/compare_V4.py</url>
+          <line>123</line>
+          <option name="timeStamp" value="136" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/number_density.py</url>
+          <line>32</line>
+          <option name="timeStamp" value="137" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/append_settings.py</url>
+          <line>25</line>
+          <option name="timeStamp" value="144" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/eps_paper/plot_p_average_for_all.py</url>
+          <line>46</line>
+          <option name="timeStamp" value="148" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/eps_paper/plot_p_average_for_all.py</url>
+          <line>70</line>
+          <option name="timeStamp" value="149" />
+        </line-breakpoint>
+      </breakpoints>
+      <default-breakpoints>
+        <breakpoint type="python-exception">
+          <properties notifyOnTerminate="true" exception="BaseException">
+            <option name="notifyOnTerminate" value="true" />
+          </properties>
+        </breakpoint>
+      </default-breakpoints>
+    </breakpoint-manager>
   </component>
 </project>
