@@ -373,6 +373,7 @@ class QPOutput:
         np.savetxt(fname=f4p+'dVe_anion.dat',  X=self.dVe_anion)
         np.savetxt(fname=f4p+'dEe_cation.dat',  X=self.dEe_cation)
         np.savetxt(fname=f4p+'dEe_anion.dat',  X=self.dEe_anion)
+        np.savetxt(fname=f4p+'radii.dat',  X=self.radii)
 
 
     def plot_p(self, xlim = [0, 1.25]):
