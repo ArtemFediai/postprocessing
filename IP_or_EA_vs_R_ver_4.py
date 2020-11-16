@@ -31,14 +31,14 @@ def main():
         qp_settings_file = 'settings_ng.yml'  # default name of the QP settings file
         with open(qp_settings_file, 'r') as fid:
             qp_settings = yaml.load(fid, Loader=yaml.FullLoader)
-        R = int(qp_settings['System']['Shells']['1']['cutoff']) # this will work only for one shell!
-        ab = [19, 41]  # ab is the left/right limit of the epsilon evaluation interval
+        R = int(qp_settings['System']['Shells']['0']['cutoff']) # this will work only for one shell!
+        ab = [19, 31]  # ab is the left/right limit of the epsilon evaluation interval
         number_density_nm3_aNPD = 1.158623303810171 # aNPD
         number_density_nm3_TCTA = 0.9162165860886232 # TCTA
         number_density_nm3_C60 = 1.4266923 # C60
-
+        number_density_nm3_SpiroOMeTAD = 0.4873207140786595  # SpiroOMeTAD
         #
-        my_density = number_density_nm3_TCTA
+        my_density = number_density_nm3_SpiroOMeTAD
         #
 #        my_mol_name = os.listdir('Analysis')[0].split('_')[1]  # will work only for 1-component material #TODO: wrong
 
@@ -63,9 +63,9 @@ def main():
 
         Analysis_output.plot_IPEA()
 
-        Analysis_output.extract_eps_from_polarization(ab=ab, number_density_nm3=number_density_nm3_TCTA)
+        Analysis_output.extract_eps_from_polarization(ab=ab, number_density_nm3=my_density)
 
-        Analysis_output.extract_eps_from_polarization_new(ab=ab, number_density_nm3=number_density_nm3_TCTA)
+        Analysis_output.extract_eps_from_polarization_new(ab=ab, number_density_nm3=my_density)
 
         Analysis_output.save_polarization_elementwise()
 
@@ -607,7 +607,7 @@ class QPOutput:
         # below: polarization vs. n**(-1/3)
 
         n_mean = np.asarray([self.n_mols[radius]['mean'] for radius in self.n_mols]) # mean number of molecules
-        r_renormalized = (n_mean/number_density_nm3 * 3 / 4 / np.pi * 1E3)**(1/3)  # in A
+        r_renormalized = (n_mean/(number_density_nm3) * 3 / 4 / np.pi * 1E3)**(1/3)  # in A
         self.radii_renormalized = r_renormalized
         #        plt.plot(self.radii, r_renormalized) renormalized r vs normal r
         #        plt.savefig('test.png')
