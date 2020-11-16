@@ -24,7 +24,7 @@ def main():
 
 
     # for average eps -->
-    a, b, c, n = 20, 30, 10, 11
+    a, b, c, n = 20, 30, 10, 50
     lower_limits_eps = np.linspace(a, a+c, n)
     upper_limits_eps = np.linspace(b, b+c, n)
 
@@ -38,7 +38,7 @@ def main():
 
 
     for i, folder in enumerate(folders):
-        #radii = np.loadtxt(folder + '/Analysis/p_elementwise/radii_renormalized.dat')
+        radii = np.loadtxt(folder + '/Analysis/p_elementwise/radii_renormalized.dat')
         e0i_anion = np.loadtxt(folder + '/Analysis/p_elementwise/dEe_anion.dat')  #DFT depol
         eii_anion = np.loadtxt(folder + '/Analysis/p_elementwise/dV0_anion.dat')  #class pol
         v0i_anion = np.loadtxt(folder + '/Analysis/p_elementwise/dVe_anion.dat')  #class depol
