@@ -22,11 +22,11 @@ def main():
     folders = ['C60' ,'aNPD' , 'TCTA']
     radii = np.loadtxt(folders[0] + '/Analysis/p_elementwise/radii.dat')
 
-
+    radii_renormalization = True
 
 
     # for average eps -->
-    a, b, c, n = 20, 40, 0, 21
+    a, b, c, n = 20, 30, 10, 50
     lower_limits_eps = np.linspace(a, a+c, n)
     upper_limits_eps = np.linspace(b, b+c, n)
 
@@ -35,16 +35,17 @@ def main():
     number_density_nm3_TCTA = 0.9162165860886232  # TCTA
     number_density_nm3_C60 = 1.4266923  # C60
 
-    plt.figure('polarization average')
-
+    plt.figure('polarization average', figsize=[4.5,3.5])
 
 
     for i, folder in enumerate(folders):
         with open(folder+'/jonas_dict.yaml') as fid:
             jonas_dict = yaml.load(fid, Loader=yaml.FullLoader)
-
-        radii = np.array(jonas_dict['R_direct_grid'])
-        #radii = np.array(jonas_dict['r_renormalized'])
+        radii_not_renormalized = np.array(jonas_dict['R_direct_grid'])
+        if radii_renormalization == True:
+            radii = np.array(jonas_dict['r_renormalized'])
+        else:
+            radii = np.array(jonas_dict['R_direct_grid'])
 
         e0i = np.array(jonas_dict['E0_dft'])
         v0i = np.array(jonas_dict['E0_sd'])
@@ -60,11 +61,17 @@ def main():
 
         p_av = (e0i_anion + eii_anion + v0i_anion + e0i_cation + eii_cation + v0i_cation)/2.0
 
-        point_a, point_b, point_b1, target_i = eps(folder, radii, p_av, [20, 40], [50, 1E100])
+        point_a, point_b, point_b1, target_i, point_a1, epsilon = eps_mod(folder, radii, radii_not_renormalized, p_av, [20, 40], [1, 1E5])
 
-        plt.plot([point_a[0], point_b1[0]], [point_a[1],point_b1[1]], color='black')
-        plt.plot(10*radii[target_i]**(-1), p_av[target_i], 'o', color='black', mfc='none')
-        plt.plot(10*radii**(-1), p_av, label=folder)
+        # style 1
+        # plt.plot(10*radii**(-1), p_av, '.', label=folder)
+        # plt.plot([point_a[0], point_b1[0]], [point_a[1],point_b1[1]], color='black', )
+        # plt.plot(10*radii[target_i]**(-1), p_av[target_i], 'o', color='black', mfc='none')
+
+        # style 2
+        plt.plot(10*radii**(-1), p_av, 'o', mfc='none', label=folder + ', $\epsilon_r$ = {:1.2f}'.format(epsilon), color='C{}'.format(i)) # all points
+        plt.plot(10*radii[target_i]**(-1), p_av[target_i], 'o', mfc='C{}'.format(i))
+        plt.plot([point_a1[0], point_b1[0]], [point_a1[1], point_b1[1]], color='black')
 
         eps_range = np.zeros(n)
         for i in range(n):
@@ -75,15 +82,22 @@ def main():
         print('eps_mean ' + folder + '= ', eps_mean)
         print('eps_std ' + folder + '= ', eps_std)
 
-    plt.xlim([0, 2])
+    plt.xlim([0, 1])
+    plt.ylim([0, 1.0])
+    plt.ylim(bottom=0)
     plt.grid()
     plt.ylabel('Average polarization energy, eV')
     plt.xlabel('$10/R,  10 / \AA^{-1} $')
-    plt.xlabel('Inverse distance $1/R,  10 / \AA^{-1} $')
+    if radii_renormalization:
+        plt.xlabel('Inverse distance renormalized $1/R,  10 / \AA^{-1} $')
+    else:
+        plt.xlabel('Inverse distance $1/R,  10 / \AA^{-1} $')
     plt.legend()
     ax1 = plt.gca()
     add_inverse_axis(ax1)
-    plt.savefig('p_average_for_all.png', dpi=600)
+
+
+    plt.savefig('p_average_for_all_jonas_data.png', dpi=600, bbox_inches='tight')
 
 
 def eps(folder, radii, energies, ab,a1b1):
@@ -115,6 +129,37 @@ def eps(folder, radii, energies, ab,a1b1):
     return point_a, point_b, point_b1, target_i
 ##
 
+def eps_mod(folder, radii, r_not_renormalized, energies, ab,a1b1):
+    # differs from eps by outputting another points
+    c = 7.1997176734999995  # coefficient in the formula
+
+    a, b, a1, b1 = ab[0], ab[1], a1b1[0], a1b1[1]  # analyze interval; plot interval
+
+    target_i = np.where(np.logical_and(r_not_renormalized >= a, r_not_renormalized <= b))[0]
+    # target_i1 = np.where(np.logical_and(radii > a1, radii < b1))[0]
+    selected_r = radii[target_i]  # selected interval to compute epsilon
+    # selected_r1 = radii[target_i1]
+    selected_energies = energies[target_i]
+    # selected_energies1 = energies[target_i1]
+
+    coef_poly = np.polyfit(1.0 / selected_r, selected_energies, 1)
+
+    selected_fitted_energies = coef_poly[0] / selected_r + coef_poly[1]
+
+    epsilon = c / (c + coef_poly[0])
+
+    print( "eps " + folder + " = ", epsilon)
+
+    e_a1 = coef_poly[0]/a1 + coef_poly[1]
+    e_b1 = coef_poly[0]/b1 + coef_poly[1]
+
+    point_a = [10 / b1, coef_poly[1]]
+    point_b = [10 / selected_r[-1], selected_energies[-1]]
+    point_b1 = [10 / a1, e_a1]
+    point_a1 = [10 / b1, e_b1]
+
+    return point_a, point_b, point_b1, target_i, point_a1, epsilon
+##
 def eps_only(folder, radii, energies, ab):
 
     c = 7.1997176734999995  # coefficient in the formula
