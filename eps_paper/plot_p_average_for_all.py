@@ -20,7 +20,7 @@ from IP_or_EA_vs_R_ver_4 import add_inverse_axis
 def main():
 
     folders = ['C60' ,'aNPD' , 'TCTA']
-    radii = np.loadtxt(folders[0] + '/Analysis/p_elementwise/radii.dat')
+    radii_not_renormalized = np.loadtxt(folders[0] + '/Analysis/p_elementwise/radii.dat')
 
 
     # for average eps -->
@@ -64,7 +64,7 @@ def main():
         plt.plot(10*radii**(-1), p_av, label=folder)
 
         #save in postprocessing folder
-        np.savetxt(name_of_postprocessing_folder + '/' + name_of_pcs_qp_folder + '/' + 'radii.dat', radii)
+        np.savetxt(name_of_postprocessing_folder + '/' + name_of_pcs_qp_folder + '/' + 'radii.dat', radii_not_renormalized)
         np.savetxt(name_of_postprocessing_folder + '/' + name_of_pcs_qp_folder + '/' + 'p_av_{}.dat'.format(folder), p_av)
 
         eps_range = np.zeros(n)
