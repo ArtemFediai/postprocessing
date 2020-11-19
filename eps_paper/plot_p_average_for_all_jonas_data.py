@@ -22,7 +22,7 @@ def main():
     folders = ['C60' ,'aNPD' , 'TCTA']
     radii = np.loadtxt(folders[0] + '/Analysis/p_elementwise/radii.dat')
 
-    radii_renormalization = True
+    radii_renormalization = False
 
 
     # for average eps -->
@@ -35,8 +35,18 @@ def main():
     number_density_nm3_TCTA = 0.9162165860886232  # TCTA
     number_density_nm3_C60 = 1.4266923  # C60
 
-    plt.figure('polarization average', figsize=[4.5,3.5])
 
+    name_of_postprocessing_folder = 'postprocessing_output'
+    name_of_pcs_pcs_folder = 'pcs_pcs'
+    name_of_pcs_qp_folder = 'pcs_qp'
+
+    if not os.path.exists(name_of_postprocessing_folder):
+        os.mkdir(name_of_postprocessing_folder)
+    else:
+        if not os.path.exists(name_of_postprocessing_folder + '/' + name_of_pcs_pcs_folder):
+            os.mkdir(name_of_postprocessing_folder + '/' + name_of_pcs_pcs_folder)
+
+    plt.figure('polarization average', figsize=[4.5,3.5])
 
     for i, folder in enumerate(folders):
         with open(folder+'/jonas_dict.yaml') as fid:
@@ -72,6 +82,11 @@ def main():
         plt.plot(10*radii**(-1), p_av, 'o', mfc='none', label=folder + ', $\epsilon_r$ = {:1.2f}'.format(epsilon), color='C{}'.format(i)) # all points
         plt.plot(10*radii[target_i]**(-1), p_av[target_i], 'o', mfc='C{}'.format(i))
         plt.plot([point_a1[0], point_b1[0]], [point_a1[1], point_b1[1]], color='black')
+
+
+        #save in postprocessing folder
+        np.savetxt(name_of_postprocessing_folder + '/' + name_of_pcs_pcs_folder + '/' + 'radii.dat', radii_not_renormalized)
+        np.savetxt(name_of_postprocessing_folder + '/' + name_of_pcs_pcs_folder + '/' + 'p_av_{}.dat'.format(folder), p_av)
 
         eps_range = np.zeros(n)
         for i in range(n):

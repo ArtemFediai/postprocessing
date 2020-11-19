@@ -20,7 +20,7 @@ from IP_or_EA_vs_R_ver_4 import add_inverse_axis
 def main():
 
     folders = ['C60' ,'aNPD' , 'TCTA']
-    radii = np.loadtxt(folders[0] + '/Analysis/p_elementwise/radii.dat')
+    radii_not_renormalized = np.loadtxt(folders[0] + '/Analysis/p_elementwise/radii.dat')
 
 
     # for average eps -->
@@ -35,7 +35,16 @@ def main():
 
     plt.figure('polarization average')
 
+    name_of_postprocessing_folder = 'postprocessing_output'
+    name_of_pcs_pcs_folder = 'pcs_pcs'
+    name_of_pcs_qp_folder = 'pcs_qp'
 
+    if not os.path.exists(name_of_postprocessing_folder):
+        os.mkdir(name_of_postprocessing_folder)
+        if not os.path.exists(name_of_postprocessing_folder + '/' + name_of_pcs_qp_folder):
+            os.mkdir(name_of_postprocessing_folder + '/' + name_of_pcs_qp_folder)
+    else:
+        pass
 
     for i, folder in enumerate(folders):
         radii = np.loadtxt(folder + '/Analysis/p_elementwise/radii_renormalized.dat')
@@ -53,6 +62,10 @@ def main():
         plt.plot([point_a[0], point_b1[0]], [point_a[1],point_b1[1]], color='black')
         plt.plot(10*radii[target_i]**(-1), p_av[target_i], 'o', color='black', mfc='none')
         plt.plot(10*radii**(-1), p_av, label=folder)
+
+        #save in postprocessing folder
+        np.savetxt(name_of_postprocessing_folder + '/' + name_of_pcs_qp_folder + '/' + 'radii.dat', radii_not_renormalized)
+        np.savetxt(name_of_postprocessing_folder + '/' + name_of_pcs_qp_folder + '/' + 'p_av_{}.dat'.format(folder), p_av)
 
         eps_range = np.zeros(n)
         for i in range(n):
