@@ -1,4 +1,7 @@
 # joint 1 2 3
+# from CT/1/Abalysis/CT/
+# from IPEA/1/Analysis/EA or IP
+# read and joint summary and matrix ...
 
 from __future__ import print_function
 from __future__ import absolute_import
@@ -39,12 +42,26 @@ def main():
     dic_CT_joint = {}
     dic_IP_joint = {}
     dic_EA_joint = {}
+    dic_CT_joint_Matrix = {}
+    dic_IP_joint_Matrix = {}
+    dic_EA_joint_Matrix = {}
 
     #CT
-    CT_file_to_read_template, CT_file_to_write = create_CT_folder(CT_dir, analysis_dir, id1, id2)
+    CT_file_to_read_template, \
+    CT_file_to_write, \
+    CT_file_to_read_template_Matrix, \
+    CT_file_to_write_Matrix = \
+        create_CT_folder(CT_dir, analysis_dir, id1, id2)
 
     # IP
-    IP_file_to_read_template, EA_file_to_read_template, IP_file_to_write, EA_file_to_write =\
+    IP_file_to_read_template,\
+    EA_file_to_read_template,\
+    IP_file_to_write, \
+    EA_file_to_write, \
+    IP_file_to_read_template_Matrix, \
+    EA_file_to_read_template_Matrix, \
+    IP_file_to_write_Matrix, \
+    EA_file_to_write_Matrix = \
         create_IPEA_folders(IPEA_dir,analysis_dir,id1,id2)
 
     for i, number in enumerate(numbers):
@@ -56,6 +73,16 @@ def main():
 
         dic_IP_123[i] = load_yaml(IP_file_to_read)
         dic_EA_123[i] = load_yaml(EA_file_to_read)
+
+        #Matrix
+        CT_file_to_read_Matrix = CT_file_to_read_template_Matrix.format(number)
+        dic_CT_joint_Matrix.update(load_yaml(CT_file_to_read_Matrix))
+
+        IP_file_to_read_Matrix = IP_file_to_read_template_Matrix.format(number)
+        dic_IP_joint_Matrix.update(load_yaml(IP_file_to_read_Matrix))
+
+        EA_file_to_read_Matrix = EA_file_to_read_template_Matrix.format(number)
+        dic_EA_joint_Matrix.update(load_yaml(EA_file_to_read_Matrix))
 
     # CT begins
     dic_CT_joint[mean_full_env] = np.mean(np.array([dic_CT_123[i][mean_full_env] for i,_ in enumerate(numbers)])).item()
@@ -76,8 +103,13 @@ def main():
         dic_IP_joint['raw_data'].update(dic_IP_123[i]['raw_data'])
         dic_EA_joint['raw_data'].update(dic_EA_123[i]['raw_data'])
 
+    push_yaml(CT_file_to_write, dic_CT_joint)
+    push_yaml(CT_file_to_write_Matrix, dic_CT_joint_Matrix)
+
     push_yaml(IP_file_to_write, dic_IP_joint)
     push_yaml(EA_file_to_write, dic_EA_joint)
+    push_yaml(IP_file_to_write_Matrix, dic_IP_joint_Matrix)
+    push_yaml(EA_file_to_write_Matrix, dic_EA_joint_Matrix)
     # IP ends
 
 
@@ -95,9 +127,13 @@ def push_yaml(file_name, dict_name):
 def create_IPEA_folders(IPEA_dir, analysis_dir, id1,id2):
     IP_filename = 'IP_{}_summary.yml'.format(id2)
     EA_filename = 'EA_{}_summary.yml'.format(id1)
+    IP_filename_Matrix = 'Matrix-analysis-IP_{}.yml'.format(id2)
+    EA_filename_Matrix = 'Matrix-analysis-EA_{}.yml'.format(id1)
 
     IP_file_to_read_template = IPEA_dir + '/' + '{}' + '/' + analysis_dir + '/IP/' + IP_filename
     EA_file_to_read_template = IPEA_dir + '/' + '{}' + '/' + analysis_dir + '/EA/' + EA_filename
+    IP_file_to_read_template_Matrix = IPEA_dir + '/' + '{}' + '/' + analysis_dir + '/IP/' + IP_filename_Matrix
+    EA_file_to_read_template_Matrix = IPEA_dir + '/' + '{}' + '/' + analysis_dir + '/EA/' + EA_filename_Matrix
 
     joint_dir_IPEA_name = 'IPEA_joint'
 
@@ -111,12 +147,19 @@ def create_IPEA_folders(IPEA_dir, analysis_dir, id1,id2):
 
     IP_file_to_write = joint_dir_IPEA_name + '/' + analysis_dir + '/IP/' + IP_filename
     EA_file_to_write = joint_dir_IPEA_name + '/' + analysis_dir + '/EA/' + EA_filename
+    IP_file_to_write_Matrix = joint_dir_IPEA_name + '/' + analysis_dir + '/IP/' + IP_filename_Matrix
+    EA_file_to_write_Matrix = joint_dir_IPEA_name + '/' + analysis_dir + '/EA/' + EA_filename_Matrix
 
-    return IP_file_to_read_template, EA_file_to_read_template, IP_file_to_write, EA_file_to_write
+    return IP_file_to_read_template, EA_file_to_read_template, IP_file_to_write, EA_file_to_write, \
+           IP_file_to_read_template_Matrix, EA_file_to_read_template_Matrix, \
+           IP_file_to_write_Matrix, EA_file_to_write_Matrix
 
 def create_CT_folder(CT_dir, analysis_dir, id1, id2):
     CT_filename = 'CT_{}_-1,{}_1_summary.yml'.format(id1,id2)
+    CT_filename_Matrix = 'Matrix-analysis-CT_{}_-1,{}_1.yml'.format(id1,id2)
     CT_file_to_read_template =  CT_dir + '/' + '{}' + '/' + analysis_dir + '/CT/' + CT_filename
+    CT_file_to_read_template_Matrix =  CT_dir + '/' + '{}' + '/' + analysis_dir + '/CT/' + CT_filename_Matrix
+
     joint_dir_CT_name = 'CT_joint'
 
     if not os.path.exists(joint_dir_CT_name):
@@ -127,7 +170,8 @@ def create_CT_folder(CT_dir, analysis_dir, id1, id2):
         os.mkdir(joint_dir_CT_name + '/' + analysis_dir + '/CT')
 
     CT_file_to_write = joint_dir_CT_name + '/' + analysis_dir + '/CT/' + CT_filename
-    return CT_file_to_read_template, CT_file_to_write
+    CT_file_to_write_Matrix = joint_dir_CT_name + '/' + analysis_dir + '/CT/' + CT_filename_Matrix
+    return CT_file_to_read_template, CT_file_to_write, CT_file_to_read_template_Matrix, CT_file_to_write_Matrix
 
 if __name__ == '__main__':
     main()
