@@ -84,30 +84,70 @@ def plot_theory_data_wrt_vacuum(name, IP_surface, IP_bulk, EA_surface, EA_bulk, 
 
 
 if __name__=="__main__":
-  # aNPD
-    IP_vac = -6.016
-    EA_vac = -0.239
-    IP_surface, IP_bulk = -5.855356585736369, -5.482817320152966 # from 5 cores
-    EA_surface, EA_bulk = -0.5487299462795663, -0.7850648317545766
+    # aNPD
+    source = 'GW'
+
+    # -> GW
+    if source == "GW":
+        IP_vac = -6.572 #QZVP
+        EA_vac = -0.154 #
+        P_plus = 0.53
+        P_minus = 0.4
+
+        IP_surface, IP_bulk = IP_vac+0.5*P_minus, IP_vac + P_plus # from 5 cores
+        EA_surface, EA_bulk = EA_vac - 0.5*P_minus, EA_vac - P_minus
+    # <- GW
+    else:
+        IP_vac = -6.016
+        EA_vac = -0.239
+        IP_surface, IP_bulk = -5.855356585736369, -5.482817320152966 # from 5 cores
+        EA_surface, EA_bulk = -0.5487299462795663, -0.7850648317545766
+
+
     IP_bar = [np.mean([IP_surface, IP_bulk]), np.abs(IP_bulk - IP_surface) + 2*0.08]  # 1 by bulk surface, 2 by std
     EA_bar = [np.mean([EA_surface, EA_bulk]), np.abs(EA_bulk - EA_surface) + 2*0.06]  # same
     plot_theory_data_binding_energy("NPD",IP_surface, IP_bulk, EA_surface, EA_bulk, IP_bar,EA_bar,IP_vac,EA_vac,binding_lims=[-10,8], workfunction=4.82) # workfunction for Silicon 100
 
     #C60
-    IP_vac = -7.649
-    EA_vac = -2.512
-    IP_surface, IP_bulk = -7.1592219080499575, -6.621296915771398
-    EA_surface, EA_bulk = -3.0894178277449016, -3.6207609752891408
+    # -> GW
+    if source == "GW":
+#        IP_vac = -7.581 #TZVP PBE0@GW
+#        EA_vac = -2.57 # TZVP PBE0@GW
+        IP_vac = -7.794 #GW@B2PLYP
+        EA_vac = -2.649 #GW@B2PLYP
+        P_plus = 1.03
+        P_minus = 1.02
+
+        IP_surface, IP_bulk = IP_vac+0.5*P_minus, IP_vac + P_plus # from 5 cores
+        EA_surface, EA_bulk = EA_vac - 0.5*P_minus, EA_vac - P_minus
+    # <- GW
+    else:
+        IP_vac = -7.649
+        EA_vac = -2.512
+        IP_surface, IP_bulk = -7.1592219080499575, -6.621296915771398
+        EA_surface, EA_bulk = -3.0894178277449016, -3.6207609752891408
+
     IP_bar= [np.mean([IP_surface,IP_bulk]), np.abs(IP_bulk-IP_surface) + 2*0.01] # 1 by bulk surface, 2 by std
     EA_bar= [np.mean([EA_surface,EA_bulk]), np.abs(EA_bulk-EA_surface) + 2*0.01] # same
     plot_theory_data_binding_energy("C60",IP_surface, IP_bulk, EA_surface, EA_bulk, IP_bar,EA_bar,IP_vac,EA_vac,binding_lims=[-5.3, 4], workfunction=4.294142857)
-   # workfunction computed by secondary electron cutoff and photon energy
+    # workfunction computed by secondary electron cutoff and photon energy
 
     # TCTA
-    IP_vac = -6.414
-    EA_vac = -0.002
-    IP_surface, IP_bulk = -6.17, -5.88
-    EA_surface, EA_bulk = -0.27, -0.54
+    # -> GW
+    if source == "GW":
+        IP_vac = -6.934 #QZVP
+        EA_vac = -0.057 #
+        P_plus = 0.54
+        P_minus = 0.56
+
+        IP_surface, IP_bulk = IP_vac+0.5*P_minus, IP_vac + P_plus # from 5 cores
+        EA_surface, EA_bulk = EA_vac - 0.5*P_minus, EA_vac - P_minus
+    # <- GW
+    else:
+        IP_vac = -6.414
+        EA_vac = -0.002
+        IP_surface, IP_bulk = -6.17, -5.88
+        EA_surface, EA_bulk = -0.27, -0.54
     IP_bar = [np.mean([IP_surface, IP_bulk]), np.abs(IP_bulk - IP_surface) + 2 * 0.05]  # 1 by bulk surface, 2 by std
     EA_bar = [np.mean([EA_surface, EA_bulk]), np.abs(EA_bulk - EA_surface) + 2 * 0.02]  # same
     plot_theory_data_wrt_vacuum("TCTA",IP_surface, IP_bulk, EA_surface, EA_bulk, IP_bar, EA_bar,IP_vac,EA_vac, vac_lims=[-9, 3])
