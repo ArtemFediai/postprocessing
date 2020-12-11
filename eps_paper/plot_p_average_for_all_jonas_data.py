@@ -22,7 +22,7 @@ def main():
     folders = ['C60' ,'aNPD' , 'TCTA']
     radii = np.loadtxt(folders[0] + '/Analysis/p_elementwise/radii.dat')
 
-    radii_renormalization = False
+    radii_renormalization = True
 
 
     # for average eps -->
@@ -101,18 +101,22 @@ def main():
     plt.ylim([0, 1.0])
     plt.ylim(bottom=0)
     plt.grid()
-    plt.ylabel('Average polarization energy, eV')
+    plt.ylabel('Average polarization energy $\mathrm{P}$, eV')
     plt.xlabel('$10/R,  10 / \AA^{-1} $')
     if radii_renormalization:
-        plt.xlabel('Inverse distance renormalized $1/R,  10 / \AA^{-1} $')
+        plt.xlabel(r'Inverse renormalized distance $10/ \tilde{R},  \mathrm{\AA}^{-1} $')
     else:
         plt.xlabel('Inverse distance $1/R,  10 / \AA^{-1} $')
     plt.legend()
     ax1 = plt.gca()
-    add_inverse_axis(ax1)
+    if radii_renormalization:
+        add_inverse_axis(ax1, x_label=r'$\tilde{R}, \mathrm{\AA}$')
+    else:
+        add_inverse_axis(ax1)
 
 
     plt.savefig('p_average_for_all_jonas_data.png', dpi=600, bbox_inches='tight')
+    plt.savefig('p_average_for_all_jonas_data.svg', bbox_inches='tight')
 
 
 def eps(folder, radii, energies, ab,a1b1):
