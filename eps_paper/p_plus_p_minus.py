@@ -95,9 +95,9 @@ def main():
         plt.ylabel('Cation and anion polarization energies, eV')
         plt.xlabel('$10/R,  10 / \AA^{-1} $')
         if radii_renormalization:
-            plt.xlabel('Inverse distance renormalized $10/R,  10 / \AA^{-1} $')
+            plt.xlabel('Renormalized inverse radius $\tilde{R},  10 / \AA^{-1} $')
         else:
-            plt.xlabel('Inverse distance $10/R, \AA^{-1} $')
+            plt.xlabel('Inverse radius $10/R, \AA^{-1} $')
         plt.legend()
         ax1 = plt.gca()
         add_inverse_axis(ax1, rs_plot=np.array([4, 5, 6, 7, 10, 20, 50]))
