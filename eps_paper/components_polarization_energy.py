@@ -12,6 +12,11 @@ import yaml
 import scipy.constants as const
 import time
 import gzip
+import seaborn as sns; sns.set()
+import pandas as pd
+#sns.set_theme(style="whitegrid")
+sns.set_style('whitegrid')
+sns.color_palette()
 
 from IP_or_EA_vs_R_ver_4 import add_inverse_axis
 
@@ -67,25 +72,25 @@ def main():
         delta_delta_cation = np.array(jonas_dict['delta_delta_E0_cation_mean'])
 
         p_av = (e0i_anion + eii_anion + v0i_anion + e0i_cation + eii_cation + v0i_cation)/2.0
-
-        plt.plot(10*radii**(-1), 0.5*(e0i_anion+e0i_cation), label='$\Delta E_{env}$') #
-        plt.plot(10*radii**(-1), 0.5*(v0i_anion+v0i_cation), label='$\Delta V_{core}$') #
-        plt.plot(10*radii**(-1), 0.5*(eii_anion+eii_cation), label='$\Delta V_{env}$') #
-#        plt.plot(10*radii**(-1), 0.5*(e0_anion+e0_cation)*np.ones(len(eii_cation)), label='$\Delta E_0$') #
+        de0i = 0.5*(e0i_anion+e0i_cation) #dE_env
+        dv0i = 0.5*(v0i_anion+v0i_cation) #dR_core
+        deii = 0.5*(eii_anion+eii_cation) #dV_env
 
         point_a, point_b, point_b1, target_i, point_a1, epsilon = eps_mod(folder, radii, radii_not_renormalized, p_av, [20, 40], [1, 1E5])
 
+        array_of_ps_at_0 = []
+        array_of_ps = [de0i, dv0i, deii, p_av]
+        for i, p in enumerate(array_of_ps):
+            point_a, point_b, point_b1, _, point_a1, _ = eps_mod(folder, radii, radii_not_renormalized, p, [20, 40], [1, 1E5])
+            print([point_a1[1]])
+            array_of_ps_at_0.append(point_a1[1])
+            plt.plot([point_a[0], point_b[0]], [point_a[1], point_b[1]], LineStyle='dashed' , marker='o')
+        print(array_of_ps_at_0)
 
-        # style 2
-        #plt.plot(10*radii**(-1), p_av, 'o', mfc='none', label=folder + ', $\epsilon_r$ = {:1.2f}'.format(epsilon), color='black') # all points
-        # style 3
-        #plt.plot(10*radii**(-1), p_av, '.', label=folder + ', $\epsilon_r$ = {:1.2f}'.format(epsilon), color='black') # all points
-        # style 4
-        #plt.plot(10*radii**(-1), p_av, label=folder + ', $\epsilon_r$ = {:1.2f}'.format(epsilon), color='black') # all points
-        #plt.plot(10*radii**(-1), p_av, label= '$\Delta E_{env} + \Delta V_{core} + \Delta V_{env}$', color='black') # all points
+        plt.plot(10*radii**(-1), de0i , label='$\Delta E_{env}$') #
+        plt.plot(10*radii**(-1), dv0i, label='$\Delta V_{core}$') #
+        plt.plot(10*radii**(-1), deii, label='$\Delta V_{env}$') #
         plt.plot(10*radii**(-1), p_av, label= '$P_{env}$', color='black') # all points
-        #plt.plot(10*radii_not_renormalized**(-1), p_av, label=folder + ', $\epsilon_r$ = {:1.2f}'.format(epsilon), color='grey') # not renormalized
-        #plt.text(0.05, 1.6, folder, fontsize=12, bbox={'facecolor': 'white', 'edgecolor': 'white', 'alpha': 1, 'pad':10})
 
 
         eps_range = np.zeros(n)
@@ -100,19 +105,30 @@ def main():
         plt.xlim([0, 2])
         plt.ylim([-1, 2])
         plt.grid()
-        plt.ylabel('Components of polarization energy, eV')
+        plt.ylabel('Components of the polarization energy, eV')
         plt.xlabel('$10/R,  10 / \AA^{-1} $')
         if radii_renormalization:
-            plt.xlabel('Inverse distance renormalized $10/R,  10 / \AA^{-1} $')
+            plt.xlabel('Inverse renormalized radius $10/R,  10 / \AA^{-1} $')
         else:
-            plt.xlabel('Inverse distance $10/R, \AA^{-1} $')
+            plt.xlabel('Inverse radius $10/R, \AA^{-1} $')
         plt.legend()
         ax1 = plt.gca()
         add_inverse_axis(ax1, rs_plot=np.array([5, 7, 10, 20, 30, 50]))
         plt.text(0.1, 1.6, folder, fontsize=12, bbox={'facecolor': 'white', 'edgecolor': 'grey', 'alpha': 0.5, 'pad':10})
         plt.savefig('p_average_componentwise_{}.png'.format(folder), dpi=600, bbox_inches='tight')
+        plt.close()
 
+        #seaborn
 
+        fig, ax = plt.subplots( )
+        values =  np.transpose([0.5*(e0i_anion+e0i_cation), 0.5*(v0i_anion+v0i_cation), 0.5*(eii_anion+eii_cation), p_av])
+        data = pd.DataFrame(values, 10/radii_not_renormalized, columns=["delta_e_env", "delta_v_core", "delta_v_env", "p"])
+        sns.lineplot(data=data, palette='tab10', linewidth=2.5, ax=ax)
+        add_inverse_axis(ax, rs_plot=np.array([5, 7, 10, 20, 30, 50]))
+        plt.xlim([0, 2])
+        plt.ylim([-1, 2])
+        plt.savefig('p_av_components_seaborn_{}.png'.format(folder))
+        plt.close()
 
 def eps(folder, radii, energies, ab,a1b1):
     c = 7.1997176734999995  # coefficient in the formula
