@@ -1,0 +1,15 @@
+# order: C60, aNPD, (TCTA)
+# Theo:
+# C60: /FH2_Jonas/Manuell/2020-08_C60_pure/5_core_8its_015_4its_03_3its_05_8its_08
+# aNPD: /FH2_Jonas/Manuell/2020-08_alphaNPD_pure/5_core_12its_03_8its_05
+# TCTA:  /FH2_Jonas/Manuell/2020-08_TCTA_pure/5_core_8its_015_8its_03
+# Exp sources:
+# C60: Optical ...
+# aNPD: Hermann et al.
+# TCTA: Organic light-emitting diodes # minus 0.15
+molecules: ["C60", "NPD", "TCTA"]
+exp_vals: [4.08, 2.7, 2.873]
+exp_stds: [0, 0, 0]
+theo_vals: [4.159485049, 2.71600275, 2.493119592]
+theo_stds: [0.1045233904, 0.0628703533, 0.05084550823]
+claussius_mossotti_vals: [3.69257338093406, 3.70689475700077, 3.59869564673177]
