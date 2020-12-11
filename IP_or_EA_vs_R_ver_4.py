@@ -688,13 +688,16 @@ def plot_1(x, y, filename, y_name, xlim):
     plt.savefig(filename)
     plt.close()
 
-def add_inverse_axis(initial_axis, rs_plot=np.array([1, 2, 3, 4, 5, 7, 10, 20, 30, 40, 50]),
-                     rs_grid=np.array([])):
+def add_inverse_axis(initial_axis,
+                     rs_plot=np.array([1, 2, 3, 4, 5, 7, 10, 20, 30, 40, 50]),
+                     rs_grid=np.array([]),
+                     x_label='$R, \AA$'):
+
     def inv(x):
         return 10 / x
 
     ax2 = initial_axis.twiny()
-    ax2.set_xlabel('$R, \AA$')
+    ax2.set_xlabel(x_label)
     ax2.set_xticks(inv(rs_plot), minor=False)
     ax2.set_xticks(inv(rs_grid), minor=True)
     ax2.set_xticklabels(rs_plot)
