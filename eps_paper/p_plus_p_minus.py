@@ -20,6 +20,8 @@ from IP_or_EA_vs_R_ver_4 import add_inverse_axis
 def main():
 
     folders = ['aNPD' , 'C60' ,'TCTA']
+    folders_names = ['NPB' , 'C60' ,'TCTA']
+
     radii = np.loadtxt(folders[0] + '/Analysis/p_elementwise/radii.dat')
 
     radii_renormalization = False
@@ -76,8 +78,8 @@ def main():
 
         a_p, a_m, b_p, b_m = eps_mod_2(folder, radii, radii_not_renormalized, p_av, [20, 40], [1, 1E5], p_plus, p_minus, 30.0)
 
-        plt.plot(10*radii**(-1), p_plus, label='$P^{+}. P^{+}_{bulk}=%1.2f$ eV' % a_p[1], color='C0') #
-        plt.plot(10*radii**(-1), p_minus, label='$P^{-}. P^{-}_{bulk}=%1.2f eV$' % a_m[1], color='C1') #
+        plt.plot(10*radii**(-1), p_plus, label='$\mathrm{P}^{+}. \mathrm{P}^{+}_\mathrm{bulk}=%1.2f$ eV' % a_p[1], color='C0') #
+        plt.plot(10*radii**(-1), p_minus, label='$\mathrm{P}^{-}. \mathrm{P}^{-}_\mathrm{bulk}=%1.2f eV$' % a_m[1], color='C1') #
 
 
 
@@ -89,19 +91,19 @@ def main():
         # print('eps_mean ' + folder + '= ', eps_mean)
         # print('eps_std ' + folder + '= ', eps_std)
 
-        plt.xlim([0, 4])
+        plt.xlim([0, 3])
         plt.ylim([-0.25, 1.2])
         plt.grid()
         plt.ylabel('Cation and anion polarization energies, eV')
         plt.xlabel('$10/R,  10 / \AA^{-1} $')
         if radii_renormalization:
-            plt.xlabel('Renormalized inverse radius $\tilde{R},  10 / \AA^{-1} $')
+            plt.xlabel('Renormalized inverse radius $\tilde{R},  10 / \mathrm{\AA}^{-1} $')
         else:
-            plt.xlabel('Inverse radius $10/R, \AA^{-1} $')
+            plt.xlabel('Inverse radius $10/R, \mathrm{\AA}^{-1} $')
         plt.legend()
         ax1 = plt.gca()
-        add_inverse_axis(ax1, rs_plot=np.array([4, 5, 6, 7, 10, 20, 50]))
-        plt.text(0.4, 1.0, folder, fontsize=12, bbox={'facecolor': 'white', 'edgecolor': 'grey', 'alpha': 0.75, 'pad': 10})
+        add_inverse_axis(ax1, rs_plot=np.array([4, 5, 6, 7, 10, 20, 50]), x_label='$R, \mathrm{\AA}$')
+        plt.text(0.4, 1.0, folders_names[i], fontsize=12, bbox={'facecolor': 'white', 'edgecolor': 'grey', 'alpha': 0.75, 'pad': 10})
         plt.savefig('p_plus_minus_{}.png'.format(folder), dpi=600, bbox_inches='tight')
         plt.savefig('p_plus_minus_{}.svg'.format(folder), bbox_inches='tight')
 
