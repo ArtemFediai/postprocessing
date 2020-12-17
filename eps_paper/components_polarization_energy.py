@@ -40,9 +40,8 @@ def main():
     number_density_nm3_TCTA = 0.9162165860886232  # TCTA
     number_density_nm3_C60 = 1.4266923  # C60
 
-
-
-
+    mean_array_of_ps_at_0 = np.array([0.0, 0.0, 0.0])
+    store_it = np.zeros([3,3])
     for i, folder in enumerate(folders):
         plt.figure('polarization_componentwise_{}'.format(folder), figsize=[4.5, 3.5])
         with open(folder+'/jonas_dict.yaml') as fid:
@@ -89,12 +88,12 @@ def main():
         #partial ->
         array_of_ps_at_0 = []
         array_of_ps = [deii, dv0i, dvii] # various polarizations
-        for i, p in enumerate(array_of_ps):
+        for j, p in enumerate(array_of_ps):
             point_a, point_b, point_b1, _, point_a1, _ = eps_mod(folder, radii, radii_not_renormalized, p, [20, 40], [1, 1E5])
             print([point_a1[1]])
             array_of_ps_at_0.append(point_a1[1])
-            plt.plot([point_a[0], point_b[0]], [point_a[1], point_b[1]], LineStyle='dotted', color=f'C{i}')
-            plt.plot([point_a[0]], [point_a[1]], LineStyle='dashed', marker='o', color=f'C{i}')
+            plt.plot([point_a[0], point_b[0]], [point_a[1], point_b[1]], LineStyle='dotted', color=f'C{j}')
+            plt.plot([point_a[0]], [point_a[1]], LineStyle='dashed', marker='o', color=f'C{j}')
             bulks.append(point_a[1])
 
         bulks.append(delta_delta)##dd
@@ -108,8 +107,8 @@ def main():
         plt.plot(10*radii**(-1), p_av, label= '$\mathrm{P}_\mathrm{env}$', color='black')  # all points
 
         eps_range = np.zeros(n)
-        for i in range(n):
-            eps_range[i] = eps_only(folder, radii, p_av, [lower_limits_eps[i], upper_limits_eps[i]])
+        for j in range(n):
+            eps_range[j] = eps_only(folder, radii, p_av, [lower_limits_eps[j], upper_limits_eps[j]])
         eps_std = np.std(eps_range)
         eps_mean = np.mean(eps_range)
 
@@ -177,6 +176,21 @@ def main():
         plt.savefig(f'bar_plot_{folder}.svg')
         plt.close()
         #<-- bar chart
+        normalized = np.abs(np.array(array_of_ps_at_0))  / np.sum(np.abs(array_of_ps_at_0))
+        mean_array_of_ps_at_0 +=  normalized
+
+        store_it[i,:] = normalized
+
+
+        # std for components
+
+    print("computing mean")
+    print(mean_array_of_ps_at_0/len(folders))
+    print("all")
+    print(store_it)
+    for ii in range(np.shape(store_it)[1]):
+        print(store_it[:, ii])
+        print(np.std(store_it[:,ii]))
 
 
 def eps(folder, radii, energies, ab,a1b1):
