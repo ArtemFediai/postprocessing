@@ -7,7 +7,7 @@
 # C60: Optical ...
 # aNPD: Hermann et al.
 # TCTA: Organic light-emitting diodes # minus 0.15
-molecules: ["C60", "NPD", "TCTA"]
+molecules: ["C60", "NPB", "TCTA"]
 exp_vals: [4.08, 2.7, 2.873]
 exp_stds: [0, 0, 0]
 theo_vals: [4.159485049, 2.71600275, 2.493119592]

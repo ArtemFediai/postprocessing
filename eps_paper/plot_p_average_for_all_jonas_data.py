@@ -20,6 +20,7 @@ from IP_or_EA_vs_R_ver_4 import add_inverse_axis
 def main():
 
     folders = ['C60' ,'aNPD' , 'TCTA']
+    names = ['C60' ,'NPB' , 'TCTA']
     radii = np.loadtxt(folders[0] + '/Analysis/p_elementwise/radii.dat')
 
     radii_renormalization = True
@@ -79,7 +80,7 @@ def main():
         # plt.plot(10*radii[target_i]**(-1), p_av[target_i], 'o', color='black', mfc='none')
 
         # style 2
-        plt.plot(10*radii**(-1), p_av, 'o', mfc='none', label=folder + ', $\epsilon_r$ = {:1.2f}'.format(epsilon), color='C{}'.format(i)) # all points
+        plt.plot(10*radii**(-1), p_av, 'o', mfc='none', label=names[i] + ', $\epsilon_r$ = {:1.2f}'.format(epsilon), color='C{}'.format(i)) # all points
         plt.plot(10*radii[target_i]**(-1), p_av[target_i], 'o', mfc='C{}'.format(i))
         plt.plot([point_a1[0], point_b1[0]], [point_a1[1], point_b1[1]], color='black')
 
