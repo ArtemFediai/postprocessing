@@ -1,9 +1,4 @@
 Analysis:
-  homo_lumo_generator:
-    enabled: false
-    periodic_copies: [1, 1, 1]
-    coulomb_cutoff: 25.0
-    non_PBC_morphology: morphology.cml
   Excitonic:
     Fluorescence:
       DFTEngine: Turbomole 1
@@ -92,15 +87,15 @@ DFTEngine:
       functional: BP86
       memory: 1500
       scf_convergence: superextreme
-      threads: 64
+      threads: 20
 QuantumPatch:
   calculateJs: false
   charge_damping: 0.3
   chargetype_multipoles: false
   dimer_cutoff: 7.0
-  morphology: structure.cml
+  morphology: structurePBC.cml
   number_of_equilibration_steps: 16
-  partial_charge_cutoff: 40
+  partial_charge_cutoff: 60
   type: matrix_eaip
 System:
   Core:
@@ -109,8 +104,9 @@ System:
     engine: Turbomole 1
     engine_by_iter: {}
     type: list
-    list: 'molstate.0: 6678;6980;5846;7195;3892;6425;7374;5894;6373;5541;3168;5703;5830;8035;3516;6687;2587;3892;4157;6754;4329;2557;2881;3223;4846;6835;4097;2492;7920;3154
-      # molstate.1: 7272;7272;6718;7252;4235;6509;7272;5872;6550;5502;3286;5532;5967;7942;3738;6783;2673;3847;4194;6718;4235;2551;2814;3356;4824;6894;4384;2722;8034;3227'
+    number: 30
+    list: 'molstate.0: 8428;14609;10936;5113;5190;8194;14490;7202;2605;5845;2230;12782;2843;1493;6344;6146;4717;647;16518;1506;20009;8297;11982;11527;9584;10210;4888;1107;13391;22180
+      # molstate.1: 18050;7252;19412;208;12641;18405;7068;1547;9013;16517;376;14724;3832;12277;9617;17356;4932;376;4932;18934;14416;21867;15959;3832;13540;23878;7252;19325;13316;14724'
   IdenticalMolecules:
     crystal_centers: []
     enable_mapping: false
@@ -132,3 +128,8 @@ System:
       engine: Turbomole 1
       engine_by_iter: {}
       type: scf
+    '1':
+      cutoff: 60.0
+      engine: Turbomole 1
+      engine_by_iter: {}
+      type: static

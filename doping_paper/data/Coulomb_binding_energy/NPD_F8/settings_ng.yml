@@ -82,7 +82,17 @@ DFTEngine:
       fallback: Turbomole 1 fallback
       functional: BP86
       memory: 1500
-      scf_convergence: normal_1000
+      scf_convergence: normal_500
+      threads: 1
+    TM18:
+      basis: def2-SVPD
+      charge_model: ESP
+      dispersion: false
+      engine: Turbomole
+      fallback: Turbomole 1 fallback
+      functional: BP86
+      memory: 1500
+      scf_convergence: normal_500
       threads: 1
     Turbomole 1 fallback:
       basis: def2-SVPD
@@ -92,7 +102,7 @@ DFTEngine:
       functional: BP86
       memory: 1500
       scf_convergence: superextreme
-      threads: 64
+      threads: 1
 QuantumPatch:
   calculateJs: false
   charge_damping: 0.3
@@ -107,10 +117,11 @@ System:
     GeometricalOptimizationSteps: []
     default_molstates: 0;1
     engine: Turbomole 1
-    engine_by_iter: {}
+    engine_by_iter:
+      FirstCharged: TM18
     type: list
-    list: 'molstate.0: 6678;6980;5846;7195;3892;6425;7374;5894;6373;5541;3168;5703;5830;8035;3516;6687;2587;3892;4157;6754;4329;2557;2881;3223;4846;6835;4097;2492;7920;3154
-      # molstate.1: 7272;7272;6718;7252;4235;6509;7272;5872;6550;5502;3286;5532;5967;7942;3738;6783;2673;3847;4194;6718;4235;2551;2814;3356;4824;6894;4384;2722;8034;3227'
+    list: 'molstate.0: 3597;3133;5049;7878;4873;5325;4020;4493;5625;6072;5345;5114;7222;2326;3598;6418;5863;3850;8248;7521;4725;7806;7159;2577;7459;7323;5211;7808;2966;2279
+      # molstate.1: 3735;2822;5317;7473;5012;5375;4451;4451;6315;5944;5277;5277;7124;2369;3574;6415;5856;3907;8201;7676;4717;7662;7238;2905;7473;7199;5106;7778;3092;2369'
   IdenticalMolecules:
     crystal_centers: []
     enable_mapping: false
