@@ -92,13 +92,13 @@ DFTEngine:
       functional: BP86
       memory: 1500
       scf_convergence: superextreme
-      threads: 64
+      threads: 20
 QuantumPatch:
   calculateJs: false
   charge_damping: 0.3
   chargetype_multipoles: false
   dimer_cutoff: 7.0
-  morphology: structure.cml
+  morphology: structurePBC.cml
   number_of_equilibration_steps: 16
   partial_charge_cutoff: 40
   type: matrix_eaip
@@ -109,8 +109,9 @@ System:
     engine: Turbomole 1
     engine_by_iter: {}
     type: list
-    list: 'molstate.0: 6678;6980;5846;7195;3892;6425;7374;5894;6373;5541;3168;5703;5830;8035;3516;6687;2587;3892;4157;6754;4329;2557;2881;3223;4846;6835;4097;2492;7920;3154
-      # molstate.1: 7272;7272;6718;7252;4235;6509;7272;5872;6550;5502;3286;5532;5967;7942;3738;6783;2673;3847;4194;6718;4235;2551;2814;3356;4824;6894;4384;2722;8034;3227'
+    number: 10
+    list: 'molstate.0: 6961;6574;6313;3820;4486;4756;3325;4162;2983;5773;5035;3541;7807;4459;7537;6592;4549;2200;5629;6421;3091;2317;5062;5800;5287;3010;3586;4117;5197;2686 # molstate.1:
+      7744;6817;6628;4207;4999;4207;3469;4495;3280;5863;4837;3559;7744;4837;7744;6817;4324;2272;5845;6691;3145;2371;5521;5863;5485;2812;3559;4270;5179;3469'
   IdenticalMolecules:
     crystal_centers: []
     enable_mapping: false
